@@ -1,0 +1,154 @@
+---
+config:
+    layout: elk
+---
+classDiagram
+direction TB
+    class Client {
+        -name: String
+        -clientId: long
+        -email: String
+        -passwordHash: String
+        -client_status: enum
+        -client_segment: string
+        +activate() 
+        +deactivate() 
+    }
+    class Session {
+        -sessionId: long
+        -clienId: long
+        -tokenHash: String
+        -createdAt: date
+        -expiresAt: date
+        -isRevoked: boolean
+        +isValid() 
+        +revoke() 
+    }
+    class Account {
+        -accountId: long
+        -clientId: long
+        -accountStatus: enum 
+        -openedAt: date
+        +isOwnedBy()
+        +isActive()
+    }
+    class Instrument {
+        -instrumentId: long
+        -market: String
+        -symbol: String
+        -assetClass: enum
+        -isTradable: boolean
+        -quoteCurrency: enum
+        +isTradable()
+    }
+    class Order {
+        -orderId: long 
+        -accountId: long
+        -instrumentId: long
+        -idempotencyKey: UUID
+        -side: enum
+        -requestedQuantity: BigDecimal
+        -submittedAt: date
+        -currentOrderStatus: enum
+        +submit()
+        +accept()
+        +reject()
+        +currentStatus()
+    }
+    class OrderEvent {
+        -orderEventId: long
+        -orderId: long
+        -status: enum 
+        -reasonForStatusChange: String
+        -decisionQuote: QuoteSnapshot
+        -decisionQuoteAt: date
+        -occurredAt: date
+    }
+    class Fill {
+        -fillId: long
+        -orderId: long
+        -fillQuantity: BigDecimal
+        -executionPrice: Money
+        -executionTime: date
+    }
+    class CashBalance {
+        -accountId: long
+        -currency: enum
+        -totalBalance: Money
+        -reservedBalance: Money
+        -updatedAt: date
+        +availableBalance()
+        +reserveCash()
+        +releaseReservedCash()
+        +depositCash()
+        +withdrawCash()
+    }
+    class Holding {
+        -accountId: long
+        -instrumentId: long
+        -totalQuantity: BigDecimal
+        -reservedQuantity: BigDecimal
+        -updatedAt: date
+        +availableQuantiy()
+        +reserveQuantity()
+        +releaseReservedQuantity()
+        +addPurchase()
+        +settleSale()
+    }
+    class Portfolio {
+        -accountId: long
+        -holdings: List<Holding>
+        -cashBalances: Map<Currency, CashBalance>
+        +getTotalPortfolioValue()
+    }
+    class CashMovement {
+        -cashMovementId: long
+        -accountId: long
+        -fillId: long
+        -amount: Money
+        -movementType: enum 
+        -currency: enum
+        -occurredAt: date
+    }
+    class Money {
+        -amount: BigDecimal
+        -currency: String
+        +add() Money
+        +subtract() Money
+        +multiply() Money
+    }
+    class QuoteSnapshot {
+        -price: Money
+        -quoteAt: date
+    }
+
+    Client "1" --> "0..*" Session : has
+    Client "1" *-- "0..*" Account : owns
+
+    Account "1" <-- "0..*" Order : placed from
+    Account "1" <-- "1..*" CashBalance : has
+    Account "1" <-- "0..*" Holding : has
+    Account "1" <-- "1..1" Portfolio : has
+    Account "1" <-- "0..*" CashMovement : has
+
+    Instrument "1" <-- "0..*" Order : references
+    Instrument "1" <-- "0..*" Holding : references
+
+    Order "1" *-- "1..*" OrderEvent : produces
+    Order "1" *-- "0..1" Fill : produces
+
+    Fill "1" --> "1..1" CashMovement : produces
+
+    Money ..> CashMovement : used in 
+    Money ..> Fill : used in
+    Money ..> QuoteSnapshot : used in
+    Money ..> CashBalance : used in
+
+
+
+
+
+
+
+
+
