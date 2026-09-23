@@ -32,6 +32,17 @@ npm run build
 
 The compiled files are written under `frontend/dist/`.
 
+## Run the backend
+
+From the project root, run:
+
+```powershell
+cd backend
+mvn spring-boot:run
+```
+
+The API starts at `http://localhost:8080`.
+
 ## Current prototype scope
 
 Authentication, portfolio data, trades, transfers, and market data are held in
@@ -40,9 +51,11 @@ buttons on the account page are placeholders; no backend API is connected yet.
 
 ## Run the backend
 
+From the repository root:
+
 ```bash
 cd backend
-mvn compile exec:java -Dexec.mainClass=com.neueda.leap.Main
+mvn spring-boot:run
 ```
 
-The backend is currently independent of the frontend prototype.
+The backend starts at <http://localhost:8080>.
