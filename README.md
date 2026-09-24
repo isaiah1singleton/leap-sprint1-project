@@ -32,6 +32,33 @@ npm run build
 
 The compiled files are written under `frontend/dist/`.
 
+## Run the backend
+
+From the project root, run:
+
+```powershell
+docker compose up -d postgres
+cd backend
+mvn spring-boot:run
+```
+
+The API starts at `http://localhost:8080`.
+
+The first backend startup creates the `clients` table automatically through the
+database migration. PostgreSQL defaults to `localhost:5432`, database `leap`,
+username `postgres`, and password `postgres`. Override these with
+`DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD` if needed.
+
+### Mock authentication endpoints
+
+```text
+POST /api/auth/register  { "email": "trader@example.com", "password": "password" }
+POST /api/auth/sign-in  { "email": "trader@example.com", "password": "password" }
+```
+
+Passwords are stored as BCrypt hashes. Emails are normalized to lowercase and
+must be unique regardless of case.
+
 ## Current prototype scope
 
 Authentication, portfolio data, trades, transfers, and market data are held in
@@ -40,9 +67,11 @@ buttons on the account page are placeholders; no backend API is connected yet.
 
 ## Run the backend
 
+From the repository root:
+
 ```bash
 cd backend
-mvn compile exec:java -Dexec.mainClass=com.neueda.leap.Main
+mvn spring-boot:run
 ```
 
-The backend is currently independent of the frontend prototype.
+The backend starts at <http://localhost:8080>.
