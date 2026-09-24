@@ -1,0 +1,71 @@
+erDiagram
+    DIM_CLIENT ||--o{ FACT_TRADE : "classifies"
+    DIM_ACCOUNT ||--o{ FACT_TRADE : "owns"
+    DIM_INSTRUMENT ||--o{ FACT_TRADE : "describes"
+    DIM_DATE ||--o{ FACT_TRADE : "execution date"
+    DIM_TIME ||--o{ FACT_TRADE : "execution time"
+
+    FACT_TRADE {
+        bigint trade_key PK
+        bigint fill_id "Degenerate dimension / OLTP Fill ID"
+        bigint order_id "Degenerate dimension / OLTP Order ID"
+        bigint client_key FK
+        bigint account_key FK
+        bigint instrument_key FK
+        int execution_date_key FK
+        int execution_time_key FK
+        string side
+        decimal executed_quantity
+        decimal execution_price
+        decimal notional_amount
+    }
+
+    DIM_CLIENT {
+        bigint client_key PK "Warehouse surrogate key"
+        bigint client_id "OLTP Client ID"
+        string client_segment
+        string client_status
+        date effective_from
+        date effective_to
+        boolean is_current
+    }
+
+    DIM_ACCOUNT {
+        bigint account_key PK "Warehouse surrogate key"
+        bigint account_id "OLTP Account ID"
+        string account_status
+        date opened_date
+    }
+
+    DIM_INSTRUMENT {
+        bigint instrument_key PK "Warehouse surrogate key"
+        bigint instrument_id "OLTP Instrument ID"
+        string symbol
+        string instrument_name
+        string asset_class
+        string market
+        string quote_currency
+        string tradable_status
+    }
+
+    DIM_DATE {
+        int date_key PK "YYYYMMDD"
+        date full_date
+        int day
+        string day_name
+        int week
+        int month
+        string month_name
+        int quarter
+        int year
+        boolean is_weekend
+    }
+
+    DIM_TIME {
+        int time_key PK "HHMMSS"
+        time full_time
+        int hour
+        int minute
+        int second
+        string time_bucket
+    }
