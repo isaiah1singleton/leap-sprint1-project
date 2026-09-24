@@ -1,7 +1,9 @@
 package com.neueda.leap.controller;
 
 import com.neueda.leap.models.AccountResponse;
+import com.neueda.leap.models.OpenAccountRequest;
 import com.neueda.leap.service.AccountService;
+import com.neueda.leap.service.ClientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -11,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
 import java.security.Principal;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -18,17 +21,19 @@ import java.util.NoSuchElementException;
 public class AccountController {
 
     private final AccountService accountService;
+    private final ClientService clientService;
 
     @Autowired
-    public AccountController(AccountService accountService) {
+    public AccountController(AccountService accountService, ClientService clientService) {
         this.accountService = accountService;
+        this.clientService = clientService;
     }
 
     @PostMapping
-    public ResponseEntity<AccountResponse> openAccount(Principal principal) {
+    public ResponseEntity<AccountResponse> openAccount(Principal principal, @RequestBody OpenAccountRequest request) {
         Integer clientId = authenticatedClientId(principal);
 
-        AccountResponse account = accountService.openAccount(clientId);
+        AccountResponse account = accountService.openAccount(clientId, request.accountName());
 
         URI location = URI.create("/api/accounts/" + account.accountId());
 
@@ -41,11 +46,17 @@ public class AccountController {
         return accountService.getAccount(accountId, clientId);
     }
 
+    @GetMapping
+    public List<AccountResponse> getAccounts(Principal principal) {
+        Integer clientId = authenticatedClientId(principal);
+        return accountService.getAccounts(clientId);
+    }
+
     private Integer authenticatedClientId(Principal principal) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to access accounts.");
         }
-        return accountService
+        return clientService
                 .findActiveClientIdByEmail(principal.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "An active client login is required."));
     }

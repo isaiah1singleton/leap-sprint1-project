@@ -1,7 +1,6 @@
 package com.neueda.leap.enums;
 
-public enum AccountStatus {
+public enum ClientStatus {
     ACTIVE,
-    SUSPENDED,
     INACTIVE
 }

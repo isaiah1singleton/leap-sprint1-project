@@ -1,5 +1,6 @@
 package com.neueda.leap.entities;
 
+import com.neueda.leap.enums.ClientStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,11 +14,6 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "clients")
 public class Client {
-
-    public enum ClientStatus {
-        ACTIVE,
-        INACTIVE
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,6 +46,10 @@ public class Client {
 
     public Integer getClientId() {
         return clientId;
+    }
+
+    public ClientStatus getClientStatus() {
+        return clientStatus;
     }
 
     public String getEmail() {

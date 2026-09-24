@@ -15,4 +15,6 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
 
     // Find a particular account only if it belongs to that client
     Optional<Account> findByAccountIdAndClient_ClientId(Integer accountId, Integer clientId);
+
+    boolean existsByClient_ClientIdAndAccountNameIgnoreCase(Integer clientId, String accountName);
 }

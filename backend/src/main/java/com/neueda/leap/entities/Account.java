@@ -34,11 +34,19 @@ public class Account {
     )
     private Instant openedAt;
 
+    @Column(name = "account_name", nullable = false)
+    private String accountName;
+
     protected Account() {}
 
-    public Account(Client client) {
+    public Account(Client client, String accountName) {
         this.client = Objects.requireNonNull(client, "An account must belong to a client.");
         this.accountStatus = AccountStatus.ACTIVE;
+        this.accountName = Objects.requireNonNull(accountName, "Account name is required").trim();
+
+        if (this.accountName.isEmpty()) {
+            throw new IllegalArgumentException("Account name is required");
+        }
     }
 
     // Runs before JPA inserts a new account
@@ -61,6 +69,10 @@ public class Account {
         return accountStatus;
     }
 
+    public String getAccountName() {
+        return accountName;
+    }
+
     public Instant getOpenedAt() {
         return openedAt;
     }
@@ -78,5 +90,12 @@ public class Account {
                 status,
                 "Account status is required"
         );
+    }
+    public void changeAccountName(String accountName) {
+        String normalized = Objects.requireNonNull(accountName, "Account name is required").trim();
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException("Account name is required");
+        }
+        this.accountName = normalized;
     }
 }
