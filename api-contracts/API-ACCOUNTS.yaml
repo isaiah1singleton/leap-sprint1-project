@@ -1,0 +1,845 @@
+openapi: 3.0.3
+info:
+  title: LEAP Order Management Service - Accounts & Portfolio
+  description: >
+    Manages client accounts, account status, portfolio, balances, holdings,
+    and cash movement operations.
+  version: 1.0.0
+  license:
+    name: Internal use only
+
+servers:
+  - url: /v1
+
+paths:
+  /clients/{clientId}/accounts:
+    get:
+      summary: Lists all accounts owned by a client
+      operationId: listClientAccounts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Client accounts returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Creates a new account for a client
+      operationId: createAccount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '201':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}:
+    get:
+      summary: Retrieves an account by ID
+      operationId: getAccount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Account returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/status:
+    patch:
+      summary: Updates the status of an account - for admin use only
+      operationId: updateAccountStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountStatusRequest'
+      responses:
+        '200':
+          description: Account status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/portfolio:
+    get:
+      summary: Retrieves the portfolio for an account
+      operationId: getPortfolio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Portfolio returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-balances:
+    get:
+      summary: Lists cash balances for an account
+      operationId: listCashBalances
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Cash balances returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBalanceListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-balances/{currency}/reserve:
+    post:
+      summary: Reserves cash in a currency balance
+      operationId: reserveCash
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: currency
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Currency'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmountRequest'
+      responses:
+        '200':
+          description: Cash balance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBalanceResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cash balance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-balances/{currency}/release:
+    post:
+      summary: Releases reserved cash in a currency balance
+      operationId: releaseReservedCash
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: currency
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Currency'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmountRequest'
+      responses:
+        '200':
+          description: Cash balance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBalanceResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cash balance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-balances/{currency}/deposit:
+    post:
+      summary: Deposits cash into a currency balance
+      operationId: depositCash
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: currency
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Currency'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmountRequest'
+      responses:
+        '200':
+          description: Cash balance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBalanceResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cash balance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-balances/{currency}/withdraw:
+    post:
+      summary: Withdraws cash from a currency balance
+      operationId: withdrawCash
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: currency
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Currency'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmountRequest'
+      responses:
+        '200':
+          description: Cash balance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBalanceResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cash balance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/holdings:
+    get:
+      summary: Lists holdings for an account
+      operationId: listHoldings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Holdings returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/holdings/{instrumentId}/reserve:
+    post:
+      summary: Reserves quantity from a holding
+      operationId: reserveHolding
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: instrumentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuantityRequest'
+      responses:
+        '200':
+          description: Holding updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Holding not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/holdings/{instrumentId}/release:
+    post:
+      summary: Releases reserved quantity from a holding
+      operationId: releaseHolding
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: instrumentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuantityRequest'
+      responses:
+        '200':
+          description: Holding updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Holding not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/holdings/{instrumentId}/purchase:
+    post:
+      summary: Adds a purchase quantity to a holding
+      operationId: addPurchaseToHolding
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: instrumentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuantityRequest'
+      responses:
+        '200':
+          description: Holding updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Holding not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/holdings/{instrumentId}/settle-sale:
+    post:
+      summary: Settles a sale quantity from a holding
+      operationId: settleHoldingSale
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: instrumentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuantityRequest'
+      responses:
+        '200':
+          description: Holding updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Holding not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-movements:
+    get:
+      summary: Lists cash movements for an account
+      operationId: listCashMovements
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Cash movements returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashMovementListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /cash-movements/{cashMovementId}:
+    get:
+      summary: Retrieves a cash movement by ID
+      operationId: getCashMovement
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cashMovementId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Cash movement returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashMovementResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cash movement not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    AccountStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE]
+
+    Currency:
+      type: string
+      enum: [USD, EUR]
+
+    CashMovementType:
+      type: string
+      enum: [DEPOSIT, WITHDRAW, FEE]
+
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: number
+          format: double
+        currency:
+          $ref: '#/components/schemas/Currency'
+
+    AccountResponse:
+      type: object
+      required: [accountId, clientId, accountStatus, openedAt]
+      properties:
+        accountId:
+          type: integer
+          format: int64
+        clientId:
+          type: integer
+          format: int64
+        accountStatus:
+          $ref: '#/components/schemas/AccountStatus'
+        openedAt:
+          type: string
+          format: date-time
+
+    AccountListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/AccountResponse'
+
+    UpdateAccountStatusRequest:
+      type: object
+      required: [accountStatus]
+      properties:
+        accountStatus:
+          $ref: '#/components/schemas/AccountStatus'
+
+    CashBalanceResponse:
+      type: object
+      required: [accountId, currency, totalBalance, reservedBalance, updatedAt]
+      properties:
+        accountId:
+          type: integer
+          format: int64
+        currency:
+          $ref: '#/components/schemas/Currency'
+        totalBalance:
+          $ref: '#/components/schemas/Money'
+        reservedBalance:
+          $ref: '#/components/schemas/Money'
+        updatedAt:
+          type: string
+          format: date-time
+
+    CashBalanceListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/CashBalanceResponse'
+
+    HoldingResponse:
+      type: object
+      required: [accountId, instrumentId, totalQuantity, reservedQuantity, updatedAt]
+      properties:
+        accountId:
+          type: integer
+          format: int64
+        instrumentId:
+          type: integer
+          format: int64
+        totalQuantity:
+          type: number
+          format: double
+        reservedQuantity:
+          type: number
+          format: double
+        updatedAt:
+          type: string
+          format: date-time
+
+    HoldingListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/HoldingResponse'
+
+    PortfolioResponse:
+      type: object
+      required: [accountId, holdings, cashBalances]
+      properties:
+        accountId:
+          type: integer
+          format: int64
+        holdings:
+          type: array
+          items:
+            $ref: '#/components/schemas/HoldingResponse'
+        cashBalances:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CashBalanceResponse'
+
+    CashMovementResponse:
+      type: object
+      required: [cashMovementId, accountId, amount, movementType, currency, occurredAt]
+      properties:
+        cashMovementId:
+          type: integer
+          format: int64
+        accountId:
+          type: integer
+          format: int64
+        fillId:
+          type: integer
+          format: int64
+          nullable: true
+        amount:
+          $ref: '#/components/schemas/Money'
+        movementType:
+          $ref: '#/components/schemas/CashMovementType'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        occurredAt:
+          type: string
+          format: date-time
+
+    CashMovementListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/CashMovementResponse'
+
+    AmountRequest:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+          format: double
+
+    QuantityRequest:
+      type: object
+      required: [quantity]
+      properties:
+        quantity:
+          type: number
+          format: double
+
+    ErrorResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+

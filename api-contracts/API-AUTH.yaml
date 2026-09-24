@@ -1,0 +1,474 @@
+openapi: 3.0.3
+info:
+  title: LEAP Order Management Service - Client Sign-On & Authentication
+  description: >
+    Registers and authenticates clients, manages current client context,
+    client profiles, and session lifecycle.
+  version: 1.0.0
+  license:
+    name: Internal use only
+
+servers:
+  - url: /v1
+
+paths:
+  /auth/register:
+    post:
+      summary: Registers a new client
+      operationId: registerClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Client registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/signin:
+    post:
+      summary: Authenticates a client and returns a session
+      operationId: signIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignInResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/signout:
+    post:
+      summary: Signs out the current client
+      operationId: signOut
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Signed out successfully
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      summary: Retrieves the current authenticated client
+      operationId: getCurrentClient
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current client context
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentClientResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{clientId}:
+    get:
+      summary: Retrieves a client by ID
+      operationId: getClient
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Client returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Updates a client by ID
+      operationId: updateClient
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientRequest'
+      responses:
+        '200':
+          description: Client updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{clientId}/status:
+    patch:
+      summary: Updates the status of a client - for admin use only
+      operationId: updateClientStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientStatusRequest'
+      responses:
+        '200':
+          description: Client status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{clientId}/sessions:
+    get:
+      summary: Lists all sessions for a client - for admin use only
+      operationId: listClientSessions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Client sessions returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{clientId}/sessions/{sessionId}:
+    get:
+      summary: Retrieves a session for a client
+      operationId: getSession
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Session returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{clientId}/sessions/{sessionId}/revoke:
+    post:
+      summary: Revokes a client session
+      operationId: revokeSession
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Session revoked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ClientStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE]
+
+    ClientResponse:
+      type: object
+      required: [clientId, name, email, clientStatus, clientSegment]
+      properties:
+        clientId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        clientStatus:
+          $ref: '#/components/schemas/ClientStatus'
+        clientSegment:
+          type: string
+
+    UpdateClientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        clientSegment:
+          type: string
+
+    UpdateClientStatusRequest:
+      type: object
+      required: [clientStatus]
+      properties:
+        clientStatus:
+          $ref: '#/components/schemas/ClientStatus'
+
+    SessionResponse:
+      type: object
+      required: [sessionId, clientId, createdAt, expiresAt, revoked]
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+        clientId:
+          type: integer
+          format: int64
+        tokenHash:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        revoked:
+          type: boolean
+
+    SessionListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/SessionResponse'
+
+    ErrorResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password, clientSegment]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        clientSegment:
+          type: string
+
+    SignInRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 1
+
+    RegisterResponse:
+      type: object
+      required: [client, session, token]
+      properties:
+        client:
+          $ref: '#/components/schemas/ClientResponse'
+        session:
+          $ref: '#/components/schemas/SessionResponse'
+        token:
+          type: string
+          description: Bearer token for authenticated requests
+
+    SignInResponse:
+      type: object
+      required: [client, defaultAccountId, session, token]
+      properties:
+        client:
+          $ref: '#/components/schemas/ClientResponse'
+        defaultAccountId:
+          type: integer
+          format: int64
+        session:
+          $ref: '#/components/schemas/SessionResponse'
+        token:
+          type: string
+          description: Bearer token for authenticated requests
+
+    CurrentClientResponse:
+      type: object
+      required: [client, defaultAccountId]
+      properties:
+        client:
+          $ref: '#/components/schemas/ClientResponse'
+        defaultAccountId:
+          type: integer
+          format: int64
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+

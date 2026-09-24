@@ -1,0 +1,1735 @@
+openapi: 3.0.3
+info:
+  title: LEAP Order Management Service
+  description: >
+    Retrieves and updates clients, accounts, instruments, orders, portfolio data,
+    balances, holdings, fills, cash movements, and sessions.
+  version: 1.0.0
+  license:
+    name: Internal use only
+
+servers:
+  - url: /v1
+
+paths:
+  /auth/register:
+    post:
+      summary: Registers a new client
+      operationId: registerClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Client registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/signin:
+    post:
+      summary: Authenticates a client and returns a session
+      operationId: signIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignInResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/signout:
+    post:
+      summary: Signs out the current client
+      operationId: signOut
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Signed out successfully
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      summary: Retrieves the current authenticated client
+      operationId: getCurrentClient
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current client context
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentClientResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{clientId}:
+    get:
+      summary: Retrieves a client by ID
+      operationId: getClient
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Client returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Updates a client by ID
+      operationId: updateClient
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientRequest'
+      responses:
+        '200':
+          description: Client updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{clientId}/status:
+    patch:
+      summary: Updates the status of a client
+      operationId: updateClientStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientStatusRequest'
+      responses:
+        '200':
+          description: Client status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{clientId}/sessions:
+    get:
+      summary: Lists all sessions for a client
+      operationId: listClientSessions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Client sessions returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{clientId}/sessions/{sessionId}:
+    get:
+      summary: Retrieves a session for a client
+      operationId: getSession
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Session returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{clientId}/sessions/{sessionId}/revoke:
+    post:
+      summary: Revokes a client session
+      operationId: revokeSession
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Session revoked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{clientId}/accounts:
+    get:
+      summary: Lists all accounts owned by a client
+      operationId: listClientAccounts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Client accounts returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Creates a new account for a client
+      operationId: createAccount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '201':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}:
+    get:
+      summary: Retrieves an account by ID
+      operationId: getAccount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Account returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/status:
+    patch:
+      summary: Updates the status of an account
+      operationId: updateAccountStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountStatusRequest'
+      responses:
+        '200':
+          description: Account status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/portfolio:
+    get:
+      summary: Retrieves the portfolio for an account
+      operationId: getPortfolio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Portfolio returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-balances:
+    get:
+      summary: Lists cash balances for an account
+      operationId: listCashBalances
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Cash balances returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBalanceListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-balances/{currency}/reserve:
+    post:
+      summary: Reserves cash in a currency balance
+      operationId: reserveCash
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: currency
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Currency'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmountRequest'
+      responses:
+        '200':
+          description: Cash balance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBalanceResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cash balance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-balances/{currency}/release:
+    post:
+      summary: Releases reserved cash in a currency balance
+      operationId: releaseReservedCash
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: currency
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Currency'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmountRequest'
+      responses:
+        '200':
+          description: Cash balance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBalanceResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cash balance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-balances/{currency}/deposit:
+    post:
+      summary: Deposits cash into a currency balance
+      operationId: depositCash
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: currency
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Currency'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmountRequest'
+      responses:
+        '200':
+          description: Cash balance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBalanceResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cash balance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-balances/{currency}/withdraw:
+    post:
+      summary: Withdraws cash from a currency balance
+      operationId: withdrawCash
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: currency
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Currency'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmountRequest'
+      responses:
+        '200':
+          description: Cash balance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBalanceResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cash balance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/holdings:
+    get:
+      summary: Lists holdings for an account
+      operationId: listHoldings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Holdings returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/holdings/{instrumentId}/reserve:
+    post:
+      summary: Reserves quantity from a holding
+      operationId: reserveHolding
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: instrumentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuantityRequest'
+      responses:
+        '200':
+          description: Holding updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Holding not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/holdings/{instrumentId}/release:
+    post:
+      summary: Releases reserved quantity from a holding
+      operationId: releaseHolding
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: instrumentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuantityRequest'
+      responses:
+        '200':
+          description: Holding updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Holding not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/holdings/{instrumentId}/purchase:
+    post:
+      summary: Adds a purchase quantity to a holding
+      operationId: addPurchaseToHolding
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: instrumentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuantityRequest'
+      responses:
+        '200':
+          description: Holding updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Holding not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/holdings/{instrumentId}/settle-sale:
+    post:
+      summary: Settles a sale quantity from a holding
+      operationId: settleHoldingSale
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: instrumentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuantityRequest'
+      responses:
+        '200':
+          description: Holding updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Holding not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/cash-movements:
+    get:
+      summary: Lists cash movements for an account
+      operationId: listCashMovements
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Cash movements returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashMovementListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /cash-movements/{cashMovementId}:
+    get:
+      summary: Retrieves a cash movement by ID
+      operationId: getCashMovement
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cashMovementId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Cash movement returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashMovementResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cash movement not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /instruments:
+    get:
+      summary: Lists instruments
+      operationId: listInstruments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Instruments returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstrumentListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /instruments/{instrumentId}:
+    get:
+      summary: Retrieves an instrument by ID
+      operationId: getInstrument
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: instrumentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Instrument returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstrumentResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Instrument not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/{accountId}/orders:
+    get:
+      summary: Lists orders for an account
+      operationId: listOrders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Orders returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Submits a new order for an account
+      operationId: submitOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Account or instrument not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orders/{orderId}:
+    get:
+      summary: Retrieves an order by ID
+      operationId: getOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Order returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orders/{orderId}/accept:
+    post:
+      summary: Accepts an order
+      operationId: acceptOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Order accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orders/{orderId}/reject:
+    post:
+      summary: Rejects an order
+      operationId: rejectOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectOrderRequest'
+      responses:
+        '200':
+          description: Order rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orders/{orderId}/events:
+    get:
+      summary: Lists status events for an order
+      operationId: listOrderEvents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Order events returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderEventListResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orders/{orderId}/fill:
+    get:
+      summary: Retrieves the fill for an order
+      operationId: getOrderFill
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Fill returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FillResponse'
+        '401':
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Fill not found for the order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ClientStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE]
+
+    AccountStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE]
+
+    AssetClass:
+      type: string
+      enum: [EQUITY, ETF, BOND, FUND, FOREX, COMMODITY, DERIVATIVE, CRYPTO]
+
+    Currency:
+      type: string
+      enum: [USD, EUR]
+
+    OrderSide:
+      type: string
+      enum: [BUY, SELL]
+
+    OrderStatus:
+      type: string
+      enum: [SUBMITTED, ACCEPTED, REJECTED, FILLED, CANCELLED]
+
+    CashMovementType:
+      type: string
+      enum: [DEPOSIT, WITHDRAW, FEE]
+
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: number
+          format: double
+        currency:
+          $ref: '#/components/schemas/Currency'
+
+    QuoteSnapshot:
+      type: object
+      required: [price, quoteAt]
+      properties:
+        price:
+          $ref: '#/components/schemas/Money'
+        quoteAt:
+          type: string
+          format: date-time
+
+    ClientResponse:
+      type: object
+      required: [clientId, name, email, clientStatus, clientSegment]
+      properties:
+        clientId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        clientStatus:
+          $ref: '#/components/schemas/ClientStatus'
+        clientSegment:
+          type: string
+
+    UpdateClientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        clientSegment:
+          type: string
+
+    UpdateClientStatusRequest:
+      type: object
+      required: [clientStatus]
+      properties:
+        clientStatus:
+          $ref: '#/components/schemas/ClientStatus'
+
+    SessionResponse:
+      type: object
+      required: [sessionId, clientId, createdAt, expiresAt, revoked]
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+        clientId:
+          type: integer
+          format: int64
+        tokenHash:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        revoked:
+          type: boolean
+
+    SessionListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/SessionResponse'
+
+    AccountResponse:
+      type: object
+      required: [accountId, clientId, accountStatus, openedAt]
+      properties:
+        accountId:
+          type: integer
+          format: int64
+        clientId:
+          type: integer
+          format: int64
+        accountStatus:
+          $ref: '#/components/schemas/AccountStatus'
+        openedAt:
+          type: string
+          format: date-time
+
+    AccountListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/AccountResponse'
+
+    UpdateAccountStatusRequest:
+      type: object
+      required: [accountStatus]
+      properties:
+        accountStatus:
+          $ref: '#/components/schemas/AccountStatus'
+
+    InstrumentResponse:
+      type: object
+      required: [instrumentId, market, symbol, assetClass, isTradable, quoteCurrency]
+      properties:
+        instrumentId:
+          type: integer
+          format: int64
+        market:
+          type: string
+        symbol:
+          type: string
+        assetClass:
+          $ref: '#/components/schemas/AssetClass'
+        isTradable:
+          type: boolean
+        quoteCurrency:
+          $ref: '#/components/schemas/Currency'
+
+    InstrumentListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/InstrumentResponse'
+
+    CreateOrderRequest:
+      type: object
+      required: [instrumentId, idempotencyKey, side, requestedQuantity]
+      properties:
+        instrumentId:
+          type: integer
+          format: int64
+        idempotencyKey:
+          type: string
+          format: uuid
+        side:
+          $ref: '#/components/schemas/OrderSide'
+        requestedQuantity:
+          type: number
+          format: double
+
+    OrderResponse:
+      type: object
+      required: [orderId, accountId, instrumentId, idempotencyKey, side, requestedQuantity, submittedAt, currentOrderStatus]
+      properties:
+        orderId:
+          type: integer
+          format: int64
+        accountId:
+          type: integer
+          format: int64
+        instrumentId:
+          type: integer
+          format: int64
+        idempotencyKey:
+          type: string
+          format: uuid
+        side:
+          $ref: '#/components/schemas/OrderSide'
+        requestedQuantity:
+          type: number
+          format: double
+        submittedAt:
+          type: string
+          format: date-time
+        currentOrderStatus:
+          $ref: '#/components/schemas/OrderStatus'
+
+    OrderListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/OrderResponse'
+
+    RejectOrderRequest:
+      type: object
+      properties:
+        reasonForStatusChange:
+          type: string
+
+    OrderEventResponse:
+      type: object
+      required: [orderEventId, orderId, status, occurredAt]
+      properties:
+        orderEventId:
+          type: integer
+          format: int64
+        orderId:
+          type: integer
+          format: int64
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        reasonForStatusChange:
+          type: string
+          nullable: true
+        decisionQuote:
+          allOf:
+            - $ref: '#/components/schemas/QuoteSnapshot'
+          nullable: true
+        decisionQuoteAt:
+          type: string
+          format: date-time
+          nullable: true
+        occurredAt:
+          type: string
+          format: date-time
+
+    OrderEventListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/OrderEventResponse'
+
+    FillResponse:
+      type: object
+      required: [fillId, orderId, fillQuantity, executionPrice, executionTime]
+      properties:
+        fillId:
+          type: integer
+          format: int64
+        orderId:
+          type: integer
+          format: int64
+        fillQuantity:
+          type: number
+          format: double
+        executionPrice:
+          $ref: '#/components/schemas/Money'
+        executionTime:
+          type: string
+          format: date-time
+
+    CashBalanceResponse:
+      type: object
+      required: [accountId, currency, totalBalance, reservedBalance, updatedAt]
+      properties:
+        accountId:
+          type: integer
+          format: int64
+        currency:
+          $ref: '#/components/schemas/Currency'
+        totalBalance:
+          $ref: '#/components/schemas/Money'
+        reservedBalance:
+          $ref: '#/components/schemas/Money'
+        updatedAt:
+          type: string
+          format: date-time
+
+    CashBalanceListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/CashBalanceResponse'
+
+    HoldingResponse:
+      type: object
+      required: [accountId, instrumentId, totalQuantity, reservedQuantity, updatedAt]
+      properties:
+        accountId:
+          type: integer
+          format: int64
+        instrumentId:
+          type: integer
+          format: int64
+        totalQuantity:
+          type: number
+          format: double
+        reservedQuantity:
+          type: number
+          format: double
+        updatedAt:
+          type: string
+          format: date-time
+
+    HoldingListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/HoldingResponse'
+
+    PortfolioResponse:
+      type: object
+      required: [accountId, holdings, cashBalances]
+      properties:
+        accountId:
+          type: integer
+          format: int64
+        holdings:
+          type: array
+          items:
+            $ref: '#/components/schemas/HoldingResponse'
+        cashBalances:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CashBalanceResponse'
+
+    CashMovementResponse:
+      type: object
+      required: [cashMovementId, accountId, amount, movementType, currency, occurredAt]
+      properties:
+        cashMovementId:
+          type: integer
+          format: int64
+        accountId:
+          type: integer
+          format: int64
+        fillId:
+          type: integer
+          format: int64
+          nullable: true
+        amount:
+          $ref: '#/components/schemas/Money'
+        movementType:
+          $ref: '#/components/schemas/CashMovementType'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        occurredAt:
+          type: string
+          format: date-time
+
+    CashMovementListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/CashMovementResponse'
+
+    AmountRequest:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+          format: double
+
+    QuantityRequest:
+      type: object
+      required: [quantity]
+      properties:
+        quantity:
+          type: number
+          format: double
+
+    ErrorResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password, clientSegment]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        clientSegment:
+          type: string
+
+    SignInRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 1
+
+    RegisterResponse:
+      type: object
+      required: [client, session, token]
+      properties:
+        client:
+          $ref: '#/components/schemas/ClientResponse'
+        session:
+          $ref: '#/components/schemas/SessionResponse'
+        token:
+          type: string
+          description: Bearer token for authenticated requests
+
+    SignInResponse:
+      type: object
+      required: [client, defaultAccountId, session, token]
+      properties:
+        client:
+          $ref: '#/components/schemas/ClientResponse'
+        defaultAccountId:
+          type: integer
+          format: int64
+        session:
+          $ref: '#/components/schemas/SessionResponse'
+        token:
+          type: string
+          description: Bearer token for authenticated requests
+
+    CurrentClientResponse:
+      type: object
+      required: [client, defaultAccountId]
+      properties:
+        client:
+          $ref: '#/components/schemas/ClientResponse'
+        defaultAccountId:
+          type: integer
+          format: int64
+
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
