@@ -37,11 +37,27 @@ The compiled files are written under `frontend/dist/`.
 From the project root, run:
 
 ```powershell
+docker compose up -d postgres
 cd backend
 mvn spring-boot:run
 ```
 
 The API starts at `http://localhost:8080`.
+
+The first backend startup creates the `clients` table automatically through the
+database migration. PostgreSQL defaults to `localhost:5432`, database `leap`,
+username `postgres`, and password `postgres`. Override these with
+`DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD` if needed.
+
+### Mock authentication endpoints
+
+```text
+POST /api/auth/register  { "email": "trader@example.com", "password": "password" }
+POST /api/auth/sign-in  { "email": "trader@example.com", "password": "password" }
+```
+
+Passwords are stored as BCrypt hashes. Emails are normalized to lowercase and
+must be unique regardless of case.
 
 ## Current prototype scope
 
