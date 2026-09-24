@@ -1,6 +1,6 @@
 package com.neueda.leap.service;
 
-import com.neueda.leap.entity.Account;
+import com.neueda.leap.entities.Account;
 import com.neueda.leap.models.AccountResponse;
 import com.neueda.leap.repository.AccountRepository;
 import jakarta.transaction.Transactional;

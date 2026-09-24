@@ -1,7 +1,6 @@
 package com.neueda.leap.repository;
 
-import com.neueda.leap.entity.Account;
-import com.neueda.leap.enums.AccountStatus;
+import com.neueda.leap.entities.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

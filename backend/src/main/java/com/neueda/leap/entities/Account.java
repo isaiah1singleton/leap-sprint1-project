@@ -1,4 +1,4 @@
-package com.neueda.leap.entity;
+package com.neueda.leap.entities;
 
 import com.neueda.leap.enums.AccountStatus;
 import jakarta.persistence.*;
