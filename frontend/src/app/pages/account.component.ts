@@ -8,7 +8,7 @@ import { AuthService } from '../core/auth.service';
       <div class="card card-pad-lg" style="flex:1">
         <h2 class="card-title">Profile</h2>
         <dl style="margin:0">
-          <div class="definition"><dt>Username</dt><dd><strong>{{ auth.currentUser() }}</strong></dd></div>
+          <div class="definition"><dt>Email</dt><dd><strong>{{ auth.currentUser() }}</strong></dd></div>
           <div class="definition"><dt>Account type</dt><dd>Individual investor</dd></div>
           <div class="definition"><dt>Account number</dt><dd>IT8-4417-2290</dd></div>
           <div class="definition"><dt>Base currency</dt><dd>USD</dd></div>

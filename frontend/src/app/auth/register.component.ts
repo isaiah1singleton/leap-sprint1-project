@@ -12,9 +12,9 @@ import { AuthService } from '../core/auth.service';
         <h1 class="auth-title">Create your account</h1>
         <p class="auth-sub">Start trading with a personal investor account.</p>
 
-        <label class="label" for="username">Username</label>
-        <input id="username" class="input" [class.invalid]="invalid('username')"
-               [(ngModel)]="username" (keyup.enter)="submit()" placeholder="Choose a username" />
+        <label class="label" for="email">Email</label>
+        <input id="email" class="input" type="email" [class.invalid]="invalid('email')"
+               [(ngModel)]="email" (keyup.enter)="submit()" placeholder="you@example.com" />
 
         <label class="label" for="password">Password</label>
         <input id="password" type="password" class="input" [class.invalid]="invalid('password')"
@@ -30,10 +30,6 @@ import { AuthService } from '../core/auth.service';
 
         <button class="btn btn-primary" (click)="submit()">Create account</button>
         <p class="auth-foot">Already have an account? <a routerLink="/signin">Sign in</a></p>
-        <p class="prototype-note">
-          PROTOTYPE — password needs 8+ characters and a number, and both fields must match.
-          Valid input signs you straight in.
-        </p>
       </div>
     </div>
   `,
@@ -42,7 +38,7 @@ export class RegisterComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  username = '';
+  email = '';
   password = '';
   confirm = '';
   error = '';
@@ -52,8 +48,8 @@ export class RegisterComponent {
     return this.errorFields.includes(field);
   }
 
-  submit(): void {
-    const failure = this.auth.register(this.username, this.password, this.confirm);
+  async submit(): Promise<void> {
+    const failure = await this.auth.register(this.email, this.password, this.confirm);
     if (failure) {
       this.error = failure.message;
       this.errorFields = failure.fields;

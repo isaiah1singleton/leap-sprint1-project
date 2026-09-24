@@ -16,9 +16,9 @@ import { AuthService } from '../core/auth.service';
           <p class="error-banner">{{ error }}</p>
         }
 
-        <label class="label" for="username">Username</label>
-        <input id="username" class="input" [class.invalid]="invalid('username')"
-               [(ngModel)]="username" (keyup.enter)="submit()" placeholder="Your username" />
+        <label class="label" for="email">Email</label>
+        <input id="email" class="input" type="email" [class.invalid]="invalid('email')"
+               [(ngModel)]="email" (keyup.enter)="submit()" placeholder="you@example.com" />
 
         <label class="label" for="password">Password</label>
         <input id="password" type="password" class="input" [class.invalid]="invalid('password')"
@@ -27,10 +27,6 @@ import { AuthService } from '../core/auth.service';
         <button class="btn btn-primary" (click)="submit()">Sign in</button>
 
         <p class="auth-foot">No account yet? <a routerLink="/register">Create one</a></p>
-        <p class="prototype-note">
-          PROTOTYPE — correct: jmoore / trade2026, or the username you registered.
-          Anything else shows the incorrect-credentials state.
-        </p>
       </div>
     </div>
   `,
@@ -39,7 +35,7 @@ export class SigninComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  username = '';
+  email = '';
   password = '';
   error = '';
   private errorFields: string[] = [];
@@ -48,8 +44,8 @@ export class SigninComponent {
     return this.errorFields.includes(field);
   }
 
-  submit(): void {
-    const failure = this.auth.signIn(this.username, this.password);
+  async submit(): Promise<void> {
+    const failure = await this.auth.signIn(this.email, this.password);
     if (failure) {
       this.error = failure.message;
       this.errorFields = failure.fields;
