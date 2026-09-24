@@ -5,10 +5,12 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'app/overview' },
   {
     path: 'register',
+    title: 'Create account',
     loadComponent: () => import('./auth/register.component').then((m) => m.RegisterComponent),
   },
   {
     path: 'signin',
+    title: 'Sign in',
     loadComponent: () => import('./auth/signin.component').then((m) => m.SigninComponent),
   },
   {

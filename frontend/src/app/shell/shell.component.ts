@@ -20,6 +20,7 @@ import { AuthService } from '../core/auth.service';
         <header class="topbar">
           <h1>{{ pageTitle() }}</h1>
           <div class="topbar-right">
+            <span class="session-label">Signed in as</span>
             <span>{{ auth.currentUser() }}</span>
             <span class="avatar"></span>
             <button class="btn-chip" (click)="signOut()">Sign out</button>

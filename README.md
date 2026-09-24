@@ -19,9 +19,14 @@ npm install
 npm start
 ```
 
-Open <http://localhost:4200>. Use the seeded credentials
-`jmoore` / `trade2026`, or create an account from the registration page. A new
-password must contain at least eight characters and one number.
+Open <http://localhost:4200>. Frontend demo authentication is enabled by default.
+Sign in with `demo@insidetr8ders.com` / `trade2026`; the same credentials appear
+on the sign-in page. No backend is needed for this demo. The signed-in email is
+kept in the browser session so protected routes remain available after a refresh.
+Signing out clears it. The registration page creates temporary accounts held in
+memory until the page is refreshed; use the demo account for repeatable sign-in.
+Change `mockAuth` to `false` in `frontend/src/app/core/auth.service.ts` to use
+the Spring authentication API instead.
 
 For a production build:
 
@@ -61,9 +66,10 @@ must be unique regardless of case.
 
 ## Current prototype scope
 
-Authentication, portfolio data, trades, transfers, and market data are held in
-memory in the browser. Refreshing the page resets that state. The security
-buttons on the account page are placeholders; no backend API is connected yet.
+In demo mode, authentication and registration run in the browser. Portfolio
+data, trades, transfers, and market data are held in memory; refreshing the page
+resets that trading state. The security buttons on the account page are
+placeholders.
 
 ## Run the backend
 

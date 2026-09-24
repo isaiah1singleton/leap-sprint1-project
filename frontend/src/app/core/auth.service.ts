@@ -17,6 +17,11 @@ interface AuthResponse {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = 'http://localhost:8080/api/auth';
+  // Frontend demo mode. Switch this off when testing against the Spring API.
+  readonly mockAuth = true;
+  readonly demoEmail = 'demo@insidetr8ders.com';
+  readonly demoPassword = 'trade2026';
+  private readonly mockAccounts = new Map<string, string>();
   readonly currentUser = signal<string | null>(sessionStorage.getItem('currentUserEmail'));
 
   isSignedIn(): boolean {
@@ -24,11 +29,20 @@ export class AuthService {
   }
 
   async signIn(email: string, password: string): Promise<AuthFailure | null> {
-    const userEmail = email.trim();
+    const userEmail = email.trim().toLowerCase();
     const fields: string[] = [];
     if (!userEmail) fields.push('email');
     if (!password) fields.push('password');
     if (fields.length) return { message: 'Enter your email and password.', fields };
+
+    if (this.mockAuth) {
+      if ((userEmail === this.demoEmail && password === this.demoPassword) ||
+          this.mockAccounts.get(userEmail) === password) {
+        this.setCurrentUser(userEmail);
+        return null;
+      }
+      return { message: 'Email or password is incorrect.', fields: ['email', 'password'] };
+    }
 
     try {
       const response = await firstValueFrom(
@@ -42,13 +56,23 @@ export class AuthService {
   }
 
   async register(email: string, password: string, confirm: string): Promise<AuthFailure | null> {
-    const userEmail = email.trim();
-    if (!userEmail) return { message: 'Enter your email.', fields: ['email'] };
+    const userEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
+      return { message: 'Enter a valid email address.', fields: ['email'] };
+    }
     if (password.length < 8 || !/\d/.test(password) || password !== confirm) {
       return {
         message: 'Passwords must match and include 8+ characters with a number.',
         fields: ['password', 'confirm'],
       };
+    }
+    if (this.mockAuth) {
+      if (userEmail === this.demoEmail || this.mockAccounts.has(userEmail)) {
+        return { message: 'An account with this email already exists.', fields: ['email'] };
+      }
+      this.mockAccounts.set(userEmail, password);
+      this.setCurrentUser(userEmail);
+      return null;
     }
     try {
       const response = await firstValueFrom(
