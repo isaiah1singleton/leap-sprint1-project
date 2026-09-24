@@ -1,2 +1,5 @@
 starter/target
 backend/.env
+.idea/*
+.gitignore
+backend/target/*
