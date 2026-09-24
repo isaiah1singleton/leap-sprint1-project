@@ -1,0 +1,82 @@
+package com.neueda.leap.entity;
+
+import com.neueda.leap.enums.AccountStatus;
+import jakarta.persistence.*;
+
+import java.time.Instant;
+import java.util.Objects;
+
+@Entity
+@Table(name = "accounts")
+public class Account {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "account_id")
+    private Integer accountId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "client_id",
+            nullable = false,
+            updatable = false
+    )
+    private Client client;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_status", nullable = false)
+    private AccountStatus accountStatus;
+
+    @Column(
+            name = "opened_at",
+            nullable = false,
+            updatable = false
+    )
+    private Instant openedAt;
+
+    protected Account() {}
+
+    public Account(Client client) {
+        this.client = Objects.requireNonNull(client, "An account must belong to a client.");
+        this.accountStatus = AccountStatus.ACTIVE;
+    }
+
+    // Runs before JPA inserts a new account
+    @PrePersist
+    private void beforeInsert() {
+        if (openedAt == null) {
+            openedAt = Instant.now();
+        }
+    }
+
+    public Integer getAccountId() {
+        return accountId;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public AccountStatus getAccountStatus() {
+        return accountStatus;
+    }
+
+    public Instant getOpenedAt() {
+        return openedAt;
+    }
+
+    public boolean isActive() {
+        return accountStatus == AccountStatus.ACTIVE;
+    }
+
+    public boolean isOwnedBy(Client otherClient) {
+        return otherClient != null && otherClient.getClientId() != null && otherClient.getClientId().equals(client.getClientId());
+    }
+
+    public void changeStatus(AccountStatus status) {
+        this.accountStatus = Objects.requireNonNull(
+                status,
+                "Account status is required"
+        );
+    }
+}
