@@ -1,0 +1,6 @@
+target/
+.m2/
+.env
+.idea/
+*.iml
+compose.yml
