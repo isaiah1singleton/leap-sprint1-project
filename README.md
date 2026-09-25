@@ -75,3 +75,15 @@ mvn spring-boot:run
 ```
 
 The backend starts at <http://localhost:8080>.
+
+### Run the backend in Docker
+
+From the repository root:
+
+```bash
+docker build -t leap-backend ./backend
+docker run --rm -p 8080:8080 leap-backend
+```
+
+The default configuration uses an in-memory H2 database, so its data is reset
+when the container stops.
