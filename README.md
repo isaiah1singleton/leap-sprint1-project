@@ -32,22 +32,28 @@ npm run build
 
 The compiled files are written under `frontend/dist/`.
 
-## Run the backend
+## Run the backend and PostgreSQL
 
-From the project root, run:
+From the repository root, create `backend/.env` from `backend/.env.example`:
 
-```powershell
-docker compose up -d postgres
+```bash
 cd backend
-mvn spring-boot:run
+cp .env.example .env
 ```
 
-The API starts at `http://localhost:8080`.
+Set `POSTGRES_PASSWORD` to a nonempty value in `.env`, then start Compose from
+`backend`:
 
-The first backend startup creates the `clients` table automatically through the
-database migration. PostgreSQL defaults to `localhost:5432`, database `leap`,
-username `postgres`, and password `postgres`. Override these with
-`DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD` if needed.
+```bash
+docker compose -f compose.yml up -d --build
+```
+
+The backend is available at <http://localhost:8080>. The Compose file waits for
+PostgreSQL to become healthy before starting Spring Boot. On the first database
+startup, PostgreSQL runs `database/transaction_schema.sql` to create the tables.
+The `postgres_data` volume keeps the data between restarts; initialization scripts
+run only when that volume is empty. Set `BACKEND_PORT` and `POSTGRES_PORT` in
+`backend/.env` if the default host ports are occupied.
 
 ### Mock authentication endpoints
 
@@ -64,26 +70,3 @@ must be unique regardless of case.
 Authentication, portfolio data, trades, transfers, and market data are held in
 memory in the browser. Refreshing the page resets that state. The security
 buttons on the account page are placeholders; no backend API is connected yet.
-
-## Run the backend
-
-From the repository root:
-
-```bash
-cd backend
-mvn spring-boot:run
-```
-
-The backend starts at <http://localhost:8080>.
-
-### Run the backend in Docker
-
-From the repository root:
-
-```bash
-docker build -t leap-backend ./backend
-docker run --rm -p 8080:8080 leap-backend
-```
-
-The default configuration uses an in-memory H2 database, so its data is reset
-when the container stops.
