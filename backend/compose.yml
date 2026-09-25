@@ -6,9 +6,26 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
+      - ../database:/docker-entrypoint-initdb.d
       - postgres_data:/var/lib/postgresql
     ports:
       - "127.0.0.1:5432:5432"
+
+      
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-leap}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8080}:8080"
 
 volumes:
   postgres_data:
