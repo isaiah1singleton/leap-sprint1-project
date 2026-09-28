@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { API_CONFIG } from './api.config';
 
 export interface AuthFailure {
   message: string;
@@ -16,7 +17,7 @@ interface AuthResponse {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/auth';
+  private readonly apiUrl = '/api/auth';  // Relative URL - interceptor will add base URL
   readonly currentUser = signal<string | null>(sessionStorage.getItem('currentUserEmail'));
 
   isSignedIn(): boolean {
