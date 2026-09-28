@@ -22,7 +22,7 @@ CREATE TABLE clients
 (
 	client_id SERIAL PRIMARY KEY,
     client_name TEXT NOT NULL,
-	email TEXT NOT NULL,
+	email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     client_status TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
