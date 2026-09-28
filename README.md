@@ -48,25 +48,35 @@ Set `POSTGRES_PASSWORD` to a nonempty value in `.env`, then start Compose from
 docker compose -f compose.yml up -d --build
 ```
 
-The backend is available at <http://localhost:8080>. The Compose file waits for
+The backend is available at <http://127.0.0.1:18080>. The Compose file waits for
 PostgreSQL to become healthy before starting Spring Boot. On the first database
 startup, PostgreSQL runs `database/transaction_schema.sql` to create the tables.
 The `postgres_data` volume keeps the data between restarts; initialization scripts
-run only when that volume is empty. Set `BACKEND_PORT` and `POSTGRES_PORT` in
-`backend/.env` if the default host ports are occupied.
+run only when that volume is empty. Set `POSTGRES_PORT` in `backend/.env` if the
+default PostgreSQL host port is occupied.
 
-### Mock authentication endpoints
+### Authentication endpoints
 
-```text
-POST /api/auth/register  { "email": "trader@example.com", "password": "password" }
-POST /api/auth/sign-in  { "email": "trader@example.com", "password": "password" }
+Register and sign-in both return a 24-hour bearer token in `accessToken`:
+
+```bash
+curl -i 'http://127.0.0.1:18080/hello?myName=Test'
+curl -i -H 'Content-Type: application/json' \
+  -d '{"email":"you@example.com","password":"testpass123"}' \
+  'http://127.0.0.1:18080/api/auth/register'
+curl -i -H 'Content-Type: application/json' \
+  -d '{"email":"you@example.com","password":"testpass123"}' \
+  'http://127.0.0.1:18080/api/auth/sign-in'
 ```
 
 Passwords are stored as BCrypt hashes. Emails are normalized to lowercase and
-must be unique regardless of case.
+must be unique regardless of case. The random token is returned once and only
+its SHA-256 hash is stored in the `sessions` table. Send it as
+`Authorization: Bearer <accessToken>` to authenticate account API requests.
 
 ## Current prototype scope
 
-Authentication, portfolio data, trades, transfers, and market data are held in
-memory in the browser. Refreshing the page resets that state. The security
-buttons on the account page are placeholders; no backend API is connected yet.
+Portfolio data, trades, transfers, and market data are held in memory in the
+browser, so refreshing resets that state. Authentication credentials and
+sessions are stored by the backend. The frontend account page still uses
+placeholder security controls and does not yet call the account API.
