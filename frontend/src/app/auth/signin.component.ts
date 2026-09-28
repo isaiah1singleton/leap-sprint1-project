@@ -6,30 +6,7 @@ import { AuthService } from '../core/auth.service';
 @Component({
   selector: 'app-signin',
   imports: [FormsModule, RouterLink],
-  template: `
-    <div class="auth-page">
-      <div class="auth-card">
-        <h1 class="auth-title">Sign in</h1>
-        <p class="auth-sub">Access your investor dashboard.</p>
-
-        @if (error) {
-          <p class="error-banner">{{ error }}</p>
-        }
-
-        <label class="label" for="email">Email</label>
-        <input id="email" class="input" type="email" [class.invalid]="invalid('email')"
-               [(ngModel)]="email" (keyup.enter)="submit()" placeholder="you@example.com" />
-
-        <label class="label" for="password">Password</label>
-        <input id="password" type="password" class="input" [class.invalid]="invalid('password')"
-               [(ngModel)]="password" (keyup.enter)="submit()" placeholder="Your password" />
-
-        <button class="btn btn-primary" (click)="submit()">Sign in</button>
-
-        <p class="auth-foot">No account yet? <a routerLink="/register">Create one</a></p>
-      </div>
-    </div>
-  `,
+  templateUrl: './signin.component.html',
 })
 export class SigninComponent {
   private readonly auth = inject(AuthService);

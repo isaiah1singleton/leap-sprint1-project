@@ -1,0 +1,40 @@
+<div class="row">
+  <div class="card card-pad-lg tx-panel">
+    <div class="seg">
+      @for (option of modes; track option.id) {
+        <button class="seg-opt" [class.active]="mode === option.id" (click)="setMode(option.id)">{{ option.label }}</button>
+      }
+    </div>
+
+    @if (receipt) {
+      <div style="margin-top:18px">
+        <div class="receipt-mark">✓</div><h2 class="receipt-head">{{ receipt.head }}</h2>
+        <p class="receipt-body">@for (line of receipt.lines; track line) { {{ line }}<br /> }</p>
+        <button class="btn btn-primary btn-sm" (click)="receipt = null">Place another</button>
+        <button class="btn btn-secondary btn-sm" routerLink="/app/orders">View order history</button>
+      </div>
+    } @else {
+      <p class="auth-sub" style="margin-top:16px">{{ note }}</p>
+      @if (isTrade) {
+        <label class="label" for="symbol">Symbol</label>
+        <input id="symbol" class="input" [class.invalid]="invalid('symbol')" [(ngModel)]="symbol" (keyup.enter)="submit()" placeholder="e.g. AAPL" />
+        <label class="label" for="qty">Quantity</label>
+        <input id="qty" class="input" [class.invalid]="invalid('qty')" [(ngModel)]="qty" (keyup.enter)="submit()" placeholder="Number of shares" />
+      } @else {
+        <label class="label" for="amount">Amount</label>
+        <input id="amount" class="input" [class.invalid]="invalid('amount')" [(ngModel)]="amount" (keyup.enter)="submit()" placeholder="0.00" />
+        <p class="stat-note">Cash available {{ trading.money(trading.cash()) }}</p>
+      }
+      @if (error) { <p class="error-text">{{ error }}</p> }
+      <button class="btn btn-primary" (click)="submit()">Confirm {{ verb }}</button>
+    }
+  </div>
+
+  <div class="card card-pad-lg" style="flex:1;display:flex;flex-direction:column">
+    <h2 class="card-title">Your holdings</h2>
+    @for (row of holdings(); track row.sym) {
+      <div class="list-row"><div><strong>{{ row.sym }}</strong><div class="sub">{{ row.qty }} held</div></div><div style="text-align:right">{{ row.last }}<div class="sub">{{ row.value }}</div></div></div>
+    }
+    <p class="note" style="margin-top:auto;padding-top:14px">Symbols outside your holdings can be bought at a mock price of $100.00 in this prototype.</p>
+  </div>
+</div>
