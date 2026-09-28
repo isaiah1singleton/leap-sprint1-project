@@ -1,5 +1,6 @@
 package com.neueda.leap.entities;
 
+import ch.qos.logback.classic.helpers.MDCInsertingServletFilter;
 import com.neueda.leap.enums.ClientStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,6 +20,9 @@ public class Client {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "client_id", nullable = false)
     private Integer clientId;
+
+    @Column(name = "client_name", nullable = false)
+    private String clientName;
 
     @Column(nullable = false)
     private String email;
@@ -47,6 +51,8 @@ public class Client {
     public Integer getClientId() {
         return clientId;
     }
+
+    public String getClientName() { return clientName;}
 
     public ClientStatus getClientStatus() {
         return clientStatus;

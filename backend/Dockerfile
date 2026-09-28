@@ -7,5 +7,5 @@ RUN mvn -B -DskipTests package
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/team-skeleton-0.1.0.jar app.jar
-EXPOSE 8080
+EXPOSE 8082
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS clients;
 CREATE TABLE clients
 (
 	client_id SERIAL PRIMARY KEY,
+    client_name TEXT NOT NULL,
 	email TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     client_status TEXT NOT NULL,
