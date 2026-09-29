@@ -11,16 +11,23 @@ interface AuthResponse {
   clientId: number;
   email: string;
   clientSegment: string;
+  accessToken: string;
+  tokenType: string;
+  expiresAt: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/auth';
+  private readonly apiUrl = 'http://127.0.0.1:18080/api/auth';
   readonly currentUser = signal<string | null>(sessionStorage.getItem('currentUserEmail'));
 
   isSignedIn(): boolean {
-    return this.currentUser() !== null;
+    return this.currentUser() !== null && this.getAccessToken() !== null;
+  }
+
+  getAccessToken(): string | null {
+    return sessionStorage.getItem('accessToken');
   }
 
   async signIn(email: string, password: string): Promise<AuthFailure | null> {
@@ -34,7 +41,7 @@ export class AuthService {
       const response = await firstValueFrom(
         this.http.post<AuthResponse>(`${this.apiUrl}/sign-in`, { email: userEmail, password }),
       );
-      this.setCurrentUser(response.email);
+      this.setCurrentUser(response.email, response.accessToken);
       return null;
     } catch (error) {
       return this.apiFailure(error, ['email', 'password']);
@@ -54,7 +61,7 @@ export class AuthService {
       const response = await firstValueFrom(
         this.http.post<AuthResponse>(`${this.apiUrl}/register`, { email: userEmail, password }),
       );
-      this.setCurrentUser(response.email);
+      this.setCurrentUser(response.email, response.accessToken);
       return null;
     } catch (error) {
       return this.apiFailure(error, ['email']);
@@ -63,11 +70,13 @@ export class AuthService {
 
   signOut(): void {
     sessionStorage.removeItem('currentUserEmail');
+    sessionStorage.removeItem('accessToken');
     this.currentUser.set(null);
   }
 
-  private setCurrentUser(email: string): void {
+  private setCurrentUser(email: string, accessToken: string): void {
     sessionStorage.setItem('currentUserEmail', email);
+    sessionStorage.setItem('accessToken', accessToken);
     this.currentUser.set(email);
   }
 
