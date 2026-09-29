@@ -6,9 +6,7 @@
     <label class="label" for="name">Full Name</label>
     <input id="name" class="input" type="text" [class.invalid]="invalid('name')"
        [(ngModel)]="name" placeholder="Your full name" />
-    <label class="label" for="username">Username</label>
-    <input id="username" class="input" type="text" [class.invalid]="invalid('username')"
-           [(ngModel)]="username" placeholder="Your username" />
+
     <label class="label" for="email">Email</label>
     <input id="email" class="input" type="email" [class.invalid]="invalid('email')"
            [(ngModel)]="email" (keyup.enter)="submit()" placeholder="you@example.com" />
