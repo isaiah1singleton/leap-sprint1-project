@@ -5,7 +5,7 @@ export const API_CONFIG = {
   // Backend API base URL
   // For local development: http://localhost:8080
   // For production: update to your production URL
-  baseUrl: 'http://localhost:8082',
+  baseUrl: 'http://10.18.72.7:8082',
 
   // API endpoints
   endpoints: {

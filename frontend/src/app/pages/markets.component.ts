@@ -5,8 +5,6 @@ import { TradingService } from '../core/trading.service';
   selector: 'app-markets',
   templateUrl: './markets.component.html',
 })
-    </div>
-})
 export class MarketsComponent {
   readonly trading = inject(TradingService);
 }

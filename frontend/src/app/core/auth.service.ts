@@ -42,7 +42,9 @@ export class AuthService {
     }
   }
 
-  async register(email: string, password: string, confirm: string): Promise<AuthFailure | null> {
+  async register(name: string,email: string, password: string, confirm: string): Promise<AuthFailure | null> {
+    const userName = name.trim();
+    if (!userName) return { message: 'Enter your full name.', fields: ['name'] };
     const userEmail = email.trim();
     if (!userEmail) return { message: 'Enter your email.', fields: ['email'] };
     if (password.length < 8 || !/\d/.test(password) || password !== confirm) {
@@ -53,12 +55,12 @@ export class AuthService {
     }
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiUrl}/register`, { email: userEmail, password }),
+        this.http.post<AuthResponse>(`${this.apiUrl}/register`, { name: userName, email: userEmail, password }),
       );
       this.setCurrentUser(response.email);
       return null;
     } catch (error) {
-      return this.apiFailure(error, ['email']);
+      return this.apiFailure(error, ['name', 'email']);
     }
   }
 

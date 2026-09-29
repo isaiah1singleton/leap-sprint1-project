@@ -11,7 +11,7 @@ import { AuthService } from '../core/auth.service';
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-
+  name = '';
   email = '';
   password = '';
   confirm = '';
@@ -23,7 +23,7 @@ export class RegisterComponent {
   }
 
   async submit(): Promise<void> {
-    const failure = await this.auth.register(this.email, this.password, this.confirm);
+    const failure = await this.auth.register(this.name, this.email, this.password, this.confirm);
     if (failure) {
       this.error = failure.message;
       this.errorFields = failure.fields;
