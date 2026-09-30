@@ -1,11 +1,12 @@
 // API Configuration for frontend-backend communication
 // Update API_URL based on your environment (development, staging, production)
+import { environment } from '../../environments/environment';
 
 export const API_CONFIG = {
   // Backend API base URL
   // For local development: http://localhost:8080
   // For production: update to your production URL
-  baseUrl: 'http://10.18.72.7:8082',
+  baseUrl: environment.apiUrl,
 
   // API endpoints
   endpoints: {
