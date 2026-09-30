@@ -27,23 +27,31 @@ public class AuthSession {
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @Column(name = "expires_at", nullable = false)
     private OffsetDateTime expiresAt;
 
+    @Column(name = "last_activity_at", nullable = false)
+    private OffsetDateTime lastActivityAt;
+
+    // Keep the existing flag so previously revoked sessions remain revoked.
     @Column(name = "is_revoked", nullable = false)
     private boolean revoked;
+
+    @Column(name = "revoked_at")
+    private OffsetDateTime revokedAt;
 
     protected AuthSession() {
     }
 
-    public AuthSession(String sessionTokenHash, Client client, OffsetDateTime expiresAt) {
+    public AuthSession(String sessionTokenHash, Client client, OffsetDateTime createdAt, OffsetDateTime expiresAt) {
         this.sessionTokenHash = sessionTokenHash;
         this.client = client;
+        this.createdAt = createdAt;
         this.expiresAt = expiresAt;
-        this.revoked = false;
+        this.lastActivityAt = createdAt;
     }
 
     public Client getClient() {
@@ -54,7 +62,28 @@ public class AuthSession {
         return expiresAt;
     }
 
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public OffsetDateTime getLastActivityAt() {
+        return lastActivityAt;
+    }
+
+    public OffsetDateTime getRevokedAt() {
+        return revokedAt;
+    }
+
     public boolean isRevoked() {
         return revoked;
+    }
+
+    public void recordActivity(OffsetDateTime at) {
+        this.lastActivityAt = at;
+    }
+
+    public void revoke(OffsetDateTime at) {
+        this.revoked = true;
+        this.revokedAt = at;
     }
 }

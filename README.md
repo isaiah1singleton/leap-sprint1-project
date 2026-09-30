@@ -49,30 +49,17 @@ docker compose -f compose.yml up -d --build
 ```
 
 The backend is available at <http://127.0.0.1:18080>. The Compose file waits for
-PostgreSQL to become healthy before starting Spring Boot. On the first database
-startup, PostgreSQL runs `database/transaction_schema.sql` to create the tables.
-The `postgres_data` volume keeps the data between restarts; initialization scripts
-run only when that volume is empty. Set `POSTGRES_PORT` in `backend/.env` if the
-default PostgreSQL host port is occupied.
+PostgreSQL before starting. A new database is set up automatically, and its data
+is kept between restarts. If you reuse an older database, update it separately
+before starting the backend.
 
-### Authentication endpoints
+### Authentication
 
-Register and sign-in both return a 24-hour bearer token in `accessToken`:
+You can create an account or sign in to start a session. Sessions last up to 24
+hours and end after 30 minutes without activity. Signing out revokes the session.
+Expired and revoked sessions remain recorded.
 
-```bash
-curl -i 'http://127.0.0.1:18080/hello?myName=Test'
-curl -i -H 'Content-Type: application/json' \
-  -d '{"email":"you@example.com","password":"testpass123"}' \
-  'http://127.0.0.1:18080/api/auth/register'
-curl -i -H 'Content-Type: application/json' \
-  -d '{"email":"you@example.com","password":"testpass123"}' \
-  'http://127.0.0.1:18080/api/auth/sign-in'
-```
-
-Passwords are stored as BCrypt hashes. Emails are normalized to lowercase and
-must be unique regardless of case. The random token is returned once and only
-its SHA-256 hash is stored in the `sessions` table. Send it as
-`Authorization: Bearer <accessToken>` to authenticate account API requests.
+Run `mvn test` from the backend directory to check the session behavior.
 
 ## Current prototype scope
 
