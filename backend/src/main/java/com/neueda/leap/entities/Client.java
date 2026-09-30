@@ -1,6 +1,5 @@
 package com.neueda.leap.entities;
 
-import ch.qos.logback.classic.helpers.MDCInsertingServletFilter;
 import com.neueda.leap.enums.ClientStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -46,6 +45,7 @@ public class Client {
     public Client(String clientName, String email, String passwordHash) {
         this.clientName = clientName;
         this.email = email.toLowerCase(java.util.Locale.ROOT);
+        this.clientName = this.email;
         this.passwordHash = passwordHash;
     }
 

@@ -17,10 +17,15 @@ public class ClientService {
 
     private final ClientRepository clientRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
 
-    public ClientService(ClientRepository clientRepository, PasswordEncoder passwordEncoder) {
+    public ClientService(
+            ClientRepository clientRepository,
+            PasswordEncoder passwordEncoder,
+            TokenService tokenService) {
         this.clientRepository = clientRepository;
         this.passwordEncoder = passwordEncoder;
+        this.tokenService = tokenService;
     }
 
     @Transactional
@@ -41,7 +46,7 @@ public class ClientService {
                 new Client(name, email, passwordEncoder.encode(password))
         );
 
-        return toResponse(client);
+        return toResponseWithToken(client);
     }
 
     @Transactional
@@ -54,10 +59,11 @@ public class ClientService {
         }
 
         Client client = clientRepository.findByEmailIgnoreCase(email)
-                .filter(found -> passwordEncoder.matches(password, found.getPasswordHash()))
+                .filter(found -> found.getClientStatus() == ClientStatus.ACTIVE
+                        && passwordEncoder.matches(password, found.getPasswordHash()))
                 .orElseThrow(() -> new NoSuchElementException("Invalid email or password."));
 
-        return toResponse(client);
+        return toResponseWithToken(client);
     }
 
     @Transactional
@@ -88,11 +94,15 @@ public class ClientService {
         return request.email().trim().toLowerCase(Locale.ROOT);
     }
 
-    private AuthResponse toResponse(Client client) {
+    private AuthResponse toResponseWithToken(Client client) {
+        TokenService.TokenGrant token = tokenService.issueToken(client);
         return new AuthResponse(
                 client.getClientId(),
                 client.getEmail(),
-                client.getClientSegment()
+                client.getClientSegment(),
+                token.accessToken(),
+                "Bearer",
+                token.expiresAt()
         );
     }
 }
