@@ -1,5 +1,6 @@
 package com.neueda.leap.config;
 
+import com.neueda.leap.ApiRoutes;
 import com.neueda.leap.service.TokenService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +12,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -34,7 +36,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .anyRequest().permitAll())
+                        .requestMatchers(HttpMethod.POST, ApiRoutes.AUTH_REGISTER, ApiRoutes.AUTH_SIGN_IN).permitAll()
+                        .requestMatchers(HttpMethod.GET, ApiRoutes.HELLO).permitAll()
+                        .anyRequest().authenticated())
+                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(
+                        (request, response, error) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
                 .addFilterBefore(new BearerTokenAuthenticationFilter(tokenService),
                         UsernamePasswordAuthenticationFilter.class)
                 .build();

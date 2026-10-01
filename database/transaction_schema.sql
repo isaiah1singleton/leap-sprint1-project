@@ -1,23 +1,5 @@
-DROP TABLE IF EXISTS cash_movements;
-DROP TABLE IF EXISTS fifo_allocations;
-DROP TABLE IF EXISTS order_events;
-DROP TABLE IF EXISTS account_holdings;
-
-DROP TABLE IF EXISTS fills;
-DROP TABLE IF EXISTS account_balances;
-DROP TABLE IF EXISTS orders;
-
-DROP TABLE IF EXISTS sessions;
-DROP TABLE IF EXISTS accounts;
-DROP TABLE IF EXISTS instruments;
-
-DROP TABLE IF EXISTS clients;
-
-
-
-
-
-
+-- Initial schema for an empty database. PostgreSQL's Docker initializer runs
+-- this file only when creating a new data volume.
 CREATE TABLE clients
 (
 	client_id SERIAL PRIMARY KEY,
@@ -25,7 +7,7 @@ CREATE TABLE clients
 	email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     client_status TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     client_segment TEXT NOT NULL
 );
 
@@ -34,9 +16,11 @@ CREATE TABLE sessions
     session_id SERIAL PRIMARY KEY,
     session_token_hash TEXT NOT NULL UNIQUE,
     client_id INTEGER NOT NULL REFERENCES clients(client_id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMPTZ NOT NULL CHECK(expires_at > created_at),
-    is_revoked BOOLEAN NOT NULL DEFAULT FALSE
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL CHECK(expires_at > created_at),
+    last_activity_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    revoked_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE accounts
@@ -47,7 +31,7 @@ CREATE TABLE accounts
 
 	account_name TEXT NOT NULL,
 
-	opened_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+	opened_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE instruments
@@ -74,9 +58,9 @@ CREATE TABLE orders
 	submitted_quote_price NUMERIC CHECK(submitted_quote_price > 0),
 	requested_quantity INTEGER CHECK(requested_quantity > 0),
 	
-	submitted_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	submitted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		
-	submitted_quote_at TIMESTAMPTZ NOT NULL
+	submitted_quote_at TIMESTAMP WITH TIME ZONE NOT NULL
 		CHECK(submitted_at <= submitted_quote_at)
 );
 
@@ -89,8 +73,8 @@ CREATE TABLE order_events
 
 	decision_quote_price NUMERIC CHECK(decision_quote_price > 0),
 
-	occured_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	decision_quote_at TIMESTAMPTZ
+	occured_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	decision_quote_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE account_balances
@@ -102,7 +86,7 @@ CREATE TABLE account_balances
     total_balance DECIMAL NOT NULL CHECK(total_balance > 0),
     reserved_balance DECIMAL NOT NULL CHECK(reserved_balance > 0),
 
-    updated_at TIMESTAMPTZ NOT NULL
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TABLE account_holdings
@@ -118,7 +102,7 @@ CREATE TABLE fills
     order_id INTEGER NOT NULL REFERENCES orders(order_id),
 
     execution_price NUMERIC NOT NULL CHECK(execution_price > 0),
-    execution_time TIMESTAMPTZ NOT NULL
+    execution_time TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TABLE cash_movements
@@ -131,7 +115,7 @@ CREATE TABLE cash_movements
     movement_type TEXT NOT NULL CHECK(movement_type IN ('TRADE', 'ADJUSTMENT', 'DEPOSIT', 'WITHDRAWAL')),
     currency TEXT NOT NULL,
 
-    occured_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    occured_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE fifo_allocations
