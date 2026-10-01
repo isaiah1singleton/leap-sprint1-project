@@ -4,10 +4,8 @@
     <dl style="margin:0">
       <div class="definition"><dt>Email</dt><dd><strong>{{ auth.currentUser() }}</strong></dd></div>
       <div class="definition"><dt>Account type</dt><dd>Individual investor</dd></div>
-      <div class="definition"><dt>Account number</dt><dd>IT8-4417-2290</dd></div>
       <div class="definition"><dt>Base currency</dt><dd>USD</dd></div>
       <div class="definition"><dt>Verification</dt><dd class="gain">Verified</dd></div>
-      <div class="definition"><dt>Linked bank account</dt><dd>••••4417</dd></div>
     </dl>
   </div>
   <div class="card card-pad-lg" style="width:250px;flex:none;display:flex;flex-direction:column">
@@ -16,4 +14,83 @@
     <button class="btn btn-secondary btn-sm">Set up two-factor</button>
     <p style="border-top:1px solid var(--line-soft);padding-top:12px;margin-top:12px;font-size:12px;color:var(--muted);line-height:1.5">Trading limits and permissions are set by your administrator.</p>
   </div>
+</div>
+
+<!-- Trading Accounts Section -->
+<div class="card card-pad-lg" style="margin-top:20px">
+  <h2 class="card-title">Trading Accounts</h2>
+  
+  @if (success) {
+    <p style="color:var(--gain);font-weight:500;margin-bottom:12px">{{ success }}</p>
+  }
+
+  @if (error) {
+    <p style="color:var(--loss);margin-bottom:12px">{{ error }}</p>
+  }
+
+  <!-- Currently Selected Account -->
+  @if (selectedAccount()) {
+    <div style="margin-bottom:20px;padding:12px;background:rgba(0,200,0,0.1);border:1px solid var(--gain);border-radius:4px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <p style="font-weight:600;margin:0">Active Account: {{ selectedAccount()!.accountName }}</p>
+        <p style="font-size:12px;color:var(--muted);margin:4px 0 0 0">Status: {{ selectedAccount()!.accountStatus }}</p>
+      </div>
+      <a routerLink="/app/overview" class="btn btn-primary btn-sm">Go to overview</a>
+    </div>
+  }
+
+  <!-- Create New Account Form -->
+  <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--line-soft)">
+    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Create New Account</h3>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <div style="flex:1">
+        <label class="label" for="accountName">Account Name</label>
+        <input 
+          id="accountName" 
+          class="input" 
+          type="text" 
+          [class.invalid]="invalid('accountName')"
+          [(ngModel)]="newAccountName" 
+          (keyup.enter)="submit()"
+          placeholder="e.g., Primary Trading, Retirement, etc." />
+      </div>
+      <button 
+        class="btn btn-primary" 
+        (click)="submit()" 
+        [disabled]="isCreating">
+        {{ isCreating ? 'Creating...' : 'Create Account' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Existing Accounts -->
+  <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Your Accounts</h3>
+  @if (accounts.length === 0) {
+    <p style="color:var(--muted)">No trading accounts yet. Create one to get started!</p>
+  } @else {
+    <div style="display:grid;gap:12px">
+      @for (account of accounts; track account.accountId) {
+        <div 
+          style="padding:12px;border:1px solid var(--line-soft);border-radius:4px;cursor:pointer;transition:all 0.2s"
+          [style.background]="selectedAccount()?.accountId === account.accountId ? 'rgba(0,200,0,0.05)' : 'transparent'"
+          [style.border]="selectedAccount()?.accountId === account.accountId ? '1px solid var(--gain)' : '1px solid var(--line-soft)'"
+          (click)="selectAccount(account)"
+          (keyup.enter)="selectAccount(account)"
+          role="button"
+          tabindex="0">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div>
+              <strong style="font-size:14px">{{ account.accountName }}</strong>
+              <div style="font-size:12px;color:var(--muted);margin-top:4px">
+                Opened {{ account.openedAt | date:'short' }}
+              </div>
+            </div>
+            <span [style.color]="account.accountStatus === 'ACTIVE' ? 'var(--gain)' : 'var(--loss)'">
+              {{ account.accountStatus }}
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
 </div>

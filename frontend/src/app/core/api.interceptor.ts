@@ -9,9 +9,9 @@ import { Observable } from 'rxjs';
 import { API_CONFIG } from './api.config';
 
 /**
- * HTTP Interceptor that automatically prepends the API base URL to all requests.
- * This allows frontend services to use relative paths like '/api/auth/sign-in'
- * and have them automatically resolved to the full URL.
+ * HTTP Interceptor that:
+ * 1. Prepends the API base URL to all requests
+ * 2. Attaches the Bearer token from sessionStorage for authenticated requests
  */
 @Injectable()
 export class ApiInterceptor implements HttpInterceptor {
@@ -22,6 +22,17 @@ export class ApiInterceptor implements HttpInterceptor {
         url: `${API_CONFIG.baseUrl}${request.url}`
       });
     }
+
+    // Attach Bearer token if available
+    const token = sessionStorage.getItem('accessToken');
+    if (token) {
+      request = request.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+    }
+
     return next.handle(request);
   }
 }

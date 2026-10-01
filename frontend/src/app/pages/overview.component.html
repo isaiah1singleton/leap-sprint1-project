@@ -1,46 +1,95 @@
-<div class="stack">
-  <div>
-    <h2 style="margin:0">Welcome back, {{ auth.currentUser() }}</h2>
-    <p class="sub" style="margin-top:6px">Here is your account overview.</p>
-  </div>
-  <div class="row">
-    <div class="card" style="flex:1">
-      <p class="stat-label">Total account value</p>
-      <p class="stat-value">{{ trading.money(trading.totalValue()) }}</p>
-      <p class="stat-note gain">{{ dayChange }} today</p>
-    </div>
-    <div class="card" style="flex:1">
-      <p class="stat-label">Cash available</p>
-      <p class="stat-value">{{ trading.money(trading.cash()) }}</p>
-      <p class="stat-note">Settled and withdrawable</p>
-    </div>
-    <div class="card" style="flex:1">
-      <p class="stat-label">Open positions</p>
-      <p class="stat-value">{{ trading.positions().length }}</p>
-      <p class="stat-note">{{ trading.pendingOrderCount() }} order pending</p>
-    </div>
+<!-- Accounts List Section - Always Visible -->
+<div class="card card-pad-lg" style="margin-bottom:20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h2 class="card-title" style="margin:0">Your Trading Accounts</h2>
+    <button class="btn btn-primary btn-sm" (click)="createAccount()">+ Create Account</button>
   </div>
 
-  <div class="row">
-    <div class="card" style="flex:1.5">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <h2 class="card-title">Recent activity</h2>
-        <a routerLink="/app/orders" style="font-size:12px;color:var(--ink)">View all</a>
-      </div>
-      @for (order of recent(); track order.id) {
-        <div class="list-row">
-          <div><strong>{{ order.type }} {{ order.sym }}</strong><div class="sub">{{ order.date }}</div></div>
-          <div style="text-align:right">{{ order.price }}<div class="sub">{{ order.status }}</div></div>
+  @if (isLoadingAccounts()) {
+    <p style="color:var(--muted);text-align:center;padding:20px">Loading accounts...</p>
+  } @else if (accountsError()) {
+    <p style="color:var(--loss);padding:12px;background:rgba(255,50,50,0.1);border-radius:4px">{{ accountsError() }}</p>
+  } @else if (activeAccounts().length === 0) {
+    <p style="color:var(--muted);padding:12px">No active trading accounts yet. <a (click)="createAccount()" style="color:var(--ink);font-weight:600;cursor:pointer">Create one now</a></p>
+  } @else {
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+      @for (account of activeAccounts(); track account.accountId) {
+        <div 
+          style="padding:16px;border:2px solid var(--line-soft);border-radius:6px;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column"
+          [style.border-color]="selectedAccount()?.accountId === account.accountId ? 'var(--gain)' : 'var(--line-soft)'"
+          [style.background]="selectedAccount()?.accountId === account.accountId ? 'rgba(0,200,0,0.05)' : 'transparent'"
+          (click)="selectAccount(account)"
+          (keyup.enter)="selectAccount(account)"
+          role="button"
+          tabindex="0">
+          <strong style="font-size:14px">{{ account.accountName }}</strong>
+          <span style="font-size:12px;color:var(--muted);margin-top:8px">
+            Opened {{ account.openedAt | date:'MMM d, y' }}
+          </span>
+          <span [style.color]="account.accountStatus === 'ACTIVE' ? 'var(--gain)' : 'var(--loss)'" style="font-size:11px;margin-top:8px;font-weight:600">
+            {{ account.accountStatus }}
+          </span>
+          @if (selectedAccount()?.accountId === account.accountId) {
+            <span style="margin-top:8px;padding:4px 8px;background:var(--gain);color:white;border-radius:3px;font-size:11px;text-align:center">Active</span>
+          }
         </div>
       }
     </div>
+  }
+</div>
 
-    <div class="card" style="flex:1;display:flex;flex-direction:column">
-      <h2 class="card-title">Quick actions</h2>
-      <button class="btn btn-primary btn-sm" routerLink="/app/transact">Place an order</button>
-      <button class="btn btn-secondary btn-sm" routerLink="/app/transact" [queryParams]="{ mode: 'deposit' }">Deposit funds</button>
-      <button class="btn btn-secondary btn-sm" routerLink="/app/portfolio">Review portfolio</button>
-      <p class="note" style="margin-top:auto">Market data delayed 15 minutes on this account tier.</p>
+<!-- Main Content Section -->
+@if (!selectedAccount()) {
+  <div class="card card-pad-lg" style="background:rgba(255,180,0,0.05);border:1px solid var(--muted);text-align:center;padding:40px">
+    <h3 style="margin:0 0 12px 0">Select an Account</h3>
+    <p style="color:var(--muted);margin:0">Choose an account above to view its overview and manage your portfolio.</p>
+  </div>
+} @else {
+  <div class="stack">
+    <div>
+      <h2 style="margin:0">{{ selectedAccount()!.accountName }}</h2>
+      <p class="sub" style="margin-top:6px">Welcome back, {{ auth.currentUser() }} • Here is your account overview.</p>
+    </div>
+    <div class="row">
+      <div class="card" style="flex:1">
+        <p class="stat-label">Total account value</p>
+        <p class="stat-value">{{ trading.money(trading.totalValue()) }}</p>
+        <p class="stat-note gain">{{ dayChange }} today</p>
+      </div>
+      <div class="card" style="flex:1">
+        <p class="stat-label">Cash available</p>
+        <p class="stat-value">{{ trading.money(trading.cash()) }}</p>
+        <p class="stat-note">Settled and withdrawable</p>
+      </div>
+      <div class="card" style="flex:1">
+        <p class="stat-label">Open positions</p>
+        <p class="stat-value">{{ trading.positions().length }}</p>
+        <p class="stat-note">{{ trading.pendingOrderCount() }} order pending</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="card" style="flex:1.5">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <h2 class="card-title">Recent activity</h2>
+          <a routerLink="/app/orders" style="font-size:12px;color:var(--ink)">View all</a>
+        </div>
+        @for (order of recent(); track order.id) {
+          <div class="list-row">
+            <div><strong>{{ order.type }} {{ order.sym }}</strong><div class="sub">{{ order.date }}</div></div>
+            <div style="text-align:right">{{ order.price }}<div class="sub">{{ order.status }}</div></div>
+          </div>
+        }
+      </div>
+
+      <div class="card" style="flex:1;display:flex;flex-direction:column">
+        <h2 class="card-title">Quick actions</h2>
+        <button class="btn btn-primary btn-sm" routerLink="/app/transact">Place an order</button>
+        <button class="btn btn-secondary btn-sm" routerLink="/app/transact" [queryParams]="{ mode: 'deposit' }">Deposit funds</button>
+        <button class="btn btn-secondary btn-sm" routerLink="/app/portfolio">Review portfolio</button>
+        <button class="btn btn-secondary btn-sm" (click)="createAccount()">Create account</button>
+        <p class="note" style="margin-top:auto">Market data delayed 15 minutes on this account tier.</p>
+      </div>
     </div>
   </div>
-</div>
+}
