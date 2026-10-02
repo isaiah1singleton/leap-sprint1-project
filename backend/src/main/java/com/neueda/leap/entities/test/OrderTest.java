@@ -7,6 +7,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Nested;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -28,18 +29,70 @@ public class OrderTest {
         mocks = MockitoAnnotations.openMocks(this);
     }
 
-    // Test if an ordinary order can be submitted
-    @Test
-    void validOrderConstructed() {
-        assertDoesNotThrow(
-                () -> new Order(
-                        mockInstrument,
-                        OrderSide.BUY,
-                        new BigDecimal(10),
-                        OffsetDateTime.now()
-                )
-        );
+    @Nested
+    class ConstructorTests {
+        // Test if an ordinary order can be submitted
+        @Test
+        void validOrderConstructed() {
+            assertDoesNotThrow(
+                    () -> new Order(
+                            mockInstrument,
+                            OrderSide.BUY,
+                            new BigDecimal(10),
+                            OffsetDateTime.now()
+                    )
+            );
+        }
+
+        @Test
+        void missingRequiredArguments() {
+            assertThrows(IllegalArgumentException.class,
+                    () -> new Order(
+                            null,
+                            OrderSide.BUY,
+                            new BigDecimal(10),
+                            OffsetDateTime.now()
+                    )
+            );
+            assertThrows(IllegalArgumentException.class,
+                    () -> new Order(
+                            mockInstrument,
+                            null,
+                            new BigDecimal(10),
+                            OffsetDateTime.now()
+                    )
+            );
+            assertThrows(IllegalArgumentException.class,
+                    () -> new Order(
+                            mockInstrument,
+                            OrderSide.BUY,
+                            new BigDecimal(10),
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void nonPositiveQuantity() {
+            assertThrows(IllegalArgumentException.class,
+                    () -> new Order(
+                            mockInstrument,
+                            OrderSide.BUY,
+                            new BigDecimal(0),
+                            OffsetDateTime.now()
+                    )
+            );
+            assertThrows(IllegalArgumentException.class,
+                    () -> new Order(
+                            mockInstrument,
+                            OrderSide.BUY,
+                            new BigDecimal(-2),
+                            OffsetDateTime.now()
+                    )
+            );
+        }
     }
+
 
     @AfterEach
     void afterEachTeardown() throws Exception{
