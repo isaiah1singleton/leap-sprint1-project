@@ -98,6 +98,7 @@ public class ClientService {
         TokenService.TokenGrant token = tokenService.issueToken(client);
         return new AuthResponse(
                 client.getClientId(),
+                client.getClientName(),
                 client.getEmail(),
                 client.getClientSegment(),
                 token.accessToken(),
