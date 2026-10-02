@@ -11,9 +11,17 @@ export class AccountsCacheService {
   readonly activeAccounts = signal<AccountResponse[]>([]);
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
+  private cachedForUser: string | null = null;
 
   async loadAccounts(forceRefresh = false): Promise<AccountResponse[]> {
     const currentUser = this.auth.currentUser();
+    
+    // If user has changed, clear the cache
+    if (currentUser !== this.cachedForUser) {
+      console.log(`👤 User changed from ${this.cachedForUser} to ${currentUser} | Clearing cache`);
+      this.clearCache();
+      this.cachedForUser = currentUser;
+    }
     
     // If already loaded and not forcing refresh, return cached accounts
     if (!forceRefresh && this.accounts().length > 0) {
@@ -48,6 +56,7 @@ export class AccountsCacheService {
     console.log(`🗑️ Clearing accounts cache for ${this.auth.currentUser()}`);
     this.accounts.set([]);
     this.activeAccounts.set([]);
+    this.cachedForUser = null;
   }
 
   addAccount(account: AccountResponse): void {
