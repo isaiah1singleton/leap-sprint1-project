@@ -61,7 +61,8 @@ CREATE TABLE orders
 	submitted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		
 	submitted_quote_at TIMESTAMP WITH TIME ZONE NOT NULL
-		CHECK(submitted_at <= submitted_quote_at)
+		CHECK(submitted_at <= submitted_quote_at),
+	current_order_status TEXT NOT NULL DEFAULT 'SUBMITTED'
 );
 
 CREATE TABLE order_events
