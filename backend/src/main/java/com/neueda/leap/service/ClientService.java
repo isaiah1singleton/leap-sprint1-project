@@ -30,11 +30,12 @@ public class ClientService {
 
     @Transactional
     public AuthResponse register(AuthRequest request) {
+        String name = request == null || request.name() == null ? null : request.name().trim();
         String email = normalizedEmail(request);
         String password = request == null ? null : request.password();
 
-        if (email == null || password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Email and password are required.");
+        if (name == null || name.isBlank() || email == null || password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Name, email and password are required.");
         }
 
         if (clientRepository.findByEmailIgnoreCase(email).isPresent()) {
@@ -42,7 +43,7 @@ public class ClientService {
         }
 
         Client client = clientRepository.save(
-                new Client(email, passwordEncoder.encode(password))
+                new Client(name, email, passwordEncoder.encode(password))
         );
 
         return toResponseWithToken(client);
@@ -97,6 +98,7 @@ public class ClientService {
         TokenService.TokenGrant token = tokenService.issueToken(client);
         return new AuthResponse(
                 client.getClientId(),
+                client.getClientName(),
                 client.getEmail(),
                 client.getClientSegment(),
                 token.accessToken(),

@@ -1,30 +1,78 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
+import { AccountService, AccountResponse, AccountFailure } from '../core/account.service';
+import { AccountSelectionService } from '../core/account-selection.service';
+import { AccountsCacheService } from '../core/accounts-cache.service';
 
 @Component({
   selector: 'app-account',
-  template: `
-    <div class="row">
-      <div class="card card-pad-lg" style="flex:1">
-        <h2 class="card-title">Profile</h2>
-        <dl style="margin:0">
-          <div class="definition"><dt>Email</dt><dd><strong>{{ auth.currentUser() }}</strong></dd></div>
-          <div class="definition"><dt>Account type</dt><dd>Individual investor</dd></div>
-          <div class="definition"><dt>Account number</dt><dd>IT8-4417-2290</dd></div>
-          <div class="definition"><dt>Base currency</dt><dd>USD</dd></div>
-          <div class="definition"><dt>Verification</dt><dd class="gain">Verified</dd></div>
-          <div class="definition"><dt>Linked bank account</dt><dd>••••4417</dd></div>
-        </dl>
-      </div>
-      <div class="card card-pad-lg" style="width:250px;flex:none;display:flex;flex-direction:column">
-        <h2 class="card-title">Security</h2>
-        <button class="btn btn-secondary btn-sm">Change password</button>
-        <button class="btn btn-secondary btn-sm">Set up two-factor</button>
-        <p style="border-top:1px solid var(--line-soft);padding-top:12px;margin-top:12px;font-size:12px;color:var(--muted);line-height:1.5">Trading limits and permissions are set by your administrator.</p>
-      </div>
-    </div>
-  `,
+  templateUrl: './account.component.html',
+  imports: [CommonModule, FormsModule, RouterLink],
 })
-export class AccountComponent {
+export class AccountComponent implements OnInit {
   readonly auth = inject(AuthService);
+  readonly selectedAccount = inject(AccountSelectionService).selectedAccount;
+  private readonly accountService = inject(AccountService);
+  private readonly accountSelection = inject(AccountSelectionService);
+  private readonly router = inject(Router);
+  private readonly accountsCache = inject(AccountsCacheService);
+
+  accounts: AccountResponse[] = [];
+  newAccountName = '';
+  isCreating = false;
+  error = '';
+  success = '';
+  private errorFields: string[] = [];
+
+  ngOnInit(): void {
+    this.loadAccounts();
+  }
+
+  async loadAccounts(): Promise<void> {
+    this.accounts = await this.accountsCache.loadAccounts();
+  }
+
+  invalid(field: string): boolean {
+    return this.errorFields.includes(field);
+  }
+
+  async selectAccount(account: AccountResponse): Promise<void> {
+    this.accountSelection.selectAccount(account);
+    await this.router.navigate(['/app/overview']);
+  }
+
+  async submit(): Promise<void> {
+    this.error = '';
+    this.success = '';
+    this.errorFields = [];
+    this.isCreating = true;
+
+    const result = await this.accountService.createAccount(this.newAccountName);
+
+    if ('fields' in result) {
+      // It's an AccountFailure
+      this.error = result.message;
+      this.errorFields = result.fields;
+      this.isCreating = false;
+      return;
+    }
+
+    // Success - result is AccountResponse
+    this.success = `Account "${result.accountName}" created successfully!`;
+    this.newAccountName = '';
+    this.isCreating = false;
+    
+    // Add to cache immediately
+    this.accountsCache.addAccount(result);
+    
+    // Also reload from backend to stay in sync
+    await this.loadAccounts();
+
+    // Select the newly created account and navigate to overview
+    this.accountSelection.selectAccount(result);
+    await this.router.navigate(['/app/overview']);
+  }
 }

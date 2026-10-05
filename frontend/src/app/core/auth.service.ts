@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { API_CONFIG } from './api.config';
 
 export interface AuthFailure {
   message: string;
@@ -9,6 +10,7 @@ export interface AuthFailure {
 
 interface AuthResponse {
   clientId: number;
+  clientName: string;
   email: string;
   clientSegment: string;
   accessToken: string;
@@ -19,8 +21,9 @@ interface AuthResponse {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:18080/api/auth';
-  readonly currentUser = signal<string | null>(sessionStorage.getItem('currentUserEmail'));
+  private readonly apiUrl = '/api/auth';
+  readonly currentUser = signal<string | null>(sessionStorage.getItem('currentUserName'));
+  readonly currentUserEmail = signal<string | null>(sessionStorage.getItem('currentUserEmail'));
 
   isSignedIn(): boolean {
     return this.currentUser() !== null && this.getAccessToken() !== null;
@@ -41,14 +44,16 @@ export class AuthService {
       const response = await firstValueFrom(
         this.http.post<AuthResponse>(`${this.apiUrl}/sign-in`, { email: userEmail, password }),
       );
-      this.setCurrentUser(response.email, response.accessToken);
+      this.setCurrentUser(response.clientName, response.email, response.accessToken);
       return null;
     } catch (error) {
       return this.apiFailure(error, ['email', 'password']);
     }
   }
 
-  async register(email: string, password: string, confirm: string): Promise<AuthFailure | null> {
+  async register(name: string, email: string, password: string, confirm: string): Promise<AuthFailure | null> {
+    const userName = name.trim();
+    if (!userName) return { message: 'Enter your full name.', fields: ['name'] };
     const userEmail = email.trim();
     if (!userEmail) return { message: 'Enter your email.', fields: ['email'] };
     if (password.length < 8 || !/\d/.test(password) || password !== confirm) {
@@ -59,31 +64,35 @@ export class AuthService {
     }
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiUrl}/register`, { email: userEmail, password }),
+        this.http.post<AuthResponse>(`${this.apiUrl}/register`, { name: userName, email: userEmail, password }),
       );
-      this.setCurrentUser(response.email, response.accessToken);
+      this.setCurrentUser(response.clientName, response.email, response.accessToken);
       return null;
     } catch (error) {
-      return this.apiFailure(error, ['email']);
+      return this.apiFailure(error, ['name', 'email']);
     }
   }
 
   signOut(): void {
+    sessionStorage.removeItem('currentUserName');
     sessionStorage.removeItem('currentUserEmail');
     sessionStorage.removeItem('accessToken');
     this.currentUser.set(null);
+    this.currentUserEmail.set(null);
   }
 
-  private setCurrentUser(email: string, accessToken: string): void {
+  private setCurrentUser(name: string, email: string, accessToken: string): void {
+    sessionStorage.setItem('currentUserName', name);
     sessionStorage.setItem('currentUserEmail', email);
     sessionStorage.setItem('accessToken', accessToken);
-    this.currentUser.set(email);
+    this.currentUser.set(name);
+    this.currentUserEmail.set(email);
   }
 
   private apiFailure(error: unknown, fields: string[]): AuthFailure {
-    if (error instanceof HttpErrorResponse && typeof error.error === 'string') {
-      return { message: error.error, fields };
+    if (error instanceof HttpErrorResponse && error.error?.detail) {
+      return { message: error.error.detail, fields };
     }
-    return { message: 'Unable to reach the authentication service. Please try again.', fields };
+    return { message: 'An error occurred. Please try again.', fields };
   }
 }

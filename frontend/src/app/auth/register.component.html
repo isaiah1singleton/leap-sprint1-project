@@ -1,0 +1,29 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <h1 class="auth-title">Create your account</h1>
+    <p class="auth-sub">Start trading with a personal investor account.</p>
+
+    <label class="label" for="name">Full Name</label>
+    <input id="name" class="input" type="text" [class.invalid]="invalid('name')"
+       [(ngModel)]="name" placeholder="Your full name" />
+
+    <label class="label" for="email">Email</label>
+    <input id="email" class="input" type="email" [class.invalid]="invalid('email')"
+           [(ngModel)]="email" (keyup.enter)="submit()" placeholder="you@example.com" />
+
+    <label class="label" for="password">Password</label>
+    <input id="password" type="password" class="input" [class.invalid]="invalid('password')"
+           [(ngModel)]="password" (keyup.enter)="submit()" placeholder="Create a password" />
+
+    <label class="label" for="confirm">Confirm password</label>
+    <input id="confirm" type="password" class="input" [class.invalid]="invalid('confirm')"
+           [(ngModel)]="confirm" (keyup.enter)="submit()" placeholder="Repeat your password" />
+
+    @if (error) {
+      <p class="error-text">{{ error }}</p>
+    }
+
+    <button class="btn btn-primary" (click)="submit()">Create account</button>
+    <p class="auth-foot">Already have an account? <a routerLink="/signin">Sign in</a></p>
+  </div>
+</div>

@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 
 public record AuthResponse(
         Integer clientId,
+        String clientName,
         String email,
         String clientSegment,
         String accessToken,

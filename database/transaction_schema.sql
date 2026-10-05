@@ -42,7 +42,7 @@ CREATE TABLE instruments
     asset_class TEXT NOT NULL,
     instrument_name TEXT NOT NULL,
     is_tradable BOOLEAN NOT NULL DEFAULT FALSE,
-    quote_currency TEXT NOT NULL
+    quote_currency TEXT NOT NULL,
     CONSTRAINT uk_instruments_market_symbol UNIQUE (market, symbol)
 );
 
