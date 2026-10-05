@@ -22,22 +22,41 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id")
     private Integer orderId;
+
     @ManyToOne
-    @JoinColumn(name = "instrument_instrument_id")
+    @JoinColumn(name = "account_id")
+    private Account account;
+
+    @ManyToOne
+    @JoinColumn(name = "instrument_id")
     private Instrument instrument;
+
+    @Enumerated(EnumType.STRING)
     private OrderSide side;
+
+    @Column(name = "requested_quantity", nullable = false, columnDefinition = "numeric")
     private BigDecimal RequestedQuantity;
+
+    @Column(name = "submitted_at", nullable = false)
     private OffsetDateTime submittedAt;
+
+    @Enumerated(EnumType.STRING)
     private OrderStatus currentOrderStatus;
 
     protected Order() { }
 
     public Order(
+            Account account,
             Instrument instrument,
             OrderSide side,
             BigDecimal requestedQuantity,
             OffsetDateTime submittedAt
     ) {
+        if (account == null) {
+            throw new IllegalArgumentException("account cannot be null");
+        }
+        this.account = account;
+
         if (instrument == null){
             throw new IllegalArgumentException("Instrument is required.");
         }
@@ -60,5 +79,40 @@ public class Order {
             throw new IllegalArgumentException("SubmittedAt timestamp is required.");
         }
         this.submittedAt = submittedAt;
+
+        this.currentOrderStatus = OrderStatus.SUBMITTED;
+    }
+
+
+    public Integer getOrderId() {
+        return orderId;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public Instrument getInstrument() {
+        return instrument;
+    }
+
+    public OrderSide getSide() {
+        return side;
+    }
+
+    public BigDecimal getRequestedQuantity() {
+        return RequestedQuantity;
+    }
+
+    public OffsetDateTime getSubmittedAt() {
+        return submittedAt;
+    }
+
+    public OrderStatus getCurrentOrderStatus() {
+        return currentOrderStatus;
+    }
+
+    public void setCurrentOrderStatus(OrderStatus currentOrderStatus) {
+        this.currentOrderStatus = currentOrderStatus;
     }
 }

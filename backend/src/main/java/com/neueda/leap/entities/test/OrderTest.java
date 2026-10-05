@@ -1,5 +1,6 @@
 package com.neueda.leap.entities.test;
 
+import com.neueda.leap.entities.Account;
 import com.neueda.leap.entities.Instrument;
 import com.neueda.leap.enums.OrderSide;
 import com.neueda.leap.entities.Order;
@@ -22,6 +23,9 @@ public class OrderTest {
     @Mock
     private Instrument mockInstrument;
 
+    @Mock
+    private Account mockAccount;
+
     private AutoCloseable mocks;
 
     @BeforeEach
@@ -36,6 +40,7 @@ public class OrderTest {
         void validOrderConstructed() {
             assertDoesNotThrow(
                     () -> new Order(
+                            mockAccount,
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(10),
@@ -49,6 +54,7 @@ public class OrderTest {
             assertThrows(IllegalArgumentException.class,
                     () -> new Order(
                             null,
+                            mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(10),
                             OffsetDateTime.now()
@@ -56,6 +62,16 @@ public class OrderTest {
             );
             assertThrows(IllegalArgumentException.class,
                     () -> new Order(
+                            mockAccount,
+                            null,
+                            OrderSide.BUY,
+                            new BigDecimal(10),
+                            OffsetDateTime.now()
+                    )
+            );
+            assertThrows(IllegalArgumentException.class,
+                    () -> new Order(
+                            mockAccount,
                             mockInstrument,
                             null,
                             new BigDecimal(10),
@@ -64,6 +80,7 @@ public class OrderTest {
             );
             assertThrows(IllegalArgumentException.class,
                     () -> new Order(
+                            mockAccount,
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(10),
@@ -76,6 +93,7 @@ public class OrderTest {
         void nonPositiveQuantity() {
             assertThrows(IllegalArgumentException.class,
                     () -> new Order(
+                            mockAccount,
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(0),
@@ -84,6 +102,7 @@ public class OrderTest {
             );
             assertThrows(IllegalArgumentException.class,
                     () -> new Order(
+                            mockAccount,
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(-2),

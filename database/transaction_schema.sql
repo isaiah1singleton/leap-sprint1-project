@@ -56,7 +56,7 @@ CREATE TABLE orders
 
 	side TEXT NOT NULL CHECK (side IN ('BUY', 'SELL')),
 	submitted_quote_price NUMERIC CHECK(submitted_quote_price > 0),
-	requested_quantity INTEGER CHECK(requested_quantity > 0),
+	requested_quantity NUMERIC CHECK(requested_quantity > 0),
 	
 	submitted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		
