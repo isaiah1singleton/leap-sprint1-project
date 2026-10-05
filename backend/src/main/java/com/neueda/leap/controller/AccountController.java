@@ -49,9 +49,9 @@ public class AccountController {
     @GetMapping
     public List<AccountResponse> getAccounts(Principal principal) {
         Integer clientId = authenticatedClientId(principal);
-        System.out.println("📊 [AccountController] Loading accounts for clientId: " + clientId + " | email: " + principal.getName());
+        System.out.println("[AccountController] Loading accounts for clientId: " + clientId + " | email: " + principal.getName());
         List<AccountResponse> accounts = accountService.getAccounts(clientId);
-        System.out.println("✅ [AccountController] Found " + accounts.size() + " accounts for client: " + clientId);
+        System.out.println("[AccountController] Found " + accounts.size() + " accounts for client: " + clientId);
         return accounts;
     }
 

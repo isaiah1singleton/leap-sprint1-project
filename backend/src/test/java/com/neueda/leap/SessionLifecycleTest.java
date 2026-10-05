@@ -183,7 +183,7 @@ class SessionLifecycleTest {
     }
 
     private TokenService.TokenGrant issueToken() {
-        Client client = clientRepository.save(new Client("alice@example.com", "unused-test-hash"));
+        Client client = clientRepository.save(new Client("Name", "alice@example.com", "unused-test-hash"));
         return tokenService.issueToken(client);
     }
 
