@@ -1,29 +1,118 @@
 package com.neueda.leap.entities;
 
+import com.neueda.leap.enums.AssetClass;
+import com.neueda.leap.enums.Currency;
 import com.neueda.leap.enums.OrderSide;
 import com.neueda.leap.enums.OrderStatus;
+import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Locale;
+
+
+@Entity
+@Table(
+        name = "orders"
+)
+
 
 public class Order {
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "order_id")
     private Integer orderId;
-    private Integer instrumentId;
+
+    @ManyToOne
+    @JoinColumn(name = "account_id")
+    private Account account;
+
+    @ManyToOne
+    @JoinColumn(name = "instrument_id")
+    private Instrument instrument;
+
+    @Enumerated(EnumType.STRING)
     private OrderSide side;
+
+    @Column(name = "requested_quantity", nullable = false, columnDefinition = "numeric")
     private BigDecimal RequestedQuantity;
+
+    @Column(name = "submitted_at", nullable = false)
     private OffsetDateTime submittedAt;
+
+    @Enumerated(EnumType.STRING)
     private OrderStatus currentOrderStatus;
 
-    public OrderStatus submit(){
-        return OrderStatus.SUBMITTED;
+    protected Order() { }
+
+    public Order(
+            Account account,
+            Instrument instrument,
+            OrderSide side,
+            BigDecimal requestedQuantity,
+            OffsetDateTime submittedAt
+    ) {
+        if (account == null) {
+            throw new IllegalArgumentException("account cannot be null");
+        }
+        this.account = account;
+
+        if (instrument == null){
+            throw new IllegalArgumentException("Instrument is required.");
+        }
+        this.instrument = instrument;
+
+        if (side == null){
+            throw new IllegalArgumentException("OrderSide is required.");
+        }
+        this.side = side;
+
+        if (requestedQuantity == null){
+            throw new IllegalArgumentException("RequestedQuantity is required.");
+        }
+        else if (requestedQuantity.compareTo(BigDecimal.ZERO) <= 0){
+            throw new IllegalArgumentException("RequestedQuantity must be greater than to 0.");
+        }
+        this.RequestedQuantity = requestedQuantity;
+
+        if (submittedAt == null){
+            throw new IllegalArgumentException("SubmittedAt timestamp is required.");
+        }
+        this.submittedAt = submittedAt;
+
+        this.currentOrderStatus = OrderStatus.SUBMITTED;
     }
 
-    public OrderStatus accept(){
-        return OrderStatus.ACCEPTED;
+
+    public Integer getOrderId() {
+        return orderId;
     }
 
-    public OrderStatus currentStatus(){
+    public Account getAccount() {
+        return account;
+    }
+
+    public Instrument getInstrument() {
+        return instrument;
+    }
+
+    public OrderSide getSide() {
+        return side;
+    }
+
+    public BigDecimal getRequestedQuantity() {
+        return RequestedQuantity;
+    }
+
+    public OffsetDateTime getSubmittedAt() {
+        return submittedAt;
+    }
+
+    public OrderStatus getCurrentOrderStatus() {
         return currentOrderStatus;
+    }
+
+    public void setCurrentOrderStatus(OrderStatus currentOrderStatus) {
+        this.currentOrderStatus = currentOrderStatus;
     }
 }
