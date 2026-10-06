@@ -49,19 +49,19 @@ CREATE TABLE instruments
 CREATE TABLE orders
 (
 	order_id SERIAL PRIMARY KEY,
-	account_id INTEGER REFERENCES accounts(account_id),
-	instrument_id INTEGER REFERENCES instruments(instrument_id),
+	account_id INTEGER NOT NULL REFERENCES accounts(account_id),
+	instrument_id INTEGER NOT NULL REFERENCES instruments(instrument_id),
 
 	idempotency_key UUID UNIQUE NOT NULL,
 
 	side TEXT NOT NULL CHECK (side IN ('BUY', 'SELL')),
-	submitted_quote_price NUMERIC CHECK(submitted_quote_price > 0),
-	requested_quantity NUMERIC CHECK(requested_quantity > 0),
+	submitted_quote_price NUMERIC(24, 8) CHECK(submitted_quote_price > 0),
+	requested_quantity NUMERIC(24, 8) NOT NULL CHECK(requested_quantity > 0),
 	
 	submitted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		
-	submitted_quote_at TIMESTAMP WITH TIME ZONE NOT NULL
-		CHECK(submitted_at <= submitted_quote_at)
+	submitted_quote_at TIMESTAMP WITH TIME ZONE,
+	current_order_status TEXT NOT NULL DEFAULT 'SUBMITTED'
+	    CHECK(current_order_status IN ('SUBMITTED', 'ACCEPTED', 'REJECTED', 'FILLED', 'CANCELLED'))
 );
 
 CREATE TABLE order_events
@@ -83,8 +83,8 @@ CREATE TABLE account_balances
     currency TEXT NOT NULL,
     PRIMARY KEY (account_id, currency),
 
-    total_balance DECIMAL NOT NULL CHECK(total_balance > 0),
-    reserved_balance DECIMAL NOT NULL CHECK(reserved_balance > 0),
+    total_balance NUMERIC(24, 8) NOT NULL CHECK(total_balance >= 0),
+    reserved_balance NUMERIC(24, 8) NOT NULL CHECK(reserved_balance >= 0 AND reserved_balance <= total_balance),
 
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
@@ -93,7 +93,11 @@ CREATE TABLE account_holdings
 (
     account_id INTEGER NOT NULL REFERENCES accounts(account_id),
     instrument_id INTEGER NOT NULL REFERENCES instruments(instrument_id),
-    PRIMARY KEY (account_id, instrument_id)
+    PRIMARY KEY (account_id, instrument_id),
+    total_quantity NUMERIC(24, 8) NOT NULL DEFAULT 0 CHECK(total_quantity >= 0),
+    reserved_quantity NUMERIC(24, 8) NOT NULL DEFAULT 0
+        CHECK(reserved_quantity >= 0 AND reserved_quantity <= total_quantity),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE fills

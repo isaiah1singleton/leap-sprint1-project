@@ -1,22 +1,15 @@
 package com.neueda.leap.entities;
 
-import com.neueda.leap.enums.AssetClass;
-import com.neueda.leap.enums.Currency;
 import com.neueda.leap.enums.OrderSide;
 import com.neueda.leap.enums.OrderStatus;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.Locale;
 
-
+ 
 @Entity
-@Table(
-        name = "orders"
-)
-
-
+@Table(name = "orders")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
