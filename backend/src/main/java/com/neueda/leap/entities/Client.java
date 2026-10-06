@@ -42,9 +42,9 @@ public class Client {
     protected Client() {
     }
 
-    public Client(String email, String passwordHash) {
+    public Client(String name, String email, String passwordHash) {
         this.email = email.toLowerCase(java.util.Locale.ROOT);
-        this.clientName = this.email;
+        this.clientName = name;
         this.passwordHash = passwordHash;
     }
 

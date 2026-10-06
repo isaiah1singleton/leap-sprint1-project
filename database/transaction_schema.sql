@@ -42,21 +42,18 @@ CREATE TABLE instruments
     asset_class TEXT NOT NULL,
     instrument_name TEXT NOT NULL,
     is_tradable BOOLEAN NOT NULL DEFAULT FALSE,
-    quote_currency TEXT NOT NULL
+    quote_currency TEXT NOT NULL,
     CONSTRAINT uk_instruments_market_symbol UNIQUE (market, symbol)
 );
 
 CREATE TABLE orders
 (
 	order_id SERIAL PRIMARY KEY,
-	account_id INTEGER REFERENCES accounts(account_id),
-	instrument_id INTEGER REFERENCES instruments(instrument_id),
-
-	idempotency_key UUID UNIQUE NOT NULL,
-
+	account_id INTEGER NOT NULL REFERENCES accounts(account_id),
+	instrument_id INTEGER NOT NULL REFERENCES instruments(instrument_id),
 	side TEXT NOT NULL CHECK (side IN ('BUY', 'SELL')),
-	submitted_quote_price NUMERIC CHECK(submitted_quote_price > 0),
-	requested_quantity INTEGER CHECK(requested_quantity > 0),
+	submitted_quote_price NUMERIC NOT NULL CHECK(submitted_quote_price > 0),
+	requested_quantity NUMERIC NOT NULL CHECK(requested_quantity > 0),
 	
 	submitted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		
@@ -100,9 +97,9 @@ CREATE TABLE fills
 (
     fill_id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL REFERENCES orders(order_id),
-
     execution_price NUMERIC NOT NULL CHECK(execution_price > 0),
-    execution_time TIMESTAMP WITH TIME ZONE NOT NULL
+    execution_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    CONSTRAINT uk_fills_order UNIQUE (order_id)
 );
 
 CREATE TABLE cash_movements
