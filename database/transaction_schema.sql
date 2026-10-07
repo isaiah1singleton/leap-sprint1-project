@@ -70,8 +70,36 @@ CREATE TABLE order_events
 
 	decision_quote_price NUMERIC CHECK(decision_quote_price > 0),
 
-	occured_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	decision_quote_at TIMESTAMP WITH TIME ZONE
+	occurred_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	decision_quote_at TIMESTAMP WITH TIME ZONE,
+
+    CONSTRAINT uk_order_events_order_status UNIQUE (order_id, status),
+    CONSTRAINT ck_order_events_quote_pair CHECK (
+        (decision_quote_price IS NULL AND decision_quote_at IS NULL)
+        OR
+        (decision_quote_price IS NOT NULL AND decision_quote_at IS NOTNULL)
+    ),
+    CONSTRAINT ck_order_events_rejection_reason
+        CHECK (
+            status <> 'REJECTED'
+            OR (reason IS NOT NULL AND length(trim(reason)) > 0)
+        ),
+
+    CONSTRAINT ck_order_events_required_quote
+        CHECK (
+            status NOT IN ('ACCEPTED', 'FILLED')
+            OR (
+                decision_quote_price IS NOT NULL
+                AND decision_quote_at IS NOT NULL
+            )
+        ),
+
+    CONSTRAINT ck_order_events_quote_time
+        CHECK (
+            decision_quote_at IS NULL
+            OR decision_quote_at <= occurred_at
+        )
+
 );
 
 CREATE TABLE account_balances
@@ -105,14 +133,62 @@ CREATE TABLE fills
 CREATE TABLE cash_movements
 (
     cash_movement_id SERIAL PRIMARY KEY,
-    account_id INTEGER NOT NULL REFERENCES accounts(account_id),
-    fill_id INTEGER REFERENCES fills(fill_id),
 
-    amount NUMERIC NOT NULL CHECK(amount != 0),
-    movement_type TEXT NOT NULL CHECK(movement_type IN ('TRADE', 'ADJUSTMENT', 'DEPOSIT', 'WITHDRAWAL')),
-    currency TEXT NOT NULL,
+    account_id INTEGER NOT NULL
+        REFERENCES accounts(account_id),
 
-    occured_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    fill_id INTEGER
+        REFERENCES fills(fill_id),
+
+    amount NUMERIC NOT NULL
+        CHECK (amount <> 0),
+
+    movement_type TEXT NOT NULL
+        CHECK (
+            movement_type IN (
+                'DEPOSIT',
+                'WITHDRAW',
+                'FEE',
+                'TRADE',
+                'ADJUSTMENT'
+            )
+        ),
+
+    currency TEXT NOT NULL
+        CHECK (currency IN ('EUR', 'USD', 'GBP', 'INR')),
+
+    occurred_at TIMESTAMP WITH TIME ZONE NOT NULL
+        DEFAULT CURRENT_TIMESTAMP,
+
+    reason TEXT,
+
+    CONSTRAINT uk_cash_movements_fill
+        UNIQUE (fill_id),
+
+    CONSTRAINT ck_cash_movements_fill_type
+        CHECK (
+            (movement_type = 'TRADE' AND fill_id IS NOT NULL)
+            OR
+            (movement_type <> 'TRADE' AND fill_id IS NULL)
+        ),
+
+    CONSTRAINT ck_cash_movements_direction
+        CHECK (
+            (movement_type = 'DEPOSIT' AND amount > 0)
+            OR
+            (movement_type IN ('WITHDRAW', 'FEE') AND amount < 0)
+            OR
+            movement_type IN ('TRADE', 'ADJUSTMENT')
+        ),
+
+    CONSTRAINT ck_cash_movements_adjustment_reason
+        CHECK (
+            movement_type <> 'ADJUSTMENT'
+            OR (
+                reason IS NOT NULL
+                AND length(trim(reason)) > 0
+            )
+        )
 );
 
 CREATE TABLE fifo_allocations
