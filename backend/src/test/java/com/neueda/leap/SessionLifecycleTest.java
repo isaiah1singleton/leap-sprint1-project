@@ -146,7 +146,7 @@ class SessionLifecycleTest {
 
     @Test
     void registrationAndSignInIgnoreAnInvalidBearerHeader() throws Exception {
-        String credentials = "{\"email\":\"alice@example.com\",\"password\":\"password123\"}";
+        String credentials = "{\"name\":\"Alice\",\"email\":\"alice@example.com\",\"password\":\"password123\"}";
 
         mockMvc.perform(post("/api/auth/register")
                         .header("Authorization", "Bearer invalid")

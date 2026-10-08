@@ -9,6 +9,11 @@ public final class ApiRoutes {
     public static final String AUTH_REGISTER = AUTH + REGISTER;
     public static final String AUTH_SIGN_IN = AUTH + SIGN_IN;
     public static final String ORDER_VALIDATE = "/api/orders/{orderId}/validate";
+    public static final String MARKET = "/api/market";
+    public static final String MARKET_SYMBOLS = "/symbols";
+    public static final String MARKET_QUOTES = "/quotes";
+    public static final String MARKET_QUOTE = MARKET_QUOTES + "/{symbol}";
+    public static final String MARKET_ALL = MARKET + "/**";
 
     private ApiRoutes() {
     }

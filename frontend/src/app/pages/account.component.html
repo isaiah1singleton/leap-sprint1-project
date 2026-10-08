@@ -30,20 +30,20 @@
 
   <!-- Currently Selected Account -->
   @if (selectedAccount()) {
-    <div style="margin-bottom:20px;padding:12px;background:rgba(0,200,0,0.1);border:1px solid var(--gain);border-radius:4px;display:flex;justify-content:space-between;align-items:center">
-      <div>
+    <div class="account-banner">
+      <div class="account-summary">
         <p style="font-weight:600;margin:0">Active Account: {{ selectedAccount()!.accountName }}</p>
         <p style="font-size:12px;color:var(--muted);margin:4px 0 0 0">Status: {{ selectedAccount()!.accountStatus }}</p>
       </div>
-      <a routerLink="/app/overview" class="btn btn-primary btn-sm">Go to overview</a>
+      <a routerLink="/app/overview" class="btn btn-primary btn-sm account-action">Go to overview</a>
     </div>
   }
 
   <!-- Create New Account Form -->
   <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--line-soft)">
     <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Create New Account</h3>
-    <div style="display:flex;gap:8px;align-items:flex-end">
-      <div style="flex:1">
+    <div class="account-create-form">
+      <div class="account-name-field">
         <label class="label" for="accountName">Account Name</label>
         <input 
           id="accountName" 
@@ -55,7 +55,7 @@
           placeholder="e.g., Primary Trading, Retirement, etc." />
       </div>
       <button 
-        class="btn btn-primary" 
+        class="btn btn-primary create-account-button"
         (click)="submit()" 
         [disabled]="isCreating">
         {{ isCreating ? 'Creating...' : 'Create Account' }}
@@ -68,24 +68,24 @@
   @if (accounts.length === 0) {
     <p style="color:var(--muted)">No trading accounts yet. Create one to get started!</p>
   } @else {
-    <div style="display:grid;gap:12px">
+    <div class="account-list">
       @for (account of accounts; track account.accountId) {
         <div 
-          style="padding:12px;border:1px solid var(--line-soft);border-radius:4px;cursor:pointer;transition:all 0.2s"
+          class="account-row"
           [style.background]="selectedAccount()?.accountId === account.accountId ? 'rgba(0,200,0,0.05)' : 'transparent'"
           [style.border]="selectedAccount()?.accountId === account.accountId ? '1px solid var(--gain)' : '1px solid var(--line-soft)'"
           (click)="selectAccount(account)"
           (keyup.enter)="selectAccount(account)"
           role="button"
           tabindex="0">
-          <div style="display:flex;justify-content:space-between;align-items:start">
-            <div>
+          <div class="account-row-heading">
+            <div class="account-summary">
               <strong style="font-size:14px">{{ account.accountName }}</strong>
               <div style="font-size:12px;color:var(--muted);margin-top:4px">
                 Opened {{ account.openedAt | date:'short' }}
               </div>
             </div>
-            <span [style.color]="account.accountStatus === 'ACTIVE' ? 'var(--gain)' : 'var(--loss)'">
+            <span class="account-status" [style.color]="account.accountStatus === 'ACTIVE' ? 'var(--gain)' : 'var(--danger)'">
               {{ account.accountStatus }}
             </span>
           </div>

@@ -19,8 +19,7 @@ npm install
 npm start
 ```
 
-Open <http://localhost:4200>. Use the seeded credentials
-`jmoore` / `trade2026`, or create an account from the registration page. A new
+Open <http://localhost:4200> and create an account from the registration page. A new
 password must contain at least eight characters and one number.
 
 For a production build:
@@ -41,14 +40,17 @@ cd backend
 cp .env.example .env
 ```
 
-Set `POSTGRES_PASSWORD` to a nonempty value in `.env`, then start Compose from
+Set `POSTGRES_PASSWORD` to a nonempty value and `FAUXNANCE_API_KEY` to your
+instructor-issued key in `.env`, then start Compose from
 `backend`:
 
 ```bash
 docker compose -f compose.yml up -d --build
 ```
 
-The backend is available at <http://127.0.0.1:18080>. The Compose file waits for
+The backend is available at <http://localhost:8082> by default (or `BACKEND_PORT`
+in `.env`). The frontend's API URL is configured in
+`frontend/src/environments/environment.ts`. The Compose file waits for
 PostgreSQL before starting. A new database is set up automatically, and its data
 is kept between restarts. If you reuse an older database, update it separately
 before starting the backend.
@@ -73,9 +75,21 @@ For now, the order and account information used for this check is sample data.
 This step checks whether an order meets the rules; accepting orders and
 reserving cash or units are not included yet.
 
+## Stock and crypto market data
+
+Signed-in users can search US stocks and crypto, view quote details, and pin up
+to 25 US stocks to their dashboard. Quotes come from
+[Fauxnance](https://y4t9nq2bqf.execute-api.eu-west-2.amazonaws.com/v1/docs)
+through the backend, keeping the API key private.
+
+Prices are requested every 60 seconds while the page is visible, but may be
+delayed, stale, or synthetic. Buy and sell controls check simulated cash and
+holdings.
+
 ## Current prototype scope
 
-Portfolio data, trades, transfers, and market data are held in memory in the
-browser, so refreshing resets that state. Authentication credentials and
-sessions are stored by the backend. The frontend account page still uses
+Trades, transfers, and portfolio balances are simulated in the browser session;
+there is no broker execution or server-side order ledger yet. Market prices,
+authentication credentials, trading accounts, and sessions come from the backend.
+Signing out also revokes the backend session. The frontend account page still uses
 placeholder security controls and does not yet call the account API.

@@ -1,4 +1,7 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
+import { AuthService } from './auth.service';
+import { AccountSelectionService } from './account-selection.service';
+import { MarketQuote } from './market.service';
 
 export interface Position {
   sym: string;
@@ -38,11 +41,12 @@ export interface TxFailure {
 export type TradeMode = 'buy' | 'sell';
 export type TransferMode = 'withdraw' | 'deposit';
 
-const UNKNOWN_SYMBOL_PRICE = 100;
-
-/** In-memory trading state. Replace method bodies with API calls when available. */
+/** Account-scoped simulator. Quotes come from the API; execution is local. */
 @Injectable({ providedIn: 'root' })
 export class TradingService {
+  private readonly auth = inject(AuthService);
+  private readonly account = inject(AccountSelectionService);
+  private storageKey: string | null = null;
   readonly cash = signal(48250);
   readonly positions = signal<Position[]>([
     { sym: 'AAPL', name: 'Apple Inc.', qty: 320, avg: 188.4, last: 214.62 },
@@ -74,6 +78,23 @@ export class TradingService {
     () => this.orders().filter((order) => order.status === 'Pending').length,
   );
 
+  constructor() {
+    const initialPositions = this.positions().map(item => ({ ...item }));
+    const initialOrders = this.orders().map(item => ({ ...item }));
+    effect(() => {
+      const email = this.auth.currentUserEmail();
+      const selected = this.account.selectedAccount();
+      const key = email && selected ? `tr8ders:simulation:${email}:${selected.accountId}` : null;
+      if (key === this.storageKey && key !== null) return;
+      this.storageKey = key;
+      let saved: { cash: number; positions: Position[]; orders: Order[] } | null = null;
+      try { saved = JSON.parse(sessionStorage.getItem(key ?? '') ?? 'null'); } catch { /* Use demo state. */ }
+      this.cash.set(key ? saved?.cash ?? 48250 : 0);
+      this.positions.set(key ? saved?.positions ?? initialPositions.map(item => ({ ...item })) : []);
+      this.orders.set(key ? saved?.orders ?? initialOrders.map(item => ({ ...item })) : []);
+    });
+  }
+
   money(value: number): string {
     return '$' + value.toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -81,29 +102,36 @@ export class TradingService {
     });
   }
 
-  trade(mode: TradeMode, symbolInput: string, qtyInput: string): TxFailure | Receipt {
+  trade(mode: TradeMode, symbolInput: string, qtyInput: string, quote: MarketQuote, name = ''): TxFailure | Receipt {
     const sym = symbolInput.trim().toUpperCase();
-    const qty = Number.parseFloat(qtyInput);
+    const qty = Number(qtyInput);
+    if (!this.account.selectedAccount()) return { message: 'Select a trading account first.', fields: ['account'] };
     if (!sym) return { message: 'Enter a symbol.', fields: ['symbol'] };
-    if (!(qty > 0)) return { message: 'Enter a quantity greater than zero.', fields: ['qty'] };
+    if (!Number.isFinite(qty) || !(qty > 0)) return { message: 'Enter a quantity greater than zero.', fields: ['qty'] };
+    const price = mode === 'buy' ? quote?.ask : quote?.bid;
+    if (!quote || quote.symbol !== sym || !Number.isFinite(price) || price <= 0) {
+      return { message: 'Load a valid quote for this symbol first.', fields: ['symbol'] };
+    }
 
     const held = this.positions().find((position) => position.sym === sym);
     if (mode === 'sell' && (!held || held.qty < qty)) {
       return { message: `You do not hold enough of ${sym} to sell that quantity.`, fields: ['symbol', 'qty'] };
     }
 
-    const price = held ? held.last : UNKNOWN_SYMBOL_PRICE;
     const consideration = price * qty;
+    if (!Number.isFinite(consideration)) return { message: 'Enter a smaller quantity.', fields: ['qty'] };
     if (mode === 'buy' && consideration > this.cash()) {
       return { message: `Insufficient cash. Available ${this.money(this.cash())}.`, fields: ['qty'] };
     }
 
     const next = this.positions().map((position) =>
       position.sym === sym
-        ? { ...position, qty: mode === 'buy' ? position.qty + qty : position.qty - qty }
+        ? { ...position, qty: mode === 'buy' ? position.qty + qty : position.qty - qty,
+            avg: mode === 'buy' ? (position.avg * position.qty + consideration) / (position.qty + qty) : position.avg,
+            last: quote.price }
         : position,
     );
-    if (mode === 'buy' && !held) next.push({ sym, name: sym, qty, avg: price, last: price });
+    if (mode === 'buy' && !held) next.push({ sym, name: name || sym, qty, avg: price, last: quote.price });
     this.positions.set(next.filter((position) => position.qty > 0));
     this.cash.update((cash) => (mode === 'buy' ? cash - consideration : cash + consideration));
 
@@ -115,7 +143,7 @@ export class TradingService {
       status: 'Filled',
     });
     return {
-      head: `${order.type} order filled`,
+      head: `Simulated ${order.type.toLowerCase()} filled`,
       lines: [
         `${order.qty} ${sym} at ${this.money(price)}`,
         `Consideration ${this.money(consideration)}`,
@@ -125,8 +153,9 @@ export class TradingService {
   }
 
   transfer(mode: TransferMode, amountInput: string): TxFailure | Receipt {
+    if (!this.account.selectedAccount()) return { message: 'Select a trading account first.', fields: ['account'] };
     const amount = Number.parseFloat(amountInput);
-    if (!(amount > 0)) return { message: 'Enter an amount greater than zero.', fields: ['amount'] };
+    if (!Number.isFinite(amount) || !(amount > 0)) return { message: 'Enter an amount greater than zero.', fields: ['amount'] };
     if (mode === 'withdraw' && amount > this.cash()) {
       return { message: `Insufficient cash. Available ${this.money(this.cash())}.`, fields: ['amount'] };
     }
@@ -154,10 +183,18 @@ export class TradingService {
   private pushOrder(partial: Omit<Order, 'id' | 'date'>): Order {
     const order: Order = {
       id: 'ORD-' + (10450 + this.orders().length),
-      date: '16 Sep 2026, 10:04',
+      date: new Date().toLocaleString('en-GB', { timeZone: 'UTC' }) + ' UTC',
       ...partial,
     };
     this.orders.update((orders) => [order, ...orders]);
+    this.saveState();
     return order;
+  }
+
+  private saveState(): void {
+    if (this.storageKey) {
+      try { sessionStorage.setItem(this.storageKey, JSON.stringify({ cash: this.cash(), positions: this.positions(), orders: this.orders() })); }
+      catch { /* Simulation still works with storage disabled. */ }
+    }
   }
 }
