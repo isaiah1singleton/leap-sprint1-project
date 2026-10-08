@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { API_CONFIG } from './api.config';
 
 export interface AuthFailure {
   message: string;
@@ -72,16 +73,12 @@ export class AuthService {
     }
   }
 
-  async signOut(): Promise<void> {
-    const revoke = this.getAccessToken()
-      ? firstValueFrom(this.http.post<void>(`${this.apiUrl}/sign-out`, {})).catch(() => undefined)
-      : Promise.resolve();
+  signOut(): void {
     sessionStorage.removeItem('currentUserName');
     sessionStorage.removeItem('currentUserEmail');
     sessionStorage.removeItem('accessToken');
     this.currentUser.set(null);
     this.currentUserEmail.set(null);
-    await revoke;
   }
 
   private setCurrentUser(name: string, email: string, accessToken: string): void {
@@ -95,9 +92,6 @@ export class AuthService {
   private apiFailure(error: unknown, fields: string[]): AuthFailure {
     if (error instanceof HttpErrorResponse && error.error?.detail) {
       return { message: error.error.detail, fields };
-    }
-    if (error instanceof HttpErrorResponse && typeof error.error === 'string') {
-      return { message: error.error, fields };
     }
     return { message: 'An error occurred. Please try again.', fields };
   }

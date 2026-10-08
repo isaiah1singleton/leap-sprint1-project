@@ -2,13 +2,12 @@ import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Receipt, TradingService, TxFailure } from '../core/trading.service';
-import { MarketExplorerComponent } from '../market/market-explorer.component';
 
 type Mode = 'buy' | 'sell' | 'withdraw' | 'deposit';
 
 @Component({
   selector: 'app-transact',
-  imports: [FormsModule, RouterLink, MarketExplorerComponent],
+  imports: [FormsModule, RouterLink],
   templateUrl: './transact.component.html',
 })
 export class TransactComponent {
@@ -19,6 +18,8 @@ export class TransactComponent {
     { id: 'withdraw', label: 'Withdraw' }, { id: 'deposit', label: 'Deposit' },
   ];
   mode: Mode = 'buy';
+  symbol = '';
+  qty = '';
   amount = '';
   error = '';
   receipt: Receipt | null = null;
@@ -33,7 +34,7 @@ export class TransactComponent {
   get verb(): string { return this.modes.find((mode) => mode.id === this.mode)!.label; }
   get note(): string {
     switch (this.mode) {
-      case 'buy': return 'Search a stock or crypto symbol below. Simulated buys use the quoted ask; sells use the quoted bid.';
+      case 'buy': return 'Market order, executed at the last traded price.';
       case 'sell': return 'You can only sell quantities you currently hold.';
       case 'withdraw': return 'Withdrawals go to your linked account ending 4417.';
       default: return 'Deposits from your linked account ending 4417 are available immediately.';
@@ -56,8 +57,9 @@ export class TransactComponent {
   }
 
   submit(): void {
-    if (this.isTrade) return;
-    const result: TxFailure | Receipt = this.trading.transfer(this.mode as 'withdraw' | 'deposit', this.amount);
+    const result: TxFailure | Receipt = this.isTrade
+      ? this.trading.trade(this.mode as 'buy' | 'sell', this.symbol, this.qty)
+      : this.trading.transfer(this.mode as 'withdraw' | 'deposit', this.amount);
     if ('message' in result) {
       this.error = result.message;
       this.errorFields = result.fields;
@@ -66,6 +68,8 @@ export class TransactComponent {
     this.error = '';
     this.errorFields = [];
     this.receipt = result;
+    this.symbol = '';
+    this.qty = '';
     this.amount = '';
   }
 }

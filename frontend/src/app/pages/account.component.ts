@@ -10,7 +10,6 @@ import { AccountsCacheService } from '../core/accounts-cache.service';
 @Component({
   selector: 'app-account',
   templateUrl: './account.component.html',
-  styleUrl: './account.component.css',
   imports: [CommonModule, FormsModule, RouterLink],
 })
 export class AccountComponent implements OnInit {

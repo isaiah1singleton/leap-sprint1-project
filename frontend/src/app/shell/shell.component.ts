@@ -30,8 +30,8 @@ export class ShellComponent {
     return this.title.getTitle() || 'Dashboard';
   }
 
-  async signOut(): Promise<void> {
-    await this.auth.signOut();
+  signOut(): void {
+    this.auth.signOut();
     this.accountsCache.clearCache();
     this.accountSelection.clearSelectedAccount();
     void this.router.navigate(['/signin']);

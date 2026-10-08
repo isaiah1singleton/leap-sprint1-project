@@ -6,11 +6,10 @@ import { AuthService } from '../core/auth.service';
 import { AccountSelectionService } from '../core/account-selection.service';
 import { AccountsCacheService } from '../core/accounts-cache.service';
 import { AccountResponse } from '../core/account.service';
-import { MarketExplorerComponent } from '../market/market-explorer.component';
 
 @Component({
   selector: 'app-overview',
-  imports: [RouterLink, CommonModule, MarketExplorerComponent],
+  imports: [RouterLink, CommonModule],
   templateUrl: './overview.component.html',
 })
 export class OverviewComponent implements OnInit {
