@@ -1,4 +1,8 @@
-# Repository instructions
+# Repository instructionsse
+
+## Database
+
+Use `database/transaction_schema.sql` to imeplement all database changes - we do not use any kind of database versioning, instead opting to throw all changes in a single file.
 
 ## Backend API routes
 

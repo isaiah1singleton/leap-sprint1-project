@@ -1,88 +1,166 @@
 package com.neueda.leap.entities;
 
-import com.neueda.leap.enums.AssetClass;
-import com.neueda.leap.enums.Currency;
 import com.neueda.leap.enums.OrderSide;
-import com.neueda.leap.enums.OrderStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.Locale;
-
 
 @Entity
-@Table(
-        name = "orders"
-)
-
-
+@Table(name = "orders")
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id")
     private Integer orderId;
 
-    @ManyToOne
-    @JoinColumn(name = "account_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "account_id",
+            nullable = false,
+            updatable = false
+    )
     private Account account;
 
-    @ManyToOne
-    @JoinColumn(name = "instrument_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "instrument_id",
+            nullable = false,
+            updatable = false
+    )
     private Instrument instrument;
 
     @Enumerated(EnumType.STRING)
+    @Column(
+            name = "side",
+            nullable = false,
+            updatable = false,
+            columnDefinition = "text"
+    )
     private OrderSide side;
 
-    @Column(name = "requested_quantity", nullable = false, columnDefinition = "numeric")
-    private BigDecimal RequestedQuantity;
+    @Column(
+            name = "requested_quantity",
+            nullable = false,
+            updatable = false,
+            precision = 24,
+            scale = 8
+    )
+    private BigDecimal requestedQuantity;
 
-    @Column(name = "submitted_at", nullable = false)
+    @Column(
+            name = "submitted_quote_price",
+            nullable = false,
+            updatable = false,
+            precision = 24,
+            scale = 8
+    )
+    private BigDecimal submittedQuotePrice;
+
+    @Column(
+            name = "submitted_quote_at",
+            nullable = false,
+            updatable = false
+    )
+    private OffsetDateTime submittedQuoteAt;
+
+    @Column(
+            name = "submitted_at",
+            nullable = false,
+            updatable = false
+    )
     private OffsetDateTime submittedAt;
 
-    @Enumerated(EnumType.STRING)
-    private OrderStatus currentOrderStatus;
-
-    protected Order() { }
+    protected Order() {}
 
     public Order(
             Account account,
             Instrument instrument,
             OrderSide side,
             BigDecimal requestedQuantity,
+            BigDecimal submittedQuotePrice,
+            OffsetDateTime submittedQuoteAt,
             OffsetDateTime submittedAt
     ) {
         if (account == null) {
-            throw new IllegalArgumentException("account cannot be null");
+            throw new IllegalArgumentException("Account is required.");
         }
-        this.account = account;
 
-        if (instrument == null){
+        if (instrument == null) {
             throw new IllegalArgumentException("Instrument is required.");
         }
+
+        if (side == null) {
+            throw new IllegalArgumentException("Order side is required.");
+        }
+
+        requirePositiveNumeric(requestedQuantity, "Requested quantity");
+        requirePositiveNumeric(submittedQuotePrice, "Submitted quote price");
+
+        if (submittedQuoteAt == null) {
+            throw new IllegalArgumentException(
+                    "Submitted quote time is required."
+            );
+        }
+
+        if (submittedAt == null) {
+            throw new IllegalArgumentException(
+                    "Submission time is required."
+            );
+        }
+
+        if (submittedQuoteAt.isAfter(submittedAt)) {
+            throw new IllegalArgumentException(
+                    "Submitted quote time cannot be after submission time."
+            );
+        }
+
+        this.account = account;
         this.instrument = instrument;
-
-        if (side == null){
-            throw new IllegalArgumentException("OrderSide is required.");
-        }
         this.side = side;
-
-        if (requestedQuantity == null){
-            throw new IllegalArgumentException("RequestedQuantity is required.");
-        }
-        else if (requestedQuantity.compareTo(BigDecimal.ZERO) <= 0){
-            throw new IllegalArgumentException("RequestedQuantity must be greater than to 0.");
-        }
-        this.RequestedQuantity = requestedQuantity;
-
-        if (submittedAt == null){
-            throw new IllegalArgumentException("SubmittedAt timestamp is required.");
-        }
+        this.requestedQuantity = requestedQuantity;
+        this.submittedQuotePrice = submittedQuotePrice;
+        this.submittedQuoteAt = submittedQuoteAt;
         this.submittedAt = submittedAt;
-
-        this.currentOrderStatus = OrderStatus.SUBMITTED;
     }
 
+    private static void requirePositiveNumeric(
+            BigDecimal value,
+            String field
+    ) {
+        if (value == null || value.signum() <= 0) {
+            throw new IllegalArgumentException(
+                    field + " must be positive."
+            );
+        }
+
+        BigDecimal normalized = value.stripTrailingZeros();
+
+        int fractionalDigits = Math.max(0, normalized.scale());
+        int integerDigits = Math.max(
+                0,
+                normalized.precision() - normalized.scale()
+        );
+
+        if (fractionalDigits > 8 || integerDigits > 16) {
+            throw new IllegalArgumentException(
+                    field + " must fit NUMERIC(24, 8): "
+                            + "at most 16 integer digits and "
+                            + "8 decimal places."
+            );
+        }
+    }
 
     public Integer getOrderId() {
         return orderId;
@@ -101,18 +179,18 @@ public class Order {
     }
 
     public BigDecimal getRequestedQuantity() {
-        return RequestedQuantity;
+        return requestedQuantity;
+    }
+
+    public BigDecimal getSubmittedQuotePrice() {
+        return submittedQuotePrice;
+    }
+
+    public OffsetDateTime getSubmittedQuoteAt() {
+        return submittedQuoteAt;
     }
 
     public OffsetDateTime getSubmittedAt() {
         return submittedAt;
-    }
-
-    public OrderStatus getCurrentOrderStatus() {
-        return currentOrderStatus;
-    }
-
-    public void setCurrentOrderStatus(OrderStatus currentOrderStatus) {
-        this.currentOrderStatus = currentOrderStatus;
     }
 }
