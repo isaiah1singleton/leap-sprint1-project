@@ -63,6 +63,18 @@ Expired and revoked sessions remain recorded.
 
 Run `mvn test` from the backend directory to check the session behavior.
 
+### Order validation
+
+Before an order proceeds, the backend checks that its details are valid, the
+instrument is supported and available for trading, the requested quantity
+follows the firm's rules, and the client has enough cash or units. The check
+uses the price shown to the client and follows the platform's configurable
+trading rules.
+
+For now, the order and account information used for this check is sample data.
+This step checks whether an order meets the rules; accepting orders and
+reserving cash or units are not included yet.
+
 ## Stock and crypto market data
 
 The existing Markets and Transact pages search symbols and names from

@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, ApiRoutes.AUTH_REGISTER, ApiRoutes.AUTH_SIGN_IN).permitAll()
+                        .requestMatchers(HttpMethod.POST, ApiRoutes.ORDER_VALIDATE).authenticated()
                         .requestMatchers(HttpMethod.GET, ApiRoutes.HELLO).permitAll()
                         .requestMatchers(ApiRoutes.MARKET, ApiRoutes.MARKET_ALL).authenticated()
                         .anyRequest().authenticated())
