@@ -7,7 +7,6 @@ import com.neueda.leap.entities.Order;
 import com.neueda.leap.entities.QuoteSnapshot;
 import com.neueda.leap.enums.ClientStatus;
 import com.neueda.leap.enums.OrderSide;
-import com.neueda.leap.enums.OrderStatus;
 import com.neueda.leap.service.TradingRules;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -54,9 +53,6 @@ public class OrderValidationService {
         if (authenticatedEmail == null || account.getClient().getEmail() == null
                 || !account.getClient().getEmail().equalsIgnoreCase(authenticatedEmail)) {
             throw failure(OrderValidationErrorCodes.ORDER_NOT_OWNED, "The order does not belong to the authenticated client.");
-        }
-        if (order.getCurrentOrderStatus() != OrderStatus.SUBMITTED) {
-            throw failure(OrderValidationErrorCodes.ORDER_NOT_SUBMITTED, "The order is not in submitted status.");
         }
     }
 
