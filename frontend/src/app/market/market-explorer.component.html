@@ -1,0 +1,124 @@
+@if (showSearch()) {
+<section class="card market-panel" aria-label="Stock and crypto search">
+  <div class="market-heading">
+    <div><h2 class="card-title">Explore stocks & crypto</h2><p class="sub">Search the US stock and crypto catalogues.</p></div>
+    <span class="data-badge">We request prices every 60 seconds. Up-to-date prices aren’t guaranteed.</span>
+  </div>
+  <div class="symbol-search">
+    <label class="label" for="ticker-search">Symbol or company name</label>
+    <input id="ticker-search" class="input" type="search" placeholder="Search AAPL, Microsoft, BTC…"
+      role="combobox" aria-autocomplete="list" aria-controls="ticker-results"
+      [attr.aria-expanded]="expanded() && !!query()" [attr.aria-activedescendant]="activeIndex() >= 0 ? 'ticker-option-' + activeIndex() : null"
+      [disabled]="loadingCatalogue()" [ngModel]="query()" (ngModelChange)="search($event)"
+      (focus)="expanded.set(true)" (keydown)="searchKey($event)" autocomplete="off" />
+    @if (expanded() && query()) {
+      <div id="ticker-results" class="search-results" role="listbox" aria-label="Matching symbols">
+        @for (item of matches(); track item.symbol; let index = $index) {
+          <button type="button" class="search-result" role="option" [id]="'ticker-option-' + index"
+            [attr.aria-selected]="activeIndex() === index" [class.highlighted]="activeIndex() === index" (click)="select(item)">
+            <span><strong>{{ item.symbol }}</strong><span class="sub">{{ item.name }}</span></span>
+            <span class="data-badge">{{ item.type === 'crypto' ? 'Crypto' : 'US stock' }}</span>
+          </button>
+        } @empty { <p class="sub empty-search">No matching symbols in the catalogues.</p> }
+      </div>
+    }
+  </div>
+  @if (loadingCatalogue()) { <p class="sub" role="status">Loading symbols…</p> }
+  @if (catalogueError()) {
+    <p class="error-text" role="alert">{{ catalogueError() }}</p>
+    <button class="btn-chip" (click)="loadCatalogue()">Retry symbols</button>
+  }
+  @if (!loadingCatalogue() && !catalogueError()) {
+    <div class="common-symbols"><span class="sub">Popular stocks</span>
+      @for (symbol of common; track symbol) { <button class="btn-chip" (click)="selectSymbol(symbol)">{{ symbol }}</button> }
+    </div>
+  }
+
+  @if (selected(); as instrument) {
+    <div class="ticker-detail" aria-label="Ticker details">
+      <div class="market-heading">
+        <div><h3>{{ instrument.symbol }} <span class="sub">{{ instrument.name }}</span></h3>
+          <p class="sub">{{ instrument.exchange }} · {{ instrument.type }} · {{ instrument.currency }}</p></div>
+        @if (instrument.type === 'equity') {
+          <button class="btn-chip" (click)="togglePin(instrument)"
+            [attr.aria-pressed]="market.pins().includes(instrument.symbol)"
+            [disabled]="!market.pins().includes(instrument.symbol) && market.pins().length >= market.maxPins">
+            {{ market.pins().includes(instrument.symbol) ? 'Unpin stock' : 'Pin to dashboard' }}
+          </button>
+        }
+      </div>
+      @if (pinError()) { <p class="error-text" role="alert">{{ pinError() }}</p> }
+      @if (market.pins().length >= market.maxPins) { <p class="sub">25 stock limit reached. Unpin a stock to add another.</p> }
+      @if (loadingQuote()) { <p class="sub" role="status">Loading quote for {{ instrument.symbol }}…</p> }
+      @if (quoteError()) {
+        <p class="error-text" role="alert">{{ quoteError() }}</p>
+        <button class="btn-chip" [disabled]="loadingQuote()" (click)="loadQuote(instrument)">Retry quote</button>
+      }
+      @if (quote(); as current) {
+        <div class="quote-price">{{ money(current.price, current.currency || instrument.currency) }}
+          <span class="quote-change" [class.gain]="(current.changePercent ?? 0) > 0" [class.loss]="(current.changePercent ?? 0) < 0">{{ change(result()) }}</span>
+        </div>
+        <dl class="quote-facts">
+          <div><dt>Previous close</dt><dd>{{ current.previousClose == null ? 'Unavailable' : money(current.previousClose, current.currency || instrument.currency) }}</dd></div>
+          <div><dt>Buy at ask</dt><dd>{{ money(current.ask, current.currency || instrument.currency) }}</dd></div>
+          <div><dt>Sell at bid</dt><dd>{{ money(current.bid, current.currency || instrument.currency) }}</dd></div>
+          <div><dt>Market</dt><dd>{{ current.marketState | titlecase }}</dd></div>
+        </dl>
+        <p class="sub">Quote as of {{ current.asOf | date:'MMM d, y, HH:mm:ss':'UTC' }} UTC · {{ result()?.source }}
+          @if (result()?.stale) { <strong class="loss"> · Stale quote</strong> }
+          @if (result()?.source === 'synthetic') { <strong> · Synthetic data</strong> }
+        </p>
+        <div class="trade-controls">
+          <div><label class="label" for="ticker-quantity">Quantity</label>
+            <input id="ticker-quantity" class="input" type="number" min="0.000001" step="any" [ngModel]="quantity()" (ngModelChange)="quantity.set('' + $event); receipt.set(null)" /></div>
+          <div class="trade-account"><p class="sub">{{ account()?.accountName || 'No account selected' }}</p>
+            <p class="sub">Cash {{ trading.money(trading.cash()) }} · {{ held() }} held</p>
+            <p class="sub">Buy total {{ validQuantity() ? money(qty() * current.ask, current.currency || instrument.currency) : '—' }}</p></div>
+          <button class="btn btn-primary btn-sm" [disabled]="buyDisabled()" [title]="disabledReason('buy')" (click)="trade('buy')">Buy {{ instrument.symbol }}</button>
+          <button class="btn btn-secondary btn-sm" [disabled]="sellDisabled()" [title]="disabledReason('sell')" (click)="trade('sell')">Sell {{ instrument.symbol }}</button>
+        </div>
+        @if (buyDisabled()) { <p class="sub">Buy: {{ disabledReason('buy') }}</p> }
+        @if (sellDisabled()) { <p class="sub">Sell: {{ disabledReason('sell') }}</p> }
+        @if (tradeError()) { <p class="error-text" role="alert">{{ tradeError() }}</p> }
+        @if (receipt(); as confirmation) {
+          <div class="trade-receipt" role="status"><strong>{{ confirmation.head }}</strong>
+            @for (line of confirmation.lines; track line) { <p>{{ line }}</p> }
+          </div>
+        }
+        <p class="note">Simulated trades use this account's prototype cash and holdings. Buy at ask, sell at bid; no fees. Bid and ask are modelled by the provider.</p>
+      }
+    </div>
+  }
+  <p class="note">Fauxnance provides delayed, best-effort quotes and may return synthetic data. Educational data. Not for investment use.</p>
+</section>
+}
+
+@if (showWatchlist()) {
+  <section class="card watchlist" aria-label="Pinned stocks">
+    <div class="market-heading">
+      <div><h2 class="card-title">Pinned stocks <span class="sub">{{ market.pins().length }} / 25</span></h2>
+        <p class="sub">Your dashboard watchlist, saved for your login in this browser.</p></div>
+      <button class="btn-chip" [disabled]="refreshing() || !market.pins().length" (click)="refreshWatchlist()">{{ refreshing() ? 'Refreshing…' : 'Refresh quotes' }}</button>
+    </div>
+    @if (watchlistError()) { <p class="error-text" role="alert">{{ watchlistError() }}</p> }
+    @if (!market.pins().length) { <p class="empty-watchlist">Search for a stock on <a routerLink="/app/markets">Markets</a> and select “Pin to dashboard” to add it here.</p> }
+    <div class="watchlist-grid">
+      @for (instrument of market.pinnedSymbols(); track instrument.symbol) {
+        @let item = watchlistQuotes()[instrument.symbol];
+        <article class="watchlist-tile">
+          <div class="market-heading"><button class="ticker-link" (click)="select(instrument)">{{ instrument.symbol }}</button>
+            <button class="unpin" [attr.aria-label]="'Unpin ' + instrument.symbol" (click)="togglePin(instrument)">×</button></div>
+          <p class="sub">{{ instrument.name }}</p>
+          @if (item?.quote; as current) {
+            <strong class="tile-price" [class.gain]="(current.changePercent ?? 0) > 0" [class.loss]="(current.changePercent ?? 0) < 0">{{ money(current.price, current.currency || instrument.currency) }}</strong>
+            <p [class.gain]="(current.changePercent ?? 0) > 0" [class.loss]="(current.changePercent ?? 0) < 0">{{ (current.changePercent ?? 0) > 0 ? '↑ ' : (current.changePercent ?? 0) < 0 ? '↓ ' : '' }}{{ change(item) }}</p>
+            <p class="sub">{{ current.asOf | date:'MMM d, HH:mm:ss':'UTC' }} UTC</p>
+            @if (item.stale) { <p class="loss sub">Stale quote</p> }
+            @if (item.source === 'synthetic') { <p class="sub">Synthetic data</p> }
+          } @else { <p class="sub">{{ item?.error?.message || (refreshing() ? 'Loading quote…' : 'Quote unavailable') }}</p> }
+        </article>
+      }
+    </div>
+    @if (updatedAt()) { <p class="sub">Last checked {{ updatedAt() | date:'HH:mm:ss':'UTC' }} UTC · We request prices every 60 seconds while this page is visible. Up-to-date prices aren’t guaranteed.</p> }
+  </section>
+}

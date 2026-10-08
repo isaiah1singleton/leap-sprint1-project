@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, ApiRoutes.AUTH_REGISTER, ApiRoutes.AUTH_SIGN_IN).permitAll()
                         .requestMatchers(HttpMethod.GET, ApiRoutes.HELLO).permitAll()
+                        .requestMatchers(ApiRoutes.MARKET, ApiRoutes.MARKET_ALL).authenticated()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(
                         (request, response, error) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
