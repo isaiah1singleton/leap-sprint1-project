@@ -37,11 +37,12 @@ public class Order {
     @Column(name = "requested_quantity", nullable = false, columnDefinition = "numeric")
     private BigDecimal RequestedQuantity;
 
+    @Column(name = "submitted_quote_price", nullable = false, columnDefinition = "numeric")
+    private BigDecimal submittedQuotePrice;
+
     @Column(name = "submitted_at", nullable = false)
     private OffsetDateTime submittedAt;
 
-    @Enumerated(EnumType.STRING)
-    private OrderStatus currentOrderStatus;
 
     protected Order() { }
 
@@ -50,6 +51,7 @@ public class Order {
             Instrument instrument,
             OrderSide side,
             BigDecimal requestedQuantity,
+            BigDecimal submittedQuotePrice,
             OffsetDateTime submittedAt
     ) {
         if (account == null) {
@@ -67,6 +69,14 @@ public class Order {
         }
         this.side = side;
 
+        if (submittedQuotePrice == null){
+            throw new IllegalArgumentException("SubmittedQuotePrice is required.");
+        }
+        else if (submittedQuotePrice.compareTo(requestedQuantity) <= 0){
+            throw new IllegalArgumentException("SubmittedQuotePrice must be greater than 0.");
+        }
+        this.submittedQuotePrice = submittedQuotePrice;
+
         if (requestedQuantity == null){
             throw new IllegalArgumentException("RequestedQuantity is required.");
         }
@@ -78,9 +88,7 @@ public class Order {
         if (submittedAt == null){
             throw new IllegalArgumentException("SubmittedAt timestamp is required.");
         }
-        this.submittedAt = submittedAt;
-
-        this.currentOrderStatus = OrderStatus.SUBMITTED;
+        this.submittedAt = OffsetDateTime.now();
     }
 
 
@@ -106,13 +114,5 @@ public class Order {
 
     public OffsetDateTime getSubmittedAt() {
         return submittedAt;
-    }
-
-    public OrderStatus getCurrentOrderStatus() {
-        return currentOrderStatus;
-    }
-
-    public void setCurrentOrderStatus(OrderStatus currentOrderStatus) {
-        this.currentOrderStatus = currentOrderStatus;
     }
 }

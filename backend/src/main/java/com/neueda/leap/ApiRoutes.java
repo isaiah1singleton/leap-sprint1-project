@@ -9,6 +9,9 @@ public final class ApiRoutes {
     public static final String AUTH_REGISTER = AUTH + REGISTER;
     public static final String AUTH_SIGN_IN = AUTH + SIGN_IN;
 
+    // Order Controller
+    public static final String ORDER = "/order";
+
     private ApiRoutes() {
     }
 }
