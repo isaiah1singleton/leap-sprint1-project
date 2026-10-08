@@ -39,7 +39,6 @@
 </div>
 
 <!-- Main Content Section -->
-<app-market-explorer [showSearch]="false" />
 @if (!selectedAccount()) {
   <div class="card card-pad-lg" style="background:rgba(255,180,0,0.05);border:1px solid var(--muted);text-align:center;padding:40px">
     <h3 style="margin:0 0 12px 0">Select an Account</h3>
@@ -89,7 +88,7 @@
         <button class="btn btn-secondary btn-sm" routerLink="/app/transact" [queryParams]="{ mode: 'deposit' }">Deposit funds</button>
         <button class="btn btn-secondary btn-sm" routerLink="/app/portfolio">Review portfolio</button>
         <button class="btn btn-secondary btn-sm" (click)="createAccount()">Create account</button>
-        <p class="note" style="margin-top:auto">Search and pin stocks from Markets. Quotes refresh every 60 seconds and may be delayed by the provider.</p>
+        <p class="note" style="margin-top:auto">Market data delayed 15 minutes on this account tier.</p>
       </div>
     </div>
   </div>

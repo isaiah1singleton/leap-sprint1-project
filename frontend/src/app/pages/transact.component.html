@@ -1,5 +1,5 @@
 <div class="row">
-  <div class="card card-pad-lg" style="flex:2">
+  <div class="card card-pad-lg tx-panel">
     <div class="seg">
       @for (option of modes; track option.id) {
         <button class="seg-opt" [class.active]="mode === option.id" (click)="setMode(option.id)">{{ option.label }}</button>
@@ -16,14 +16,17 @@
     } @else {
       <p class="auth-sub" style="margin-top:16px">{{ note }}</p>
       @if (isTrade) {
-        <app-market-explorer [showWatchlist]="false" />
+        <label class="label" for="symbol">Symbol</label>
+        <input id="symbol" class="input" [class.invalid]="invalid('symbol')" [(ngModel)]="symbol" (keyup.enter)="submit()" placeholder="e.g. AAPL" />
+        <label class="label" for="qty">Quantity</label>
+        <input id="qty" class="input" [class.invalid]="invalid('qty')" [(ngModel)]="qty" (keyup.enter)="submit()" placeholder="Number of shares" />
       } @else {
         <label class="label" for="amount">Amount</label>
         <input id="amount" class="input" [class.invalid]="invalid('amount')" [(ngModel)]="amount" (keyup.enter)="submit()" placeholder="0.00" />
         <p class="stat-note">Cash available {{ trading.money(trading.cash()) }}</p>
       }
       @if (error) { <p class="error-text">{{ error }}</p> }
-      @if (!isTrade) { <button class="btn btn-primary" (click)="submit()">Confirm {{ verb }}</button> }
+      <button class="btn btn-primary" (click)="submit()">Confirm {{ verb }}</button>
     }
   </div>
 
@@ -32,6 +35,6 @@
     @for (row of holdings(); track row.sym) {
       <div class="list-row"><div><strong>{{ row.sym }}</strong><div class="sub">{{ row.qty }} held</div></div><div style="text-align:right">{{ row.last }}<div class="sub">{{ row.value }}</div></div></div>
     }
-    <p class="note" style="margin-top:auto;padding-top:14px">Cash and holdings are simulated for the selected account. Quotes come from the backend market API.</p>
+    <p class="note" style="margin-top:auto;padding-top:14px">Symbols outside your holdings can be bought at a mock price of $100.00 in this prototype.</p>
   </div>
 </div>
