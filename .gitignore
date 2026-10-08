@@ -3,3 +3,8 @@ backend/.env
 .idea/
 backend/team-skeleton.iml
 backend/target
+.venv/
+__pycache__/
+*.pyc
+analytics/duckdb/*.duckdb
+analytics/duckdb/*.duckdb.wal
