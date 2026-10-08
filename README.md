@@ -77,38 +77,14 @@ reserving cash or units are not included yet.
 
 ## Stock and crypto market data
 
-The existing Markets and Transact pages search symbols and names from
-`backend/src/main/resources/us-v1.json` and `crypto-us.json`. Selecting a result
-loads its price, daily change, previous close, bid, ask, market state, timestamp,
-and provider status through the Spring backend. Pin up to 25 US stocks from
-Markets; the Dashboard displays their prices and green/red daily changes.
-Pins are saved per login in this browser. Crypto symbols can be searched and
-traded in the simulator, but cannot be pinned to the stock watchlist.
+Signed-in users can search US stocks and crypto, view quote details, and pin up
+to 25 US stocks to their dashboard. Quotes come from
+[Fauxnance](https://y4t9nq2bqf.execute-api.eu-west-2.amazonaws.com/v1/docs)
+through the backend, keeping the API key private.
 
-All market routes require a valid backend session:
-
-- `GET /api/market/symbols?q=apple&limit=15` searches the local catalogues.
-- `GET /api/market/quotes/AAPL` returns a ticker quote.
-- `GET /api/market/quotes?symbols=AAPL,MSFT` returns up to 25 quotes, including
-  per-symbol errors when the provider cannot return a price.
-
-The backend alone sends `X-Api-Key` to
-[Fauxnance](https://y4t9nq2bqf.execute-api.eu-west-2.amazonaws.com/v1/docs).
-It reads `FAUXNANCE_API_KEY` from the environment or the optional backend `.env`
-file; never place this key in Angular configuration. `FAUXNANCE_BASE_URL` can
-override the provider URL. Quotes are cached for 30 seconds. Dashboard batches
-and selected ticker details refresh every 60 seconds while the page is visible.
-Fauxnance quotes are delayed/best-effort; stale and synthetic data are labelled.
-Provider failures show a retry option instead of fabricated prices.
-
-Buy/sell use the quoted ask/bid respectively. Their buttons are disabled for
-insufficient simulated cash/holdings, invalid quantities, an absent account,
-or unavailable/stale quotes. Simulation state is separate per login and trading
-account and survives reloads within the same browser session. Each new simulation
-starts with the existing demo cash and holdings; these are not bank balances.
-
-Run `mvn test` from `backend`, and `npm test -- --watch=false` plus
-`npm run build` from `frontend` to check the integration.
+Prices are requested every 60 seconds while the page is visible, but may be
+delayed, stale, or synthetic. Buy and sell controls check simulated cash and
+holdings.
 
 ## Current prototype scope
 
