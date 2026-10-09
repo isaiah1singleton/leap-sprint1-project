@@ -29,9 +29,6 @@ public class CashBalance {
     @Column(name = "total_balance", nullable = false, precision = 24, scale = 8)
     private BigDecimal totalBalance;
 
-    @Column(name = "reserved_balance", nullable = false, precision = 24, scale = 8)
-    private BigDecimal reservedBalance;
-
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
@@ -42,7 +39,6 @@ public class CashBalance {
         this.account = Objects.requireNonNull(account, "Account is required.");
         this.id = new CashBalanceId(account.getAccountId(), currency);
         this.totalBalance = BigDecimal.ZERO;
-        this.reservedBalance = BigDecimal.ZERO;
         touch();
     }
 
@@ -55,27 +51,8 @@ public class CashBalance {
     public Account getAccount() { return account; }
     public Currency getCurrency() { return id.getCurrency(); }
     public Money getTotalBalance() { return new Money(totalBalance, getCurrency()); }
-    public Money getReservedBalance() { return new Money(reservedBalance, getCurrency()); }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
-    public Money availableBalance() { return new Money(totalBalance.subtract(reservedBalance), getCurrency()); }
-
-    public void reserveCash(Money amount) {
-        BigDecimal value = requirePositiveAmount(amount);
-        if (availableBalance().amount().compareTo(value) < 0) {
-            throw new IllegalStateException("Insufficient available cash to reserve.");
-        }
-        reservedBalance = reservedBalance.add(value);
-        touch();
-    }
-
-    public void releaseReservedCash(Money amount) {
-        BigDecimal value = requirePositiveAmount(amount);
-        if (reservedBalance.compareTo(value) < 0) {
-            throw new IllegalStateException("Cannot release more cash than is reserved.");
-        }
-        reservedBalance = reservedBalance.subtract(value);
-        touch();
-    }
+    public Money availableBalance() { return new Money(totalBalance, getCurrency()); }
 
     public void depositCash(Money amount) {
         totalBalance = totalBalance.add(requirePositiveAmount(amount));

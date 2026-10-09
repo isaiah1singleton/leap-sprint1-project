@@ -1,5 +1,3 @@
--- Initial schema for an empty database. PostgreSQL's Docker initializer runs
--- this file only when creating a new data volume.
 CREATE TABLE clients
 (
 	client_id SERIAL PRIMARY KEY,
@@ -115,6 +113,25 @@ CREATE TABLE order_events
 
 );
 
+-- Durable integration events are inserted in the same transaction as the
+-- business change they describe. A later publisher sends unpublished rows to
+-- Kafka and sets published_at after acknowledgement.
+CREATE TABLE outbox_events
+(
+    event_id UUID PRIMARY KEY,
+    event_type TEXT NOT NULL CHECK (length(trim(event_type)) > 0),
+    aggregate_type TEXT NOT NULL CHECK (length(trim(aggregate_type)) > 0),
+    aggregate_id TEXT NOT NULL CHECK (length(trim(aggregate_id)) > 0),
+    schema_version INTEGER NOT NULL CHECK (schema_version > 0),
+    payload JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    published_at TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT ck_outbox_published_time CHECK (published_at IS NULL OR published_at >= created_at)
+);
+
+CREATE INDEX ix_outbox_events_unpublished
+    ON outbox_events(published_at, created_at, event_id);
+
 CREATE TABLE account_balances
 (
     account_id INTEGER NOT NULL REFERENCES accounts(account_id),
@@ -122,7 +139,6 @@ CREATE TABLE account_balances
     PRIMARY KEY (account_id, currency),
 
     total_balance NUMERIC(24, 8) NOT NULL CHECK(total_balance >= 0),
-    reserved_balance NUMERIC(24, 8) NOT NULL CHECK(reserved_balance >= 0 AND reserved_balance <= total_balance),
 
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
@@ -230,3 +246,11 @@ CREATE TABLE fifo_allocations
 
     allocated_quantity INTEGER NOT NULL CHECK(allocated_quantity > 0)
 );
+
+-- For an existing database initialized before cancellation was added, run
+-- only these statements in pgAdmin. They are safe to rerun.
+ALTER TABLE order_events DROP CONSTRAINT IF EXISTS order_events_status_check;
+ALTER TABLE order_events DROP CONSTRAINT IF EXISTS ck_order_events_status;
+ALTER TABLE order_events ADD CONSTRAINT ck_order_events_status
+    CHECK (status IN ('SUBMITTED', 'ACCEPTED', 'FILLED', 'REJECTED', 'CANCELLED'));
+
