@@ -4,9 +4,10 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
 
 export interface MarketSymbol {
+  instrumentId: number;
   symbol: string;
   name: string;
-  type: 'equity' | 'crypto';
+  type: 'equity' | 'etf' | 'crypto' | 'bond' | 'forex';
   exchange: string;
   currency: string;
 }
@@ -71,7 +72,7 @@ export class MarketService {
   pin(item: MarketSymbol): string | null {
     if (this.pins().includes(item.symbol)) return null;
     if (item.type !== 'equity' || !this.catalogue().some(entry => entry.symbol === item.symbol && entry.type === 'equity')) {
-      return 'Only stocks from the US catalogue can be pinned.';
+      return 'Only stocks in the instrument database can be pinned.';
     }
     if (this.pins().length >= this.maxPins) return 'You can pin up to 25 stocks. Unpin one to add another.';
     this.pins.update(pins => [...pins, item.symbol]);

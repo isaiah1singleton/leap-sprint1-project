@@ -60,7 +60,7 @@ class OrderSubmissionIntegrationTest {
         bitcoin = instruments.saveAndFlush(bitcoin);
         var quote = new MarketQuoteDto("X:BTC-USD", new BigDecimal("100"), new BigDecimal("99"),
                 new BigDecimal("101"), new BigDecimal("200"), "USD", null, null, null,
-                OffsetDateTime.now().minusMinutes(2).toString(), "open");
+                OffsetDateTime.now().minusSeconds(30).toString(), "open");
         when(market.quote("X:BTC-USD")).thenReturn(new MarketQuoteResultDto("X:BTC-USD", quote, "provider", false, null));
 
         String buy = "{\"accountId\":" + accountId + ",\"instrumentId\":" + bitcoin.getInstrumentId()

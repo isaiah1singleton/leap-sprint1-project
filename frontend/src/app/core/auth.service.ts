@@ -93,11 +93,17 @@ export class AuthService {
   }
 
   private apiFailure(error: unknown, fields: string[]): AuthFailure {
+    if (error instanceof HttpErrorResponse && error.status === 0) {
+      return { message: 'Cannot reach the backend. Check that the backend container is running and port 8082 is reachable.', fields: [] };
+    }
     if (error instanceof HttpErrorResponse && error.error?.detail) {
       return { message: error.error.detail, fields };
     }
     if (error instanceof HttpErrorResponse && typeof error.error === 'string') {
       return { message: error.error, fields };
+    }
+    if (error instanceof HttpErrorResponse && error.status >= 500) {
+      return { message: 'The backend failed to process this request. Check its container logs and try again.', fields: [] };
     }
     return { message: 'An error occurred. Please try again.', fields };
   }

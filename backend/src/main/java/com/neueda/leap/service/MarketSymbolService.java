@@ -1,33 +1,21 @@
 package com.neueda.leap.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.neueda.leap.entities.Instrument;
 import com.neueda.leap.models.MarketSymbolDto;
-import java.io.IOException;
+import com.neueda.leap.repository.InstrumentRepository;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-/** The curated files are the only supported search and quote universe. */
+/** Searchable instruments are the tradable instruments persisted in PostgreSQL. */
 @Service
 public class MarketSymbolService {
-    private final Map<String, MarketSymbolDto> symbols;
+    private final InstrumentRepository instruments;
 
-    public MarketSymbolService(ObjectMapper mapper) throws IOException {
-        Map<String, MarketSymbolDto> catalogue = new LinkedHashMap<>();
-        for (String resource : List.of("us-v1.json", "crypto-us.json")) {
-            try (var input = new ClassPathResource(resource).getInputStream()) {
-                for (var node : mapper.readTree(input).withArray("symbols")) {
-                    MarketSymbolDto symbol = mapper.treeToValue(node, MarketSymbolDto.class);
-                    catalogue.put(symbol.symbol(), symbol);
-                }
-            }
-        }
-        symbols = Map.copyOf(catalogue);
+    public MarketSymbolService(InstrumentRepository instruments) {
+        this.instruments = instruments;
     }
 
     public List<MarketSymbolDto> search(String query, int limit) {
@@ -36,8 +24,11 @@ public class MarketSymbolService {
         }
         String term = query == null ? "" : query.trim().toUpperCase(Locale.ROOT);
         if (term.length() > 100) throw new IllegalArgumentException("Search must be at most 100 characters.");
-        return symbols.values().stream()
-                .filter(item -> item.symbol().contains(term) || item.name().toUpperCase(Locale.ROOT).contains(term))
+        return instruments.findAllByOrderByMarketAscSymbolAsc().stream()
+                .filter(Instrument::isTradable)
+                .filter(item -> item.getSymbol().contains(term)
+                        || item.getInstrumentName().toUpperCase(Locale.ROOT).contains(term))
+                .map(MarketSymbolService::toDto)
                 .sorted(Comparator.comparingInt((MarketSymbolDto item) -> item.symbol().equals(term) ? 0
                         : item.symbol().startsWith(term) ? 1 : 2).thenComparing(MarketSymbolDto::symbol))
                 .limit(limit).toList();
@@ -45,8 +36,13 @@ public class MarketSymbolService {
 
     public MarketSymbolDto requireSymbol(String symbol) {
         String normalized = symbol == null ? "" : symbol.trim().toUpperCase(Locale.ROOT);
-        MarketSymbolDto result = symbols.get(normalized);
-        if (result == null) throw new NoSuchElementException("Symbol is not in the US or crypto catalogue.");
-        return result;
+        return instruments.findFirstBySymbolIgnoreCase(normalized).map(MarketSymbolService::toDto)
+                .orElseThrow(() -> new NoSuchElementException("Symbol is not in the instrument database."));
+    }
+
+    private static MarketSymbolDto toDto(Instrument item) {
+        return new MarketSymbolDto(item.getInstrumentId(), item.getSymbol(), item.getInstrumentName(),
+                item.getAssetClass().name().toLowerCase(Locale.ROOT), item.getMarket(),
+                item.getQuoteCurrency().name());
     }
 }

@@ -1,22 +1,20 @@
 <div class="stack">
   <div class="row">
-    <div class="card" style="flex:1"><p class="stat-label">Total value</p><p class="stat-value">{{ trading.money(trading.totalValue()) }}</p></div>
-    <div class="card" style="flex:1"><p class="stat-label">Invested</p><p class="stat-value">{{ trading.money(trading.invested()) }}</p></div>
     <div class="card" style="flex:1"><p class="stat-label">Cash balance</p><p class="stat-value">{{ trading.money(trading.cash()) }}</p></div>
+    <div class="card" style="flex:1"><p class="stat-label">Open positions</p><p class="stat-value">{{ trading.positions().length }}</p></div>
+    <div class="card" style="flex:1"><p class="stat-label">Orders awaiting execution</p><p class="stat-value">{{ trading.pendingOrderCount() }}</p></div>
   </div>
-
   <div class="card">
-    <h2 class="card-title">Positions</h2>
+    <h2 class="card-title">Holdings</h2>
+    @if (trading.error()) { <p class="error-text">{{ trading.error() }}</p><button class="btn-chip" (click)="trading.refresh()">Retry</button> }
+    @if (trading.loading()) { <p class="sub">Loading holdings…</p> }
     <table class="table">
-      <thead><tr><th>Instrument</th><th class="num">Qty</th><th class="num">Avg cost</th><th class="num">Last</th><th class="num">Value</th><th class="num">P&amp;L</th></tr></thead>
+      <thead><tr><th>Instrument</th><th class="num">Total quantity</th><th class="num">Reserved for sells</th><th class="num">Available</th></tr></thead>
       <tbody>
-        @for (row of rows(); track row.sym) {
-          <tr>
-            <td><span class="sym">{{ row.sym }}</span> <span class="dim">{{ row.name }}</span></td>
-            <td class="num">{{ row.qty }}</td><td class="num">{{ row.avg }}</td><td class="num">{{ row.last }}</td><td class="num">{{ row.value }}</td>
-            <td class="num" [class.gain]="row.positive" [class.loss]="!row.positive">{{ row.pnl }}</td>
-          </tr>
-        }
+        @for (row of trading.positions(); track row.instrumentId) {
+          <tr><td><span class="sym">{{ row.sym }}</span> <span class="dim">{{ row.name }}</span></td>
+            <td class="num">{{ row.qty }}</td><td class="num">{{ row.reserved }}</td><td class="num">{{ row.available }}</td></tr>
+        } @empty { <tr><td colspan="4" class="dim">No holdings for this account.</td></tr> }
       </tbody>
     </table>
   </div>

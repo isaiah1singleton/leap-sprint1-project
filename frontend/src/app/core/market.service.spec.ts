@@ -10,7 +10,7 @@ describe('MarketService watchlist', () => {
   let service: MarketService;
   let http: HttpTestingController;
   const stocks: MarketSymbol[] = Array.from({ length: 26 }, (_, i) => ({
-    symbol: `STOCK${i}`, name: `Company ${i}`, type: 'equity', exchange: 'US', currency: 'USD',
+    instrumentId: i + 1, symbol: `STOCK${i}`, name: `Company ${i}`, type: 'equity', exchange: 'US', currency: 'USD',
   }));
 
   beforeEach(() => {
@@ -59,3 +59,4 @@ describe('MarketService watchlist', () => {
     expect((await request).symbol).toBe('X:BTC-USD');
   });
 });
+

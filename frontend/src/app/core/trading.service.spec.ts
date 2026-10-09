@@ -1,62 +1,64 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountResponse } from './account.service';
 import { AccountSelectionService } from './account-selection.service';
-import { AuthService } from './auth.service';
-import { MarketQuote } from './market.service';
 import { TradingService } from './trading.service';
+import { vi } from 'vitest';
 
-describe('Quoted trading simulator', () => {
+describe('TradingService account data', () => {
   let service: TradingService;
+  let http: HttpTestingController;
   const selected = signal<AccountResponse | null>(null);
-  const account: AccountResponse = { accountId: 42, accountName: 'Test account', accountStatus: 'ACTIVE', openedAt: '2026-10-07T00:00:00Z' };
-  const quote: MarketQuote = { symbol: 'AAPL', price: 100, bid: 99, ask: 101, currency: 'USD',
-    change: 1, changePercent: 1, previousClose: 99, asOf: '2026-10-07T12:00:00Z', marketState: 'open', spreadBps: 200 };
+  const account: AccountResponse = {
+    accountId: 42, accountName: 'Test account', accountStatus: 'ACTIVE',
+    openedAt: '2026-10-07T00:00:00Z',
+  };
 
   beforeEach(() => {
-    sessionStorage.clear();
     selected.set(account);
     TestBed.configureTestingModule({ providers: [
-      { provide: AuthService, useValue: { currentUserEmail: signal('alice@example.com') } },
+      provideHttpClient(), provideHttpClientTesting(),
       { provide: AccountSelectionService, useValue: { selectedAccount: selected } },
     ] });
     service = TestBed.inject(TradingService);
+    http = TestBed.inject(HttpTestingController);
     TestBed.tick();
-    service.cash.set(202);
-    service.positions.set([]);
   });
 
-  it('buys at ask, sells at bid, and prevents spending or selling too much', () => {
-    expect(service.trade('buy', 'AAPL', '3', quote)).toHaveProperty('message');
-    expect(service.trade('buy', 'AAPL', '2', quote, 'Apple')).toHaveProperty('head');
+  afterEach(() => http.verify());
+
+  function flushAccount(id: number, cash: number): void {
+    http.expectOne(`/api/accounts/${id}/balance`).flush({ totalBalance: cash, currency: 'USD' });
+    http.expectOne(`/api/accounts/${id}/holdings`).flush([]);
+    http.expectOne(request => request.url === '/api/orders' && request.params.get('accountId') === String(id)).flush([]);
+    http.expectOne(`/api/accounts/${id}/cash-movements`).flush([]);
+  }
+
+  it('loads the selected account from the backend and clears data on account change', async () => {
     expect(service.cash()).toBe(0);
-    expect(service.positions()[0].qty).toBe(2);
-    expect(service.positions()[0].avg).toBe(101);
-    expect(service.trade('sell', 'AAPL', '3', quote)).toHaveProperty('message');
-    expect(service.trade('sell', 'AAPL', '1', quote)).toHaveProperty('head');
-    expect(service.cash()).toBe(99);
-    expect(service.positions()[0].qty).toBe(1);
-  });
-
-  it('rejects malformed quantities, mismatched quotes, and absent accounts', () => {
-    for (const quantity of ['Infinity', 'NaN', '-1', '1abc', '']) {
-      expect(service.trade('buy', 'AAPL', quantity, quote)).toHaveProperty('message');
-    }
-    expect(service.trade('buy', 'MSFT', '1', quote)).toHaveProperty('message');
-    selected.set(null);
-    TestBed.tick();
-    expect(service.trade('buy', 'AAPL', '1', quote)).toHaveProperty('message');
-  });
-
-  it('keeps simulation state separate across accounts and restores the original account', () => {
-    service.trade('buy', 'AAPL', '1', quote);
-    expect(service.cash()).toBe(101);
+    flushAccount(42, 125);
+    await vi.waitFor(() => expect(service.cash()).toBe(125));
     selected.set({ ...account, accountId: 43 });
     TestBed.tick();
-    expect(service.cash()).toBe(48250);
-    selected.set(account);
-    TestBed.tick();
-    expect(service.cash()).toBe(101);
-    expect(service.positions()[0].qty).toBe(1);
+    expect(service.cash()).toBe(0);
+    flushAccount(43, 0);
+    await vi.waitFor(() => expect(service.loading()).toBe(false));
+  });
+
+  it('submits an order and presents the persisted rejection without changing cash', async () => {
+    flushAccount(42, 100);
+    await Promise.resolve();
+    const result = service.trade('buy', 7, '2');
+    http.expectOne('/api/orders').flush({
+      orderId: 5, symbol: 'AAPL', side: 'BUY', quantity: 2, indicativePrice: 101,
+      submittedAt: '2026-10-07T12:00:00Z', status: 'REJECTED', reason: 'Insufficient cash',
+    });
+    await Promise.resolve();
+    flushAccount(42, 100);
+    const receipt = await result;
+    expect('head' in receipt && receipt.head === 'Order rejected').toBe(true);
+    expect(service.cash()).toBe(100);
   });
 });

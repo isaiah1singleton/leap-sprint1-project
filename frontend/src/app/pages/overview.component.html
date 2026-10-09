@@ -53,19 +53,19 @@
     </div>
     <div class="row">
       <div class="card" style="flex:1">
-        <p class="stat-label">Total account value</p>
-        <p class="stat-value">{{ trading.money(trading.totalValue()) }}</p>
-        <p class="stat-note gain">{{ dayChange }} today</p>
+        <p class="stat-label">Orders awaiting execution</p>
+        <p class="stat-value">{{ trading.pendingOrderCount() }}</p>
+        <p class="stat-note">Accepted market orders</p>
       </div>
       <div class="card" style="flex:1">
         <p class="stat-label">Cash available</p>
         <p class="stat-value">{{ trading.money(trading.cash()) }}</p>
-        <p class="stat-note">Settled and withdrawable</p>
+        <p class="stat-note">Current cash balance</p>
       </div>
       <div class="card" style="flex:1">
         <p class="stat-label">Open positions</p>
         <p class="stat-value">{{ trading.positions().length }}</p>
-        <p class="stat-note">{{ trading.pendingOrderCount() }} order pending</p>
+        <p class="stat-note">From current holdings</p>
       </div>
     </div>
 
@@ -80,7 +80,8 @@
             <div><strong>{{ order.type }} {{ order.sym }}</strong><div class="sub">{{ order.date }}</div></div>
             <div style="text-align:right">{{ order.price }}<div class="sub">{{ order.status }}</div></div>
           </div>
-        }
+        } @empty { <p class="sub">No orders or cash movements for this account yet.</p> }
+        @if (trading.error()) { <p class="error-text">{{ trading.error() }}</p><button class="btn-chip" (click)="trading.refresh()">Retry</button> }
       </div>
 
       <div class="card" style="flex:1;display:flex;flex-direction:column">

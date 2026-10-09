@@ -44,7 +44,7 @@ public class OrderTest {
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(10),
-                            OffsetDateTime.now()
+                            BigDecimal.ONE, OffsetDateTime.now(), OffsetDateTime.now()
                     )
             );
         }
@@ -57,7 +57,7 @@ public class OrderTest {
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(10),
-                            OffsetDateTime.now()
+                            BigDecimal.ONE, OffsetDateTime.now(), OffsetDateTime.now()
                     )
             );
             assertThrows(IllegalArgumentException.class,
@@ -66,7 +66,7 @@ public class OrderTest {
                             null,
                             OrderSide.BUY,
                             new BigDecimal(10),
-                            OffsetDateTime.now()
+                            BigDecimal.ONE, OffsetDateTime.now(), OffsetDateTime.now()
                     )
             );
             assertThrows(IllegalArgumentException.class,
@@ -75,7 +75,7 @@ public class OrderTest {
                             mockInstrument,
                             null,
                             new BigDecimal(10),
-                            OffsetDateTime.now()
+                            BigDecimal.ONE, OffsetDateTime.now(), OffsetDateTime.now()
                     )
             );
             assertThrows(IllegalArgumentException.class,
@@ -84,7 +84,7 @@ public class OrderTest {
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(10),
-                            null
+                            BigDecimal.ONE, OffsetDateTime.now(), null
                     )
             );
         }
@@ -97,7 +97,7 @@ public class OrderTest {
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(0),
-                            OffsetDateTime.now()
+                            BigDecimal.ONE, OffsetDateTime.now(), OffsetDateTime.now()
                     )
             );
             assertThrows(IllegalArgumentException.class,
@@ -106,7 +106,7 @@ public class OrderTest {
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(-2),
-                            OffsetDateTime.now()
+                            BigDecimal.ONE, OffsetDateTime.now(), OffsetDateTime.now()
                     )
             );
         }
@@ -118,3 +118,4 @@ public class OrderTest {
         mocks.close();
     }
 }
+

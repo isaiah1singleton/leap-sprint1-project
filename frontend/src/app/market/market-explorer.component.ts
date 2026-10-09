@@ -38,7 +38,8 @@ export class MarketExplorerComponent implements OnInit, OnDestroy {
   readonly quantity = signal('1');
   readonly receipt = signal<Receipt | null>(null);
   readonly tradeError = signal('');
-  readonly common = ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL'];
+  readonly common = computed(() => this.market.catalogue().filter(item => item.type === 'equity').slice(0, 5));
+  readonly submitting = signal(false);
   private timer?: ReturnType<typeof setInterval>;
   private selectionVersion = 0;
   private destroyed = false;
@@ -178,20 +179,21 @@ export class MarketExplorerComponent implements OnInit, OnDestroy {
   }
 
   disabledReason(mode: TradeMode): string {
-    if (!this.account()) return 'Select a trading account on the dashboard to place a simulated trade.';
+    if (!this.account()) return 'Select a trading account on the dashboard to place an order.';
+    if (this.submitting()) return 'Submitting order…';
     if (!this.quote() || this.loadingQuote() || this.result()?.stale) return 'A current quote is required to trade.';
     if (!this.validQuantity()) return 'Enter a quantity greater than zero.';
     const price = mode === 'buy' ? this.quote()!.ask : this.quote()!.bid;
     if (!Number.isFinite(price * this.qty())) return 'Enter a smaller quantity.';
-    if (mode === 'buy' && price * this.qty() > this.trading.cash()) return 'Insufficient cash for this quantity.';
-    if (mode === 'sell' && this.qty() > this.held()) return 'You do not hold enough of this symbol to sell this quantity.';
     return '';
   }
 
-  trade(mode: TradeMode): void {
+  async trade(mode: TradeMode): Promise<void> {
     const reason = this.disabledReason(mode);
     if (reason) { this.tradeError.set(reason); return; }
-    const result = this.trading.trade(mode, this.selected()!.symbol, this.quantity(), this.quote()!, this.selected()!.name);
+    this.submitting.set(true);
+    const result = await this.trading.trade(mode, this.selected()!.instrumentId, this.quantity());
+    this.submitting.set(false);
     if ('message' in result) this.tradeError.set(result.message);
     else { this.tradeError.set(''); this.receipt.set(result); }
   }

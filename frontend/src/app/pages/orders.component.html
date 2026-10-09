@@ -1,13 +1,21 @@
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:baseline">
-    <h2 class="card-title">All orders and transfers</h2><span class="stat-label">Last 30 days</span>
+    <h2 class="card-title">Orders and cash movements</h2>
   </div>
+  @if (trading.error()) { <p class="error-text">{{ trading.error() }}</p><button class="btn-chip" (click)="trading.refresh()">Retry</button> }
+  @if (cancelError) { <p class="error-text">{{ cancelError }}</p> }
+  @if (trading.loading()) { <p class="sub">Loading activity…</p> }
   <table class="table">
-    <thead><tr><th>Reference</th><th>Date</th><th>Type</th><th>Symbol</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Status</th></tr></thead>
+    <thead><tr><th>Reference</th><th>Date</th><th>Type</th><th>Symbol</th><th class="num">Qty</th><th class="num">Indicative price / amount</th><th>Status</th><th></th></tr></thead>
     <tbody>
       @for (order of trading.orders(); track order.id) {
-        <tr><td class="sym">{{ order.id }}</td><td class="dim">{{ order.date }}</td><td>{{ order.type }}</td><td>{{ order.sym }}</td><td class="num">{{ order.qty }}</td><td class="num">{{ order.price }}</td><td class="num dim">{{ order.status }}</td></tr>
-      }
+        <tr><td class="sym">{{ order.id }}</td><td class="dim">{{ order.date }}</td><td>{{ order.type }}</td>
+          <td>{{ order.sym }}</td><td class="num">{{ order.qty }}</td><td class="num">{{ order.price }}</td>
+          <td>{{ order.status }} @if (order.reason) { <span class="dim" [title]="order.reason">— {{ order.reason }}</span> }</td>
+          <td>@if (order.status === 'ACCEPTED' && order.orderId !== null) {
+            <button class="btn btn-secondary btn-sm" [disabled]="cancelling === order.orderId" (click)="cancel(order.orderId)">Cancel</button>
+          }</td></tr>
+      } @empty { <tr><td colspan="8" class="dim">No orders or cash movements for this account yet.</td></tr> }
     </tbody>
   </table>
 </div>

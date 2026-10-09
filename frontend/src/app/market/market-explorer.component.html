@@ -1,7 +1,7 @@
 @if (showSearch()) {
 <section class="card market-panel" aria-label="Stock and crypto search">
   <div class="market-heading">
-    <div><h2 class="card-title">Explore stocks & crypto</h2><p class="sub">Search the US stock and crypto catalogues.</p></div>
+    <div><h2 class="card-title">Explore instruments</h2><p class="sub">Search instruments available in your database.</p></div>
     <span class="data-badge">We request prices every 60 seconds. Up-to-date prices aren’t guaranteed.</span>
   </div>
   <div class="symbol-search">
@@ -30,7 +30,7 @@
   }
   @if (!loadingCatalogue() && !catalogueError()) {
     <div class="common-symbols"><span class="sub">Popular stocks</span>
-      @for (symbol of common; track symbol) { <button class="btn-chip" (click)="selectSymbol(symbol)">{{ symbol }}</button> }
+      @for (item of common(); track item.instrumentId) { <button class="btn-chip" (click)="selectSymbol(item.symbol)">{{ item.symbol }}</button> }
     </div>
   }
 
@@ -73,9 +73,9 @@
             <input id="ticker-quantity" class="input" type="number" min="0.000001" step="any" [ngModel]="quantity()" (ngModelChange)="quantity.set('' + $event); receipt.set(null)" /></div>
           <div class="trade-account"><p class="sub">{{ account()?.accountName || 'No account selected' }}</p>
             <p class="sub">Cash {{ trading.money(trading.cash()) }} · {{ held() }} held</p>
-            <p class="sub">Buy total {{ validQuantity() ? money(qty() * current.ask, current.currency || instrument.currency) : '—' }}</p></div>
-          <button class="btn btn-primary btn-sm" [disabled]="buyDisabled()" [title]="disabledReason('buy')" (click)="trade('buy')">Buy {{ instrument.symbol }}</button>
-          <button class="btn btn-secondary btn-sm" [disabled]="sellDisabled()" [title]="disabledReason('sell')" (click)="trade('sell')">Sell {{ instrument.symbol }}</button>
+            <p class="sub">Indicative buy value {{ validQuantity() ? money(qty() * current.ask, current.currency || instrument.currency) : '—' }}</p></div>
+          <button class="btn btn-primary btn-sm" [disabled]="buyDisabled()" [title]="disabledReason('buy')" (click)="trade('buy')">Submit buy</button>
+          <button class="btn btn-secondary btn-sm" [disabled]="sellDisabled()" [title]="disabledReason('sell')" (click)="trade('sell')">Submit sell</button>
         </div>
         @if (buyDisabled()) { <p class="sub">Buy: {{ disabledReason('buy') }}</p> }
         @if (sellDisabled()) { <p class="sub">Sell: {{ disabledReason('sell') }}</p> }
@@ -85,7 +85,7 @@
             @for (line of confirmation.lines; track line) { <p>{{ line }}</p> }
           </div>
         }
-        <p class="note">Simulated trades use this account's prototype cash and holdings. Buy at ask, sell at bid; no fees. Bid and ask are modelled by the provider.</p>
+        <p class="note">Submission validates against a live indicative quote. Accepted orders await execution and do not change cash or holdings.</p>
       }
     </div>
   }

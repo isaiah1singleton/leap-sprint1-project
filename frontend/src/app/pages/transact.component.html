@@ -23,15 +23,15 @@
         <p class="stat-note">Cash available {{ trading.money(trading.cash()) }}</p>
       }
       @if (error) { <p class="error-text">{{ error }}</p> }
-      @if (!isTrade) { <button class="btn btn-primary" (click)="submit()">Confirm {{ verb }}</button> }
+      @if (!isTrade) { <button class="btn btn-primary" [disabled]="submitting" (click)="submit()">{{ submitting ? 'Processing…' : 'Confirm ' + verb }}</button> }
     }
   </div>
 
   <div class="card card-pad-lg" style="flex:1;display:flex;flex-direction:column">
     <h2 class="card-title">Your holdings</h2>
     @for (row of holdings(); track row.sym) {
-      <div class="list-row"><div><strong>{{ row.sym }}</strong><div class="sub">{{ row.qty }} held</div></div><div style="text-align:right">{{ row.last }}<div class="sub">{{ row.value }}</div></div></div>
+      <div class="list-row"><div><strong>{{ row.sym }}</strong><div class="sub">{{ row.qty }} held</div></div><div style="text-align:right">{{ row.available }}<div class="sub">available</div></div></div>
     }
-    <p class="note" style="margin-top:auto;padding-top:14px">Cash and holdings are simulated for the selected account. Quotes come from the backend market API.</p>
+    <p class="note" style="margin-top:auto;padding-top:14px">Cash and holdings come from the selected account. Orders await execution; transfers update cash immediately.</p>
   </div>
 </div>

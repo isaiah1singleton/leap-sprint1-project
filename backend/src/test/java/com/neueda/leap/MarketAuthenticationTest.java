@@ -2,6 +2,10 @@ package com.neueda.leap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neueda.leap.models.MarketQuotesDto;
+import com.neueda.leap.entities.Instrument;
+import com.neueda.leap.enums.AssetClass;
+import com.neueda.leap.enums.Currency;
+import com.neueda.leap.repository.InstrumentRepository;
 import com.neueda.leap.service.MarketDataService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -26,6 +30,7 @@ class MarketAuthenticationTest {
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;
     @MockitoBean private MarketDataService market;
+    @Autowired private InstrumentRepository instruments;
 
     @Test
     void allMarketRoutesRejectMissingAndInvalidSessions() throws Exception {
@@ -40,6 +45,9 @@ class MarketAuthenticationTest {
 
     @Test
     void registrationLoginAndRevocationProtectMarketData() throws Exception {
+        Instrument bitcoin = new Instrument("US", "X:BTC-USD", "Bitcoin", AssetClass.CRYPTO, Currency.USD);
+        bitcoin.enableTrading();
+        instruments.save(bitcoin);
         String payload = "{\"name\":\"Market Tester\",\"email\":\"market-auth@example.com\",\"password\":\"TestMarket123\"}";
         String registration = mvc.perform(post(ApiRoutes.AUTH_REGISTER).contentType(APPLICATION_JSON).content(payload))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();

@@ -22,6 +22,7 @@ export class TransactComponent {
   amount = '';
   error = '';
   receipt: Receipt | null = null;
+  submitting = false;
   private errorFields: string[] = [];
 
   constructor() {
@@ -33,18 +34,17 @@ export class TransactComponent {
   get verb(): string { return this.modes.find((mode) => mode.id === this.mode)!.label; }
   get note(): string {
     switch (this.mode) {
-      case 'buy': return 'Search a stock or crypto symbol below. Simulated buys use the quoted ask; sells use the quoted bid.';
+      case 'buy': return 'Search a tradable instrument below. Accepted orders await execution; the quote is indicative.';
       case 'sell': return 'You can only sell quantities you currently hold.';
-      case 'withdraw': return 'Withdrawals go to your linked account ending 4417.';
-      default: return 'Deposits from your linked account ending 4417 are available immediately.';
+      case 'withdraw': return 'A simulated withdrawal reduces your account cash immediately.';
+      default: return 'A simulated deposit increases your account cash immediately.';
     }
   }
 
   readonly holdings = computed(() => this.trading.positions().map((position) => ({
     sym: position.sym,
     qty: position.qty.toLocaleString('en-US'),
-    last: this.trading.money(position.last),
-    value: this.trading.money(position.qty * position.last),
+    available: position.available.toLocaleString('en-US'),
   })));
 
   invalid(field: string): boolean { return this.errorFields.includes(field); }
@@ -55,9 +55,11 @@ export class TransactComponent {
     this.receipt = null;
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.isTrade) return;
-    const result: TxFailure | Receipt = this.trading.transfer(this.mode as 'withdraw' | 'deposit', this.amount);
+    this.submitting = true;
+    const result: TxFailure | Receipt = await this.trading.transfer(this.mode as 'withdraw' | 'deposit', this.amount);
+    this.submitting = false;
     if ('message' in result) {
       this.error = result.message;
       this.errorFields = result.fields;

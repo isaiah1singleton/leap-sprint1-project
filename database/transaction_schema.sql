@@ -78,7 +78,7 @@ CREATE TABLE order_events
 (
     event_id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL REFERENCES orders(order_id),
-    status TEXT NOT NULL CHECK( status IN ('SUBMITTED', 'ACCEPTED', 'FILLED', 'REJECTED')),
+    status TEXT NOT NULL CHECK( status IN ('SUBMITTED', 'ACCEPTED', 'FILLED', 'REJECTED', 'CANCELLED')),
 	reason TEXT,
 
 	decision_quote_price NUMERIC CHECK(decision_quote_price > 0),
@@ -126,6 +126,20 @@ CREATE TABLE account_balances
 
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
+
+CREATE TABLE outbox_events
+(
+    event_id UUID PRIMARY KEY,
+    event_type TEXT NOT NULL,
+    aggregate_type TEXT NOT NULL,
+    aggregate_id TEXT NOT NULL,
+    schema_version INTEGER NOT NULL CHECK (schema_version > 0),
+    payload JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    published_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX ix_outbox_events_unpublished ON outbox_events (published_at, created_at);
 
 CREATE TABLE account_holdings
 (

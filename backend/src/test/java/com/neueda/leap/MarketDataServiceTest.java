@@ -1,6 +1,9 @@
 package com.neueda.leap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.neueda.leap.entities.Instrument;
+import com.neueda.leap.enums.AssetClass;
+import com.neueda.leap.enums.Currency;
+import com.neueda.leap.repository.InstrumentRepository;
 import com.neueda.leap.service.MarketDataService;
 import com.neueda.leap.service.MarketSymbolService;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +19,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.web.server.ResponseStatusException;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class MarketDataServiceTest {
     private RestClient client;
@@ -35,7 +39,15 @@ class MarketDataServiceTest {
     void setUp() throws Exception {
         responseStatus = 200;
         responseBody = "{\"data\":" + QUOTE + ",\"meta\":{\"source\":\"cache\",\"stale\":false}}";
-        symbols = new MarketSymbolService(new ObjectMapper());
+        InstrumentRepository instruments = mock(InstrumentRepository.class);
+        Instrument apple = instrument("AAPL", "Apple Inc.", AssetClass.EQUITY);
+        Instrument microsoft = instrument("MSFT", "Microsoft Corporation", AssetClass.EQUITY);
+        Instrument bitcoin = instrument("X:BTC-USD", "Bitcoin", AssetClass.CRYPTO);
+        when(instruments.findAllByOrderByMarketAscSymbolAsc()).thenReturn(List.of(apple, microsoft, bitcoin));
+        when(instruments.findFirstBySymbolIgnoreCase("AAPL")).thenReturn(java.util.Optional.of(apple));
+        when(instruments.findFirstBySymbolIgnoreCase("MSFT")).thenReturn(java.util.Optional.of(microsoft));
+        when(instruments.findFirstBySymbolIgnoreCase("INVALID")).thenReturn(java.util.Optional.empty());
+        symbols = new MarketSymbolService(instruments);
         var builder = RestClient.builder().baseUrl("http://provider.test/v1").defaultHeader("X-Api-Key", "test-server-key");
         var server = MockRestServiceServer.bindTo(builder).build();
         server.expect(ExpectedCount.manyTimes(), request -> {}).andRespond(request -> {
@@ -84,7 +96,13 @@ class MarketDataServiceTest {
         assertThat(paths).isEmpty();
         assertThat(symbols.search("btc", 15)).anyMatch(item -> item.symbol().equals("X:BTC-USD"));
         assertThat(symbols.search("apple", 15)).anyMatch(item -> item.symbol().equals("AAPL"));
-        assertThat(symbols.search("", 1000)).hasSizeGreaterThan(500);
+        assertThat(symbols.search("", 1000)).hasSize(3);
+    }
+
+    private static Instrument instrument(String symbol, String name, AssetClass assetClass) {
+        Instrument instrument = new Instrument("US", symbol, name, assetClass, Currency.USD);
+        instrument.enableTrading();
+        return instrument;
     }
 
     @Test
