@@ -52,8 +52,6 @@ CREATE TABLE orders
 	account_id INTEGER REFERENCES accounts(account_id),
 	instrument_id INTEGER REFERENCES instruments(instrument_id),
 
-	idempotency_key UUID UNIQUE NOT NULL,
-
 	side TEXT NOT NULL CHECK (side IN ('BUY', 'SELL')),
 	submitted_quote_price NUMERIC CHECK(submitted_quote_price > 0),
 	requested_quantity NUMERIC CHECK(requested_quantity > 0),
@@ -62,7 +60,6 @@ CREATE TABLE orders
 		
 	submitted_quote_at TIMESTAMP WITH TIME ZONE NOT NULL
 		CHECK(submitted_at <= submitted_quote_at),
-	current_order_status TEXT NOT NULL DEFAULT 'SUBMITTED'
 );
 
 CREATE TABLE order_events

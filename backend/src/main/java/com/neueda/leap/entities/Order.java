@@ -32,6 +32,7 @@ public class Order {
     private Instrument instrument;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "side", nullable = false)
     private OrderSide side;
 
     @Column(name = "requested_quantity", nullable = false, columnDefinition = "numeric")
