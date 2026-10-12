@@ -111,6 +111,15 @@ class OrderValidationTest {
     }
 
     @Test
+    void acceptsBuyWhenCashExactlyMatchesIndicativeCost() {
+        Order order = order(OrderSide.BUY, new BigDecimal("2"), true, AssetClass.EQUITY, "US");
+
+        assertDoesNotThrow(() -> validation.validate(
+                order, quote(NOW), "client@example.com",
+                new Money(new BigDecimal("20"), Currency.USD), BigDecimal.ZERO));
+    }
+
+    @Test
     void rejectsInsufficientAvailableUnits() {
         Order order = order(
                 OrderSide.SELL,

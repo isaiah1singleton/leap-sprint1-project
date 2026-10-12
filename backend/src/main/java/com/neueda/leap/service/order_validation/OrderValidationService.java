@@ -108,12 +108,11 @@ public class OrderValidationService {
     private void validateAvailableResources(OrderSide side, BigDecimal quantity, QuoteSnapshot submittedQuote,
                                             Instrument instrument, Money availableCash, BigDecimal availableUnits) {
         if (side == OrderSide.BUY) {
-            BigDecimal requiredCash = submittedQuote.price().amount().multiply(quantity)
-                    .multiply(rules.fundingMultiplier(instrument.getAssetClass()));
+            BigDecimal requiredCash = submittedQuote.price().amount().multiply(quantity);
             if (availableCash == null || availableCash.amount() == null
                     || availableCash.currency() != instrument.getQuoteCurrency()
                     || availableCash.amount().compareTo(requiredCash) < 0) {
-                throw failure(OrderValidationErrorCodes.INSUFFICIENT_CASH, "Available cash does not cover the order and configured charges.");
+                throw failure(OrderValidationErrorCodes.INSUFFICIENT_CASH, "Available cash does not cover the order.");
             }
         } else if (side == OrderSide.SELL) {
             if (availableUnits == null || availableUnits.compareTo(quantity) < 0) {

@@ -84,20 +84,6 @@ public class CashMovementService {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    public CashMovement recordFee(
-            Account account,
-            BigDecimal amount,
-            Currency currency
-    ) {
-        return saveMovement(CashMovement.fee(
-                account,
-                amount,
-                currency,
-                OffsetDateTime.now(clock)
-        ));
-    }
-
-    @Transactional(propagation = Propagation.MANDATORY)
     public CashMovement recordAdjustment(
             Account account,
             BigDecimal signedAmount,

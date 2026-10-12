@@ -4,7 +4,6 @@ import com.neueda.leap.entities.Instrument;
 import com.neueda.leap.enums.AssetClass;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalTime;
@@ -48,16 +47,6 @@ public class TradingRules {
                 ? required("trading.asset." + instrument.getAssetClass() + ".quantity-scale") : override);
         if (scale < 0) throw new IllegalStateException("Quantity scale cannot be negative.");
         return scale;
-    }
-
-    public BigDecimal fundingMultiplier(AssetClass assetClass) {
-        String prefix = "trading.asset." + assetClass + ".";
-        BigDecimal fee = new BigDecimal(required(prefix + "fee-rate"));
-        BigDecimal tax = new BigDecimal(required(prefix + "tax-rate"));
-        if (fee.signum() < 0 || tax.signum() < 0) {
-            throw new IllegalStateException("Fee and tax rates cannot be negative.");
-        }
-        return BigDecimal.ONE.add(fee).add(tax);
     }
 
     public boolean isRestricted(Instrument instrument) {

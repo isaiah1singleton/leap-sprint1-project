@@ -143,18 +143,6 @@ CREATE TABLE account_balances
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-CREATE TABLE outbox_events
-(
-    event_id UUID PRIMARY KEY,
-    event_type TEXT NOT NULL,
-    aggregate_type TEXT NOT NULL,
-    aggregate_id TEXT NOT NULL,
-    schema_version INTEGER NOT NULL CHECK (schema_version > 0),
-    payload JSONB NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    published_at TIMESTAMP WITH TIME ZONE
-);
-
 CREATE INDEX ix_outbox_events_unpublished ON outbox_events (published_at, created_at);
 
 CREATE TABLE account_holdings
@@ -195,7 +183,6 @@ CREATE TABLE cash_movements
             movement_type IN (
                 'DEPOSIT',
                 'WITHDRAW',
-                'FEE',
                 'TRADE',
                 'ADJUSTMENT'
             )
@@ -223,7 +210,7 @@ CREATE TABLE cash_movements
         CHECK (
             (movement_type = 'DEPOSIT' AND amount > 0)
             OR
-            (movement_type IN ('WITHDRAW', 'FEE') AND amount < 0)
+            (movement_type = 'WITHDRAW' AND amount < 0)
             OR
             movement_type IN ('TRADE', 'ADJUSTMENT')
         ),

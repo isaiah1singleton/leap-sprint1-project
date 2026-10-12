@@ -135,11 +135,9 @@ public class CashMovement {
             );
         }
 
-        if ((cashMovementType == CashMovementType.WITHDRAW
-                || cashMovementType == CashMovementType.FEE)
-                && amount.signum() >= 0) {
+        if (cashMovementType == CashMovementType.WITHDRAW && amount.signum() >= 0) {
             throw new IllegalArgumentException(
-                    "Withdrawals and fees must decrease cash."
+                    "Withdrawals must decrease cash."
             );
         }
 
@@ -223,21 +221,6 @@ public class CashMovement {
         return new CashMovement(
                 account, null, amount.negate(),
                 CashMovementType.WITHDRAW,
-                currency, occurredAt, null
-        );
-    }
-
-    public static CashMovement fee(
-            Account account,
-            BigDecimal amount,
-            Currency currency,
-            OffsetDateTime occurredAt
-    ) {
-        requirePositive(amount);
-
-        return new CashMovement(
-                account, null, amount.negate(),
-                CashMovementType.FEE,
                 currency, occurredAt, null
         );
     }
