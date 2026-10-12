@@ -3,3 +3,4 @@ backend/.env
 .idea/
 backend/team-skeleton.iml
 backend/target
+.vscode/*
