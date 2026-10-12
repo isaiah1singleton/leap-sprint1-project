@@ -10,6 +10,9 @@ public final class ApiRoutes {
     public static final String AUTH_SIGN_IN = AUTH + SIGN_IN;
     public static final String ORDER_VALIDATE = "/api/orders/{orderId}/validate";
 
+    // Order Controller
+    public static final String ORDER = "/order";
+
     private ApiRoutes() {
     }
 }

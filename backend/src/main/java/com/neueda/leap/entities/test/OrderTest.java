@@ -44,6 +44,7 @@ public class OrderTest {
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(10),
+                            new BigDecimal(10),
                             OffsetDateTime.now()
                     )
             );
@@ -57,6 +58,7 @@ public class OrderTest {
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(10),
+                            new BigDecimal(10),
                             OffsetDateTime.now()
                     )
             );
@@ -65,6 +67,7 @@ public class OrderTest {
                             mockAccount,
                             null,
                             OrderSide.BUY,
+                            new BigDecimal(10),
                             new BigDecimal(10),
                             OffsetDateTime.now()
                     )
@@ -75,6 +78,7 @@ public class OrderTest {
                             mockInstrument,
                             null,
                             new BigDecimal(10),
+                            new BigDecimal(10),
                             OffsetDateTime.now()
                     )
             );
@@ -83,6 +87,7 @@ public class OrderTest {
                             mockAccount,
                             mockInstrument,
                             OrderSide.BUY,
+                            new BigDecimal(10),
                             new BigDecimal(10),
                             null
                     )
@@ -97,6 +102,7 @@ public class OrderTest {
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(0),
+                            new BigDecimal(10),
                             OffsetDateTime.now()
                     )
             );
@@ -106,6 +112,7 @@ public class OrderTest {
                             mockInstrument,
                             OrderSide.BUY,
                             new BigDecimal(-2),
+                            new BigDecimal(10),
                             OffsetDateTime.now()
                     )
             );
