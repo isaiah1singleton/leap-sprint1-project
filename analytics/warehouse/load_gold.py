@@ -51,5 +51,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--batch', type=Path, required=True)
     parser.add_argument('--db', type=Path, required=True)
+    parser.add_argument('--publish', type=Path, help='New immutable snapshot path; never overwritten')
     args = parser.parse_args()
-    print(json.dumps(run(args.batch, args.db), default=str, indent=2))
+    result = run(args.batch, args.db)
+    if args.publish:
+        from publish import publish
+        publish(args.db, args.publish)
+    print(json.dumps(result, default=str, indent=2))

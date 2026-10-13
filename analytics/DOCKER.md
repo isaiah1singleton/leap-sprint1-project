@@ -70,7 +70,9 @@ parallel; do not start simultaneous warehouse jobs.
   PostgreSQL resources. Large datasets may need tuning; ETL currently uses an
   in-memory transformation database.
 - Gold persists in the analytics gold volume. This is a working database, not
-  a concurrently readable Superset snapshot. Snapshot publication comes next.
+  a concurrently readable Superset snapshot. The warehouse now also publishes a
+  separate immutable generation selected by SNAPSHOT_ID. See
+  `analytics/superset/README.md` for dashboard deployment and generation switching.
 - This is full refresh with the proof's UTC, decimal precision, requested-fill
   quantity, and surrogate-key limitations. It is not incremental or scheduled.
 

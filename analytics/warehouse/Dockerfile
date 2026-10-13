@@ -7,6 +7,7 @@ COPY proof/proof.py proof/proof.py
 COPY proof/sql/ proof/sql/
 COPY queries/ queries/
 COPY warehouse/load_gold.py warehouse/load_gold.py
-RUN mkdir -p /data/warehouse && chown -R 10001:10001 /data
+COPY warehouse/publish.py warehouse/publish.py
+RUN mkdir -p /data/warehouse /data/published && chown -R 10001:10001 /data
 USER 10001:10001
 ENTRYPOINT ["python", "warehouse/load_gold.py"]

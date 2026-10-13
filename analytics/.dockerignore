@@ -10,6 +10,10 @@
 !etl/extract_transform.py
 !warehouse/
 !warehouse/load_gold.py
+!warehouse/publish.py
 !warehouse/requirements.txt
 !queries/
 !queries/*.sql
+!superset/
+!superset/*.py
+!superset/requirements.txt

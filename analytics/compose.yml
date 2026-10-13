@@ -1,5 +1,23 @@
 name: leap-analytics
 
+x-superset: &superset
+  build:
+    context: .
+    dockerfile: superset/Dockerfile
+  profiles: [bi]
+  environment: &superset-env
+    SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-}
+    SUPERSET_DB_PASSWORD: ${SUPERSET_DB_PASSWORD:-}
+    SUPERSET_ADMIN_USERNAME: ${SUPERSET_ADMIN_USERNAME:-admin}
+    SNAPSHOT_ID: ${SNAPSHOT_ID:-snapshot-001}
+  volumes:
+    - published:/data/published:ro
+  networks: [default]
+  depends_on:
+    superset-db:
+      condition: service_healthy
+  mem_limit: 2g
+
 # One-shot jobs: invoke ETL, then warehouse, sequentially with `run --rm`.
 services:
   etl:
@@ -25,14 +43,51 @@ services:
     build:
       context: .
       dockerfile: warehouse/Dockerfile
-    command: ["--batch", "/data/batches/${BATCH_ID:-batch-001}", "--db", "/data/warehouse/leap_analytics.duckdb"]
+    command: ["--batch", "/data/batches/${BATCH_ID:-batch-001}", "--db", "/data/warehouse/leap_analytics.duckdb", "--publish", "/data/published/${SNAPSHOT_ID:-snapshot-001}.duckdb"]
     volumes:
       - batches:/data/batches:ro
       - gold:/data/warehouse
+      - published:/data/published
     network_mode: none
     restart: "no"
     mem_limit: 2g
     cpus: 1.0
+
+  superset-db:
+    image: postgres:16.10
+    profiles: [bi]
+    environment:
+      POSTGRES_DB: superset
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: ${SUPERSET_DB_PASSWORD:-}
+    volumes:
+      - superset_metadata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superset -d superset"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  superset-init:
+    <<: *superset
+    environment:
+      <<: *superset-env
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:-}
+      SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL:-admin@example.test}
+    command: ["/app/.venv/bin/python", "/app/analytics-initialize.py"]
+    restart: "no"
+
+  superset-bootstrap:
+    <<: *superset
+    command: ["/app/.venv/bin/python", "/app/analytics-bootstrap.py"]
+    restart: "no"
+
+  superset:
+    <<: *superset
+    command: ["/app/.venv/bin/gunicorn", "--bind", "0.0.0.0:8088", "--workers", "2", "--timeout", "120", "superset.app:create_app()"]
+    ports:
+      - "127.0.0.1:${SUPERSET_PORT:-8088}:8088"
+    restart: unless-stopped
 
 networks:
   oltp:
@@ -42,3 +97,5 @@ networks:
 volumes:
   batches:
   gold:
+  published:
+  superset_metadata:
