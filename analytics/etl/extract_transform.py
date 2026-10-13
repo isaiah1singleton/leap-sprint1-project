@@ -37,7 +37,7 @@ def run(output, fixture=False):
             con.execute('COPY silver.executed_trades TO ? (FORMAT PARQUET)', [str(silver)])
         with silver.open('rb') as stream:
             digest = hashlib.file_digest(stream, 'sha256').hexdigest()
-        manifest = {'version': 1, 'mode': 'full', 'timezone': 'UTC', 'fill_count': count,
+        manifest = {'version': 1, 'mode': 'full', 'batch_id': output.name, 'timezone': 'UTC', 'fill_count': count,
                     'silver_sha256': digest}
         (staging / 'manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
         staging.rename(output)

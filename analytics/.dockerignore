@@ -11,6 +11,7 @@
 !warehouse/
 !warehouse/load_gold.py
 !warehouse/publish.py
+!warehouse/stable_keys.py
 !warehouse/requirements.txt
 !queries/
 !queries/*.sql

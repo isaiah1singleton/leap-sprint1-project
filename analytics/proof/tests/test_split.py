@@ -46,8 +46,9 @@ class SplitTests(unittest.TestCase):
             root = Path(directory)
             extract(root / 'batch', fixture=True)
             load(root / 'batch', root / 'gold.duckdb')
+            extract(root / 'next-batch', fixture=True)
             with patch('warehouse.load_gold.validate', side_effect=ValueError('injected')):
                 with self.assertRaises(ValueError):
-                    load(root / 'batch', root / 'gold.duckdb')
+                    load(root / 'next-batch', root / 'gold.duckdb')
             with duckdb.connect(str(root / 'gold.duckdb'), read_only=True) as con:
                 self.assertEqual(con.execute('SELECT count(*) FROM gold.gold.fact_trade').fetchone()[0], 12)
