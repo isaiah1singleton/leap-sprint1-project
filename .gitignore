@@ -1,6 +1,7 @@
 starter/target
 backend/.env
 analytics/.env
+analytics/runtime/
 .idea/
 backend/team-skeleton.iml
 backend/target

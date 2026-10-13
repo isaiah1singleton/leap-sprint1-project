@@ -115,9 +115,10 @@ if __name__ == '__main__':
     parser.add_argument('--batch', type=Path, required=True)
     parser.add_argument('--db', type=Path, required=True)
     parser.add_argument('--publish', type=Path, help='New immutable snapshot path; never overwritten')
+    parser.add_argument('--reuse-publication', action='store_true', help='Accept an existing snapshot only if its Gold matches exactly')
     args = parser.parse_args()
     result = run(args.batch, args.db)
     if args.publish:
         from publish import publish
-        publish(args.db, args.publish)
+        publish(args.db, args.publish, reuse=args.reuse_publication)
     print(json.dumps(result, default=str, indent=2))

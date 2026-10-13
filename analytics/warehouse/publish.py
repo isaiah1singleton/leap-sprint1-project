@@ -8,10 +8,23 @@ import duckdb
 from proof import ANALYTICS
 
 
-def publish(source, destination):
+def publish(source, destination, reuse=False):
     destination = Path(destination).resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.exists():
+        if reuse:
+            with duckdb.connect() as con:
+                for alias, path in (('working', source), ('published', destination)):
+                    escaped = str(Path(path).resolve()).replace("'", "''")
+                    con.execute(f"ATTACH '{escaped}' AS {alias} (READ_ONLY)")
+                for table in ('dim_client', 'dim_account', 'dim_instrument', 'dim_date', 'dim_time', 'fact_trade'):
+                    mismatch = con.execute(f'''SELECT count(*) FROM (
+                        (SELECT * FROM working.gold.{table} EXCEPT ALL SELECT * FROM published.gold.{table})
+                        UNION ALL
+                        (SELECT * FROM published.gold.{table} EXCEPT ALL SELECT * FROM working.gold.{table}))''').fetchone()[0]
+                    if mismatch:
+                        raise ValueError('Existing snapshot differs from current Gold')
+            return destination
         raise FileExistsError('Snapshot already exists; choose a new SNAPSHOT_ID')
     with tempfile.TemporaryDirectory(dir=destination.parent, prefix='.publish-') as directory:
         temporary = Path(directory) / 'snapshot.duckdb'

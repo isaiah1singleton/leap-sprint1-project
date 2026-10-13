@@ -21,6 +21,7 @@ class PublishTests(unittest.TestCase):
             extract(batch, fixture=True)
             expected = load(batch, working)
             publish(working, snapshot)
+            self.assertEqual(publish(working, snapshot, reuse=True), snapshot.resolve())
             with duckdb.connect(str(snapshot), read_only=True) as reader:
                 schemas = reader.execute("SELECT DISTINCT table_schema FROM information_schema.tables").fetchall()
                 self.assertEqual(schemas, [('gold',)])
@@ -35,3 +36,7 @@ class PublishTests(unittest.TestCase):
                     reader.execute('DELETE FROM gold.fact_trade')
                 with self.assertRaises(FileExistsError):
                     publish(working, snapshot)
+            with duckdb.connect(str(working)) as con:
+                con.execute('UPDATE gold.fact_trade SET notional_amount=notional_amount+1 WHERE fill_id=1')
+            with self.assertRaisesRegex(ValueError, 'differs'):
+                publish(working, snapshot, reuse=True)
