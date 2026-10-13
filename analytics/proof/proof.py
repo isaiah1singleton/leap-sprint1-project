@@ -58,8 +58,8 @@ def transform(con):
         con.execute((HERE / 'sql' / name).read_text())
 
 
-def validate(con):
-    fills = con.execute('SELECT count(*) FROM bronze.fills').fetchone()[0]
+def validate(con, expected_fills=None):
+    fills = expected_fills if expected_fills is not None else con.execute('SELECT count(*) FROM bronze.fills').fetchone()[0]
     for table in ('silver.executed_trades', 'gold.fact_trade'):
         count, unique = con.execute(f'SELECT count(*), count(DISTINCT fill_id) FROM {table}').fetchone()
         if count != fills or unique != fills:

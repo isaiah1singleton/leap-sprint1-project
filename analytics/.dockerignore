@@ -1,0 +1,15 @@
+**
+!proof/
+!proof/proof.py
+!proof/requirements.txt
+!proof/sql/
+!proof/sql/*.sql
+!proof/tests/
+!proof/tests/fixture.sql
+!etl/
+!etl/extract_transform.py
+!warehouse/
+!warehouse/load_gold.py
+!warehouse/requirements.txt
+!queries/
+!queries/*.sql
