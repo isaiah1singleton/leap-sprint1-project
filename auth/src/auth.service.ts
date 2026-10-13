@@ -3,6 +3,10 @@ import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import { randomBytes } from "crypto";
 import { logAuthEvent } from "./logger";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from 'typeorm';
+import { RegisterDto } from './register.dto';
+import { User } from './user/entities/user.entity';
 
 interface StoredUser {
   passwordHash: string;
@@ -20,27 +24,30 @@ export const JWT_SECRET = process.env.JWT_SECRET || "mission-control-shared-secr
 
 @Injectable()
 export class AuthService {
-  private readonly users = new Map<string, StoredUser>();
+  // private readonly users = new Map<string, StoredUser>();
 
-  constructor() {
-    // alice/mission123/MISSION_OPERATOR - matches Sprint 6's auth-stub
-    // exactly: same username, same password, same role claim, so a
-    // token from THIS service authenticates identically to a token
-    // from the stub it replaces.
-    void this.register("alice", "mission123", ["MISSION_OPERATOR"]);
-  }
+  constructor(
+    @InjectRepository(User) private readonly userRepository: Repository<User>
+  ) {}
 
   async register(
-    username: string,
+    email: string,
     password: string,
+    name: string,
     roles: string[] = ["MISSION_OPERATOR"],
-  ): Promise<{ username: string; registered: true }> {
-    if (this.users.has(username)) {
-      throw new ConflictException(`${username} is already registered`);
+  ): Promise<{ email: string; registered: true }> {
+    const userExists = await this.userRepository.findOneBy( { email } );
+    if (userExists) {
+      throw new ConflictException(`${email} is already registered`);
     }
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    this.users.set(username, { passwordHash, roles, refreshToken: null });
-    return { username, registered: true };
+    // this.users.set(username, { passwordHash, roles, refreshToken: null });
+    const user: User = new User();
+    user.email = email;
+    user.passwordHash = passwordHash;
+    user.name = name;
+    this.userRepository.save(user);
+    return { email, registered: true };
   }
 
   async login(username: string, password: string): Promise<{ accessToken: string; refreshToken: string }> {
