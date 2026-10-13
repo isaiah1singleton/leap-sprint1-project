@@ -8,6 +8,7 @@ COPY proof/sql/ proof/sql/
 COPY queries/ queries/
 COPY warehouse/load_gold.py warehouse/load_gold.py
 COPY warehouse/stable_keys.py warehouse/stable_keys.py
+COPY warehouse/delta.py warehouse/delta.py
 COPY warehouse/publish.py warehouse/publish.py
 RUN mkdir -p /data/warehouse /data/published && chown -R 10001:10001 /data
 USER 10001:10001

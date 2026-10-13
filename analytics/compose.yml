@@ -30,9 +30,10 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-leap}
       POSTGRES_USER: ${POSTGRES_USER:-leap}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
-    command: ["--output", "/data/batches/${BATCH_ID:-batch-001}"]
+    command: ["--output", "/data/batches/${BATCH_ID:-batch-001}", "--state", "/data/state/checkpoint.duckdb"]
     volumes:
       - batches:/data/batches
+      - etl_state:/data/state
     networks:
       - oltp
     restart: "no"
@@ -96,6 +97,7 @@ networks:
 
 volumes:
   batches:
+  etl_state:
   gold:
   published:
   superset_metadata:

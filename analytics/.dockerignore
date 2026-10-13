@@ -8,10 +8,12 @@
 !proof/tests/fixture.sql
 !etl/
 !etl/extract_transform.py
+!etl/incremental.py
 !warehouse/
 !warehouse/load_gold.py
 !warehouse/publish.py
 !warehouse/stable_keys.py
+!warehouse/delta.py
 !warehouse/requirements.txt
 !queries/
 !queries/*.sql

@@ -74,7 +74,9 @@ parallel; do not start simultaneous warehouse jobs.
   separate immutable generation selected by SNAPSHOT_ID. See
   `analytics/superset/README.md` for dashboard deployment and generation switching.
 - This is full refresh with the proof's UTC, decimal precision, requested-fill
-  quantity, and surrogate-key limitations. It is not incremental or scheduled.
+  quantity semantics for source extraction. Default ETL now retains state and
+  produces full/delta batches; see `analytics/etl/INCREMENTAL.md`. Gold keys are
+  stable. Source-side CDC and automatic scheduling are not implemented.
 
 Do not run `down -v`: it would delete analytics data volumes. Nothing here
 requires taking down the trading stack. Do not print resolved Compose config

@@ -7,6 +7,7 @@ COPY proof/proof.py proof/proof.py
 COPY proof/sql/ proof/sql/
 COPY proof/tests/fixture.sql proof/tests/fixture.sql
 COPY etl/extract_transform.py etl/extract_transform.py
-RUN mkdir -p /data/batches && chown -R 10001:10001 /data
+COPY etl/incremental.py etl/incremental.py
+RUN mkdir -p /data/batches /data/state && chown -R 10001:10001 /data
 USER 10001:10001
 ENTRYPOINT ["python", "etl/extract_transform.py"]

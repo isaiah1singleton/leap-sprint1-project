@@ -48,5 +48,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--fixture', action='store_true')
+    parser.add_argument('--state', type=Path, help='Persistent snapshot-diff checkpoint database')
     args = parser.parse_args()
-    print(json.dumps(run(args.output, args.fixture), indent=2))
+    if args.state:
+        from incremental import run as incremental_run
+        result = incremental_run(args.output, args.state, args.fixture)
+    else:
+        result = run(args.output, args.fixture)
+    print(json.dumps(result, indent=2))

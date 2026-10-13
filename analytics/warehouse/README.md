@@ -42,10 +42,11 @@ Do not run multiple warehouse writers concurrently.
 
 ## Scope of this step
 
-This prepares for incremental loading but **still accepts only full batches**:
-Gold tables are rebuilt within a transaction, then remapped to stable keys.
-Dimensions retain current-attribute semantics; a new full batch propagates
-corrections/deletions. No source extraction checkpoints, incremental upserts,
-CDC, scheduler, or deletion tombstones are introduced yet. PostgreSQL is unchanged.
-The next step is a versioned delta contract and persistent Bronze/Silver ETL state,
-followed by fact upserts keyed by fill_id and explicit deletion handling.
+The loader accepts legacy full batches and version-2 full/delta batches.
+Version-2 deltas require their parent to equal the warehouse head. Silver changes
+and fill-ID deletion tombstones are merged transactionally. Gold fact rows are
+replaced only for changed/deleted fill IDs, with stable keys; dimensions are
+reconciled from the complete retained Silver dataset to preserve current-attribute
+semantics. See `analytics/etl/INCREMENTAL.md` for deployment and recovery.
+No PostgreSQL changes, CDC, efficient source-side change capture, or scheduler
+are introduced.
