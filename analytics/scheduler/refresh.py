@@ -43,7 +43,7 @@ def refresh(env_file, state_dir, execute=subprocess.run):
             raise ValueError('Invalid pending refresh state')
         env = os.environ.copy()
         env.update(BATCH_ID=generation, SNAPSHOT_ID=generation)
-        base = ['docker','compose','-p','leap-analytics','--env-file',str(Path(env_file).resolve()),'-f',str(ROOT/'analytics/compose.yml'),'--profile','bi']
+        base = ['docker-compose','-p','leap-analytics','--env-file',str(Path(env_file).resolve()),'-f',str(ROOT/'analytics/compose.yml'),'--profile','bi']
 
         def command(*args):
             execute(base+list(args), cwd=ROOT, env=env, check=True, timeout=7200)
