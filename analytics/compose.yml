@@ -69,6 +69,21 @@ services:
       timeout: 5s
       retries: 20
 
+  retention:
+    build:
+      context: .
+      dockerfile: warehouse/Dockerfile
+    profiles: [bi]
+    entrypoint: ["python", "warehouse/retention.py"]
+    command: ["--help"]
+    volumes:
+      - batches:/data/batches
+      - published:/data/published
+      - etl_state:/data/state:ro
+      - gold:/data/warehouse:ro
+    network_mode: none
+    restart: "no"
+
   superset-init:
     <<: *superset
     environment:

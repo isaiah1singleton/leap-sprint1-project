@@ -5,5 +5,6 @@ RUN uv pip install --python /app/.venv/bin/python -r /tmp/analytics-requirements
 COPY superset/superset_config.py /app/pythonpath/superset_config.py
 COPY superset/bootstrap.py /app/analytics-bootstrap.py
 COPY superset/initialize.py /app/analytics-initialize.py
+COPY superset/active_snapshots.py /app/analytics-active-snapshots.py
 ENV SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py
 USER superset
