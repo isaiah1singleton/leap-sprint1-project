@@ -13,7 +13,11 @@ def digest(path):
 
 
 def verify(batch, manifest):
-    for name, expected in manifest['files'].items():
+    files = manifest.get('files')
+    required = {'executed_trades.parquet', 'deleted_fills.parquet', 'state_snapshot.parquet'}
+    if not isinstance(files, dict) or not required.issubset(files):
+        raise ValueError('Version-2 batch is missing required file checksums')
+    for name, expected in files.items():
         if Path(name).name != name or digest(batch / name) != expected:
             raise ValueError('Batch file checksum mismatch')
 
@@ -36,6 +40,21 @@ def run(output, state, fixture=False):
             raise ValueError('Batch ID is already checkpointed at another path')
         if output.exists():
             manifest = json.loads((output/'manifest.json').read_text())
+            if manifest.get('version') == 1:
+                # A pre-upgrade ETL may have completed the pending job. Let the
+                # existing full loader finish it without rewriting immutable
+                # content or changing its already-applied fingerprint.
+                if previous:
+                    raise ValueError('Cannot resume a legacy full batch after incremental state exists')
+                if (manifest.get('mode') != 'full' or manifest.get('timezone') != 'UTC'
+                        or manifest.get('batch_id', output.name) != output.name
+                        or type(manifest.get('fill_count')) is not int
+                        or manifest['fill_count'] < 0):
+                    raise ValueError('Invalid legacy full batch')
+                if digest(output/'executed_trades.parquet') != manifest.get('silver_sha256'):
+                    raise ValueError('Legacy Silver checksum mismatch')
+                print('Resuming pre-upgrade full batch; next new batch will establish incremental state.', flush=True)
+                return manifest
             verify(output, manifest)
             if manifest.get('version') != 2 or manifest.get('batch_id') != output.name:
                 raise ValueError('Existing output is not this incremental batch')

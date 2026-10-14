@@ -31,6 +31,42 @@ def source_with_changes(output, fixture=False):
 
 
 class DeltaTests(unittest.TestCase):
+    def test_resume_legacy_pending_batch_then_establish_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            batch, state, warehouse = root/'legacy', root/'state.duckdb', root/'warehouse.duckdb'
+            legacy = full_extract(batch, fixture=True)
+            original_bytes = (batch/'manifest.json').read_bytes()
+            expected = load(batch, warehouse)
+            with patch('etl.extract_transform.run', side_effect=AssertionError('Must not extract again')):
+                self.assertEqual(incremental(batch, state, fixture=True), legacy)
+            self.assertEqual((batch/'manifest.json').read_bytes(), original_bytes)
+            self.assertReports(load(batch, warehouse), expected)
+            baseline = incremental(root/'baseline-v2', state, fixture=True)
+            self.assertEqual(baseline['mode'],'full')
+            load(root/'baseline-v2', warehouse)
+            delta = incremental(root/'delta', state, fixture=True)
+            self.assertEqual((delta['mode'],delta['upsert_count'],delta['delete_count']),('delta',0,0))
+            self.assertReports(load(root/'delta', warehouse), expected)
+            with self.assertRaisesRegex(ValueError,'legacy full batch'):
+                incremental(batch,state,fixture=True)
+
+    def test_legacy_corruption_and_missing_v2_checksums_fail_clearly(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            batch=root/'legacy'
+            full_extract(batch,fixture=True)
+            path=batch/'manifest.json'
+            manifest=json.loads(path.read_text())
+            manifest['silver_sha256']='invalid'
+            path.write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError,'checksum'):
+                incremental(batch,root/'state.duckdb',fixture=True)
+            manifest['version']=2
+            path.write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError,'required file checksums'):
+                incremental(batch,root/'state.duckdb',fixture=True)
+
     def assertReports(self, actual, expected):
         # Segment SQL orders by count only; tied segments may change order.
         def normalized(reports):
