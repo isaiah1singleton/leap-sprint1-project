@@ -30,12 +30,6 @@ public class TradingRules {
         this.values = values;
     }
 
-    public long maxQuoteAgeSeconds() {
-        long age = Long.parseLong(required("trading.max-quote-age-seconds"));
-        if (age <= 0) throw new IllegalStateException("Quote age must be positive.");
-        return age;
-    }
-
     public boolean supports(AssetClass assetClass) {
         return assetClass != null
                 && Boolean.parseBoolean(values.getProperty("trading.asset." + assetClass + ".supported", "false"));

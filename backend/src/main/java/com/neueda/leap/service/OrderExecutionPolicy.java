@@ -7,7 +7,6 @@ import com.neueda.leap.entities.QuoteSnapshot;
 import com.neueda.leap.models.MarketQuoteDto;
 import com.neueda.leap.models.MarketQuoteResultDto;
 import org.springframework.stereotype.Component;
-import org.springframework.util.unit.DataUnit;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -59,10 +58,9 @@ public class OrderExecutionPolicy {
 
     public Optional<QuoteSnapshot> executionQuote(Order order, MarketQuoteResultDto result, Instant now) {
         Objects.requireNonNull(order, "Order is required.");
-        Objects.requireNonNull(result, "Market quote result is required.");
         Objects.requireNonNull(now, "Current time is required.");
 
-       if (result == null || result.error() != null || result.stale() || result.quote() ==null) {
+       if (result == null || result.error() != null || result.quote() ==null) {
            return Optional.empty();
        }
 
@@ -103,20 +101,7 @@ public class OrderExecutionPolicy {
                quoteAt
        );
 
-       return isQuoteFresh(snapshot, now) ? Optional.of(snapshot) : Optional.empty();
+       // Provider-delayed quotes are eligible; retain the actual observation time.
+       return quoteAt.toInstant().isAfter(now) ? Optional.empty() : Optional.of(snapshot);
     }
-
-    public boolean isQuoteFresh(QuoteSnapshot snapshot, Instant now) {
-        Objects.requireNonNull(now, "Current time is required.");
-
-        if (snapshot == null) {
-            return false;
-        }
-
-        Instant quoteTime = snapshot.quoteAt().toInstant();
-        Instant oldestAllowed = now.minusSeconds(tradingRules.maxQuoteAgeSeconds());
-
-        return !quoteTime.isAfter(now) && !quoteTime.isBefore(oldestAllowed);
-    }
-
 }

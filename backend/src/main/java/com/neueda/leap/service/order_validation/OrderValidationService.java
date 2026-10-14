@@ -43,9 +43,8 @@ public class OrderValidationService {
         if (!instrument.getQuoteCurrency().name().equalsIgnoreCase(request.quoteCurrency())) {
             throw new IllegalArgumentException("The quote currency does not match the instrument.");
         }
-        if (!isQuoteFresh(request.quoteAsOf().toInstant(), clock.instant())) {
-            throw new IllegalArgumentException("The displayed quote is outside the allowed age. "
-                    + "Refresh it and try again.");
+        if (request.quoteAsOf().toInstant().isAfter(clock.instant())) {
+            throw new IllegalArgumentException("The quote timestamp cannot be in the future.");
         }
         return new QuoteSnapshot(new Money(request.indicativePrice(), instrument.getQuoteCurrency()),
                 request.quoteAsOf());
@@ -127,13 +126,9 @@ public class OrderValidationService {
             throw failure(OrderValidationErrorCodes.QUOTE_CURRENCY_MISMATCH, "The quote currency does not match the instrument.");
         }
         Instant quotedAt = submittedQuote.quoteAt().toInstant();
-        if (!isQuoteFresh(quotedAt, now)) {
-            throw failure(OrderValidationErrorCodes.QUOTE_STALE, "The submitted quote is outside the allowed age.");
+        if (quotedAt.isAfter(now)) {
+            throw failure(OrderValidationErrorCodes.QUOTE_TIME_INVALID, "The quote timestamp cannot be in the future.");
         }
-    }
-
-    private boolean isQuoteFresh(Instant quotedAt, Instant now) {
-        return !quotedAt.isAfter(now) && !quotedAt.isBefore(now.minusSeconds(rules.maxQuoteAgeSeconds()));
     }
 
     private static boolean fitsOrderNumeric(BigDecimal value) {

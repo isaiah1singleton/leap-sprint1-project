@@ -65,7 +65,7 @@
           <div><dt>Market</dt><dd>{{ current.marketState | titlecase }}</dd></div>
         </dl>
         <p class="sub">Quote as of {{ current.asOf | date:'MMM d, y, HH:mm:ss':'UTC' }} UTC · {{ result()?.source }}
-          @if (result()?.stale) { <strong class="loss"> · Stale quote</strong> }
+          @if (result()?.stale) { <strong class="loss"> · Provider-delayed quote</strong> }
           @if (result()?.source === 'synthetic') { <strong> · Synthetic data</strong> }
         </p>
         <div class="trade-controls">
@@ -85,7 +85,7 @@
             @for (line of confirmation.lines; track line) { <p>{{ line }}</p> }
           </div>
         }
-        <p class="note">Submission validates against a live indicative quote. Accepted orders await execution and do not change cash or holdings.</p>
+        <p class="note">Submission validates against the displayed indicative quote. Accepted orders await execution and do not change cash or holdings.</p>
       }
     </div>
   }
@@ -111,7 +111,7 @@
             <strong class="tile-price" [class.gain]="(current.changePercent ?? 0) > 0" [class.loss]="(current.changePercent ?? 0) < 0">{{ money(current.price, current.currency || instrument.currency) }}</strong>
             <p [class.gain]="(current.changePercent ?? 0) > 0" [class.loss]="(current.changePercent ?? 0) < 0">{{ (current.changePercent ?? 0) > 0 ? '↑ ' : (current.changePercent ?? 0) < 0 ? '↓ ' : '' }}{{ change(item) }}</p>
             <p class="sub">{{ current.asOf | date:'MMM d, HH:mm:ss':'UTC' }} UTC</p>
-            @if (item.stale) { <p class="loss sub">Stale quote</p> }
+            @if (item.stale) { <p class="loss sub">Provider-delayed quote</p> }
             @if (item.source === 'synthetic') { <p class="sub">Synthetic data</p> }
           } @else { <p class="sub">{{ item?.error?.message || 'Select this ticker to request a price.' }}</p> }
         </article>

@@ -262,21 +262,19 @@ export class MarketExplorerComponent
 
     if (!instrument
       || !quote
-      || snapshot?.stale
       || snapshot?.error
       || this.loadingQuote()
       || quote.symbol !== instrument.symbol
       || !quote.currency
       || quote.currency !== instrument.currency) {
-      return 'A current quote is required to trade.';
+      return 'A valid provider quote is required to trade.';
     }
 
     const quoteTime = Date.parse(quote.asOf);
     const now = this.quoteClock();
     if (!Number.isFinite(quoteTime)
-      || quoteTime > now
-      || now - quoteTime > 120_000) {
-      return 'The displayed quote is outside the allowed age. Refresh it to trade.';
+      || quoteTime > now) {
+      return 'A valid quote timestamp that is not in the future is required.';
     }
 
     if (!this.validQuantity()) {
