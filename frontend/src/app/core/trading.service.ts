@@ -1,6 +1,6 @@
 import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { AccountSelectionService } from './account-selection.service';
 
 export interface Position {
@@ -26,6 +26,7 @@ export interface Activity {
 }
 
 export interface Receipt { head: string; lines: string[]; }
+export interface TradeReceipt extends Receipt { order: OrderDto; }
 export interface TxFailure { message: string; fields: string[]; }
 export type TradeMode = 'buy' | 'sell';
 export type TransferMode = 'withdraw' | 'deposit';
@@ -35,7 +36,8 @@ interface HoldingDto {
   instrumentId: number; symbol: string; name: string;
   totalQuantity: number; reservedQuantity: number; availableQuantity: number;
 }
-interface OrderDto {
+export interface OrderDto {
+  accountId: number;
   orderId: number; symbol: string; side: 'BUY' | 'SELL'; quantity: number;
   indicativePrice: number; submittedAt: string;
   status: 'SUBMITTED' | 'ACCEPTED' | 'REJECTED' | 'FILLED' | 'EXPIRED';
@@ -167,7 +169,7 @@ export class TradingService {
     indicativePrice: number,
     quoteAsOf: string,
     quoteCurrency: string,
-  ): Promise<TxFailure | Receipt> {
+  ): Promise<TxFailure | TradeReceipt> {
     const accountId =
       this.account.selectedAccount()?.accountId;
     const qty = Number(qtyInput);
@@ -215,6 +217,7 @@ export class TradingService {
       await this.refresh(accountId);
 
       return {
+        order,
         head: `Order ${order.status.toLowerCase()}`,
         lines: [
           `${order.side} ${order.quantity} ${order.symbol}`,
@@ -230,6 +233,10 @@ export class TradingService {
         fields: [],
       };
     }
+  }
+
+  getOrder(orderId: number): Observable<OrderDto> {
+    return this.http.get<OrderDto>(`/api/orders/${orderId}`);
   }
 
   async transfer(

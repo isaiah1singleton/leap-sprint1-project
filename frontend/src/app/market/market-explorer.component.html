@@ -70,7 +70,7 @@
         </p>
         <div class="trade-controls">
           <div><label class="label" for="ticker-quantity">Quantity</label>
-            <input id="ticker-quantity" class="input" type="number" min="0.000001" step="any" [ngModel]="quantity()" (ngModelChange)="quantity.set('' + $event); receipt.set(null)" /></div>
+            <input id="ticker-quantity" class="input" type="number" min="0.000001" step="any" [ngModel]="quantity()" (ngModelChange)="quantity.set('' + $event)" /></div>
           <div class="trade-account"><p class="sub">{{ account()?.accountName || 'No account selected' }}</p>
             <p class="sub">Cash {{ trading.money(trading.cash()) }} · {{ held() }} held</p>
             <p class="sub">Indicative buy value {{ validQuantity() ? money(qty() * current.ask, current.currency || instrument.currency) : '—' }}</p></div>
@@ -80,12 +80,7 @@
         @if (buyDisabled()) { <p class="sub">Buy: {{ disabledReason('buy') }}</p> }
         @if (sellDisabled()) { <p class="sub">Sell: {{ disabledReason('sell') }}</p> }
         @if (tradeError()) { <p class="error-text" role="alert">{{ tradeError() }}</p> }
-        @if (receipt(); as confirmation) {
-          <div class="trade-receipt" role="status"><strong>{{ confirmation.head }}</strong>
-            @for (line of confirmation.lines; track line) { <p>{{ line }}</p> }
-          </div>
-        }
-        <p class="note">Submission validates against the displayed indicative quote. Accepted orders await execution and do not change cash or holdings.</p>
+        <p class="note">Submission validates against the displayed indicative quote. Accepted orders await execution. The status window updates automatically.</p>
       }
     </div>
   }
@@ -118,4 +113,9 @@
       }
     </div>
   </section>
+}
+
+@if (orderPopupOpen()) {
+  <app-order-progress [order]="submittedOrder()" [submissionError]="tradeError()"
+    (closed)="orderPopupOpen.set(false)" />
 }

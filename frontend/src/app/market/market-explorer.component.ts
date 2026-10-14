@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { OrderProgressComponent } from './order-progress.component';
 import {
   Component,
   computed,
@@ -25,14 +26,14 @@ import {
   QuoteResult,
 } from '../core/market.service';
 import {
-  Receipt,
+  OrderDto,
   TradeMode,
   TradingService,
 } from '../core/trading.service';
 
 @Component({
   selector: 'app-market-explorer',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, OrderProgressComponent],
   templateUrl: './market-explorer.component.html',
   styleUrl: './market-explorer.component.css',
 })
@@ -61,8 +62,9 @@ export class MarketExplorerComponent
   readonly pinError = signal('');
   readonly watchlistQuotes = this.market.cachedQuotes;
   readonly quantity = signal('1');
-  readonly receipt = signal<Receipt | null>(null);
   readonly tradeError = signal('');
+  readonly orderPopupOpen = signal(false);
+  readonly submittedOrder = signal<OrderDto | null>(null);
   readonly common = computed(() =>
     this.market.catalogue()
       .filter(item => item.type === 'equity')
@@ -189,7 +191,6 @@ export class MarketExplorerComponent
     this.query.set(item.symbol);
     this.expanded.set(false);
     this.quantity.set('1');
-    this.receipt.set(null);
     this.tradeError.set('');
     this.pinError.set('');
     void this.loadQuote(item);
@@ -308,6 +309,9 @@ export class MarketExplorerComponent
     const quantity = this.quantity();
 
     this.submitting.set(true);
+    this.submittedOrder.set(null);
+    this.tradeError.set('');
+    this.orderPopupOpen.set(true);
     try {
       const result = await this.trading.trade(
         mode,
@@ -321,7 +325,7 @@ export class MarketExplorerComponent
         this.tradeError.set(result.message);
       } else {
         this.tradeError.set('');
-        this.receipt.set(result);
+        this.submittedOrder.set(result.order);
       }
     } finally {
       this.submitting.set(false);
