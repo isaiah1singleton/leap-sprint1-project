@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, ConflictException, Inject } from "@nestjs/common";
 import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import { randomBytes } from "crypto";
@@ -7,6 +7,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from 'typeorm';
 import { RegisterDto } from './register.dto';
 import { User } from './user/entities/user.entity';
+import { UserService } from "./user/user.service";
 
 interface StoredUser {
   passwordHash: string;
@@ -25,9 +26,9 @@ export const JWT_SECRET = process.env.JWT_SECRET || "mission-control-shared-secr
 @Injectable()
 export class AuthService {
   // private readonly users = new Map<string, StoredUser>();
-
+  
   constructor(
-    @InjectRepository(User) private readonly userRepository: Repository<User>
+    private readonly userService: UserService
   ) {}
 
   async register(
@@ -36,41 +37,36 @@ export class AuthService {
     name: string,
     roles: string[] = ["MISSION_OPERATOR"],
   ): Promise<{ email: string; registered: true }> {
-    const userExists = await this.userRepository.findOneBy( { email } );
+    const userExists = await this.userService.findOneByEmail( email );
     if (userExists) {
       throw new ConflictException(`${email} is already registered`);
     }
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    // this.users.set(username, { passwordHash, roles, refreshToken: null });
-    const user: User = new User();
-    user.email = email;
-    user.passwordHash = passwordHash;
-    user.name = name;
-    this.userRepository.save(user);
+    await this.userService.create({email, name, passwordHash})
     return { email, registered: true };
   }
 
-  async login(username: string, password: string): Promise<{ accessToken: string; refreshToken: string }> {
-    const user = this.users.get(username);
-    const passwordMatches = user ? await bcrypt.compare(password, user.passwordHash) : false;
-    if (!user || !passwordMatches) {
-      throw new UnauthorizedException("invalid username or password");
-    }
-    const accessToken = this.issueAccessToken(username, user.roles);
-    const refreshToken = randomBytes(32).toString("hex");
-    user.refreshToken = refreshToken;
-    logAuthEvent("login_success", username);
-    return { accessToken, refreshToken };
-  }
+  // async login(username: string, password: string): Promise<{ accessToken: string; refreshToken: string }> {
+  //   const user = this.users.get(username);
+  //   const passwordMatches = user ? await bcrypt.compare(password, user.passwordHash) : false;
+  //   if (!user || !passwordMatches) {
+  //     throw new UnauthorizedException("invalid username or password");
+  //   }
+  //   const accessToken = this.issueAccessToken(username, user.roles);
+  //   const refreshToken = randomBytes(32).toString("hex");
+  //   user.refreshToken = refreshToken;
+  //   logAuthEvent("login_success", username);
+  //   return { accessToken, refreshToken };
+  // }
 
-  refresh(refreshToken: string): { accessToken: string } {
-    const entry = this.findByRefreshToken(refreshToken);
-    if (!entry) {
-      throw new UnauthorizedException("invalid or expired refresh token");
-    }
-    const [username, user] = entry;
-    return { accessToken: this.issueAccessToken(username, user.roles) };
-  }
+  // refresh(refreshToken: string): { accessToken: string } {
+  //   const entry = this.findByRefreshToken(refreshToken);
+  //   if (!entry) {
+  //     throw new UnauthorizedException("invalid or expired refresh token");
+  //   }
+  //   const [username, user] = entry;
+  //   return { accessToken: this.issueAccessToken(username, user.roles) };
+  // }
 
   private issueAccessToken(username: string, roles: string[]): string {
     return jwt.sign({ sub: username, roles }, JWT_SECRET, {
@@ -79,7 +75,7 @@ export class AuthService {
     });
   }
 
-  private findByRefreshToken(refreshToken: string): [string, StoredUser] | undefined {
-    return [...this.users.entries()].find(([, u]) => u.refreshToken === refreshToken);
-  }
+  // private findByRefreshToken(refreshToken: string): [string, StoredUser] | undefined {
+  //   return [...this.users.entries()].find(([, u]) => u.refreshToken === refreshToken);
+  // }
 }

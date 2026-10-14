@@ -1,57 +1,43 @@
 import { Injectable } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
+// import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RegisterDto } from '../register.dto';
-import { User } from './entities/user.entity';
 
 @Injectable()
 export class UserService {
-  /**
-   * Here, we have used data mapper approch for this tutorial that is why we
-   * injecting repository here. Another approch can be Active records.
-   */
+
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-  ) {}
+  ){}
 
-  /**
-   * this is function is used to create User in User Entity.
-   * @param RegisterDto this will type of createUserDto in which
-   * we have defined what are the keys we are expecting from body
-   * @returns promise of user
-   */
-  createUser(registerDto: RegisterDto): Promise<User> {
+
+  create(createUserDto: CreateUserDto) {
     const user: User = new User();
-    user.name = registerDto.name;
-    user.email = registerDto.email;
-    user.password = registerDto.password;
+    user.name = createUserDto.name;
+    user.email = createUserDto.email;
+    user.passwordHash = createUserDto.passwordHash;
     return this.userRepository.save(user);
   }
 
-  /**
-   * this function is used to get all the user's list
-   * @returns promise of array of users
-   */
-  findAllUser(): Promise<User[]> {
+  findAllUser() {
     return this.userRepository.find();
   }
 
-  // /**
-  //  * this function used to get data of use whose id is passed in parameter
-  //  * @param id is type of number, which represent the id of user.
-  //  * @returns promise of user
-  //  */
-  // viewUser(id: number): Promise<User> {
-  //   return this.userRepository.findOneBy({ id });
+  viewUser(id: number): Promise<User | null> {
+    return this.userRepository.findOneBy({id});
+  }
+
+  findOneByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOneBy({email});
+  }
+
+  // update(id: number, updateUserDto: UpdateUserDto) {
+  //   return `This action updates a #${id} user`;
   // }
 
-
-  // /**
-  //  * this function is used to remove or delete user from database.
-  //  * @param id is the type of number, which represent id of user
-  //  * @returns nuber of rows deleted or affected
-  //  */
-  // removeUser(id: number): Promise<{ affected?: number }> {
-  //   return this.userRepository.delete(id);
+  // remove(id: number) {
+  //   return `This action removes a #${id} user`;
   // }
 }

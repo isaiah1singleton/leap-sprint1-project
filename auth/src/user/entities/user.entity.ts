@@ -1,19 +1,16 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class User {
-  /**
-   * this decorator will help to auto generate id for the table.
-   */
-  @PrimaryGeneratedColumn()
-  id!: number;
+    @PrimaryGeneratedColumn()
+    id!: number;
 
-  @Column({ type: 'varchar', length: 30 })
-  name!: string;
+    @Column({type: 'text'})
+    email!: string;
 
-  @Column({ type: 'varchar', length: 40 })
-  email!: string;
+    @Column({type: 'text'})
+    name!: string;
 
-  @Column({ type: 'varchar' })
-  passwordHash!: string;
+    @Column({type: 'text'})
+    passwordHash!: string;
 }

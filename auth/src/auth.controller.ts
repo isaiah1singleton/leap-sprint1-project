@@ -17,12 +17,12 @@ export class AuthController {
     return this.authService.register(body.email, body.password, body.name);
   }
 
-  @Post("login")
-  @HttpCode(200)
-  @ApiOperation({ summary: "Log in and receive an access token and a refresh token" })
-  @ApiResponse({ status: 200, description: "Login succeeded, tokens issued" })
-  @ApiResponse({ status: 401, description: "Invalid username or password" })
-  login(@Body() body: LoginDto) {
-    return this.authService.login(body.username, body.password);
-  }
+  // @Post("login")
+  // @HttpCode(200)
+  // @ApiOperation({ summary: "Log in and receive an access token and a refresh token" })
+  // @ApiResponse({ status: 200, description: "Login succeeded, tokens issued" })
+  // @ApiResponse({ status: 401, description: "Invalid username or password" })
+  // login(@Body() body: LoginDto) {
+  //   return this.authService.login(body.username, body.password);
+  // }
 }
