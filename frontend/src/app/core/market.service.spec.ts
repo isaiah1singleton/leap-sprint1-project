@@ -58,5 +58,19 @@ describe('MarketService watchlist', () => {
     http.expectOne('/api/market/quotes/X%3ABTC-USD').flush({ symbol: 'X:BTC-USD', quote: null, error: null });
     expect((await request).symbol).toBe('X:BTC-USD');
   });
+
+  it('shares in-flight requests but requests again on a later selection', async () => {
+    const first = service.quote('AAPL');
+    const concurrent = service.quote('AAPL');
+    expect(concurrent).toBe(first);
+    const result = { symbol: 'AAPL', quote: null, source: 'cache', stale: true, error: null };
+    http.expectOne('/api/market/quotes/AAPL').flush(result);
+    await first;
+    expect(service.cachedQuotes()['AAPL']).toEqual(result);
+
+    const refreshed = service.quote('AAPL');
+    http.expectOne('/api/market/quotes/AAPL').flush(result);
+    await refreshed;
+  });
 });
 

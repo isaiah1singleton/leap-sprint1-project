@@ -2,7 +2,7 @@
 <section class="card market-panel" aria-label="Stock and crypto search">
   <div class="market-heading">
     <div><h2 class="card-title">Explore instruments</h2><p class="sub">Search instruments available in your database.</p></div>
-    <span class="data-badge">We request prices every 60 seconds. Up-to-date prices aren’t guaranteed.</span>
+    <span class="data-badge">Select a ticker or refresh its quote to request the latest available price from Fauxnance.</span>
   </div>
   <div class="symbol-search">
     <label class="label" for="ticker-search">Symbol or company name</label>
@@ -49,10 +49,10 @@
       </div>
       @if (pinError()) { <p class="error-text" role="alert">{{ pinError() }}</p> }
       @if (market.pins().length >= market.maxPins) { <p class="sub">25 stock limit reached. Unpin a stock to add another.</p> }
+      <button class="btn-chip" [disabled]="loadingQuote()" (click)="loadQuote(instrument)">Refresh selected quote</button>
       @if (loadingQuote()) { <p class="sub" role="status">Loading quote for {{ instrument.symbol }}…</p> }
       @if (quoteError()) {
         <p class="error-text" role="alert">{{ quoteError() }}</p>
-        <button class="btn-chip" [disabled]="loadingQuote()" (click)="loadQuote(instrument)">Retry quote</button>
       }
       @if (quote(); as current) {
         <div class="quote-price">{{ money(current.price, current.currency || instrument.currency) }}
@@ -97,10 +97,8 @@
   <section class="card watchlist" aria-label="Pinned stocks">
     <div class="market-heading">
       <div><h2 class="card-title">Pinned stocks <span class="sub">{{ market.pins().length }} / 25</span></h2>
-        <p class="sub">Your dashboard watchlist, saved for your login in this browser.</p></div>
-      <button class="btn-chip" [disabled]="refreshing() || !market.pins().length" (click)="refreshWatchlist()">{{ refreshing() ? 'Refreshing…' : 'Refresh quotes' }}</button>
+        <p class="sub">Saved tickers and last fetched prices. Select a ticker to request an updated quote.</p></div>
     </div>
-    @if (watchlistError()) { <p class="error-text" role="alert">{{ watchlistError() }}</p> }
     @if (!market.pins().length) { <p class="empty-watchlist">Search for a stock on <a routerLink="/app/markets">Markets</a> and select “Pin to dashboard” to add it here.</p> }
     <div class="watchlist-grid">
       @for (instrument of market.pinnedSymbols(); track instrument.symbol) {
@@ -115,10 +113,9 @@
             <p class="sub">{{ current.asOf | date:'MMM d, HH:mm:ss':'UTC' }} UTC</p>
             @if (item.stale) { <p class="loss sub">Stale quote</p> }
             @if (item.source === 'synthetic') { <p class="sub">Synthetic data</p> }
-          } @else { <p class="sub">{{ item?.error?.message || (refreshing() ? 'Loading quote…' : 'Quote unavailable') }}</p> }
+          } @else { <p class="sub">{{ item?.error?.message || 'Select this ticker to request a price.' }}</p> }
         </article>
       }
     </div>
-    @if (updatedAt()) { <p class="sub">Last checked {{ updatedAt() | date:'HH:mm:ss':'UTC' }} UTC · We request prices every 60 seconds while this page is visible. Up-to-date prices aren’t guaranteed.</p> }
   </section>
 }

@@ -39,6 +39,8 @@ export class MarketService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   readonly catalogue = signal<MarketSymbol[]>([]);
+  readonly cachedQuotes = signal<Record<string, QuoteResult>>({});
+  private readonly quoteRequests = new Map<string, Promise<QuoteResult>>();
   readonly pins = signal<string[]>([]);
   readonly maxPins = 25;
   readonly pinnedSymbols = computed(() => this.pins().map(symbol =>
@@ -86,7 +88,18 @@ export class MarketService {
   }
 
   quote(symbol: string): Promise<QuoteResult> {
-    return firstValueFrom(this.http.get<QuoteResult>(`/api/market/quotes/${encodeURIComponent(symbol)}`));
+    const pending = this.quoteRequests.get(symbol);
+    if (pending) return pending;
+
+    const request = firstValueFrom(
+      this.http.get<QuoteResult>(`/api/market/quotes/${encodeURIComponent(symbol)}`)
+    ).then(result => {
+      this.cachedQuotes.update(quotes => ({ ...quotes, [symbol]: result }));
+      return result;
+    }).finally(() => this.quoteRequests.delete(symbol));
+
+    this.quoteRequests.set(symbol, request);
+    return request;
   }
 
   quotes(symbols: string[]): Promise<{ quotes: QuoteResult[]; disclaimer: string }> {

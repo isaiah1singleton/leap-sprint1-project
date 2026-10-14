@@ -59,11 +59,7 @@ export class MarketExplorerComponent
   readonly loadingQuote = signal(false);
   readonly quoteError = signal('');
   readonly pinError = signal('');
-  readonly watchlistError = signal('');
-  readonly refreshing = signal(false);
-  readonly watchlistQuotes =
-    signal<Record<string, QuoteResult>>({});
-  readonly updatedAt = signal<Date | null>(null);
+  readonly watchlistQuotes = this.market.cachedQuotes;
   readonly quantity = signal('1');
   readonly receipt = signal<Receipt | null>(null);
   readonly tradeError = signal('');
@@ -74,7 +70,6 @@ export class MarketExplorerComponent
   readonly submitting = signal(false);
   readonly quoteClock = signal(Date.now());
 
-  private timer?: ReturnType<typeof setInterval>;
   private quoteClockTimer?:
     ReturnType<typeof setInterval>;
   private selectionVersion = 0;
@@ -113,15 +108,6 @@ export class MarketExplorerComponent
   ngOnInit(): void {
     void this.loadCatalogue();
 
-    this.timer = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        void this.refreshWatchlist();
-        if (this.selected()) {
-          void this.loadQuote(this.selected()!, true);
-        }
-      }
-    }, 60_000);
-
     this.quoteClockTimer = setInterval(
       () => this.quoteClock.set(Date.now()),
       1_000);
@@ -130,7 +116,6 @@ export class MarketExplorerComponent
   ngOnDestroy(): void {
     this.destroyed = true;
     this.selectionVersion++;
-    if (this.timer) clearInterval(this.timer);
     if (this.quoteClockTimer) {
       clearInterval(this.quoteClockTimer);
     }
@@ -147,7 +132,6 @@ export class MarketExplorerComponent
       if (requested && this.showSearch()) {
         this.selectSymbol(requested);
       }
-      await this.refreshWatchlist();
     } catch (error) {
       this.catalogueError.set(
         this.market.errorMessage(error));
@@ -261,44 +245,6 @@ export class MarketExplorerComponent
       this.market.unpin(item.symbol);
     } else {
       this.pinError.set(this.market.pin(item) ?? '');
-    }
-    void this.refreshWatchlist();
-  }
-
-  async refreshWatchlist(): Promise<void> {
-    if (!this.showWatchlist()
-      || this.refreshing()) {
-      return;
-    }
-
-    const symbols = [...this.market.pins()];
-    if (!symbols.length) {
-      this.watchlistQuotes.set({});
-      return;
-    }
-
-    this.refreshing.set(true);
-    this.watchlistError.set('');
-
-    try {
-      const response =
-        await this.market.quotes(symbols);
-      if (this.destroyed) return;
-      this.watchlistQuotes.set(
-        Object.fromEntries(response.quotes
-          .map(item => [item.symbol, item])));
-      this.updatedAt.set(new Date());
-    } catch (error) {
-      this.watchlistQuotes.set({});
-      this.watchlistError.set(
-        this.market.errorMessage(error));
-    } finally {
-      this.refreshing.set(false);
-      if (!this.destroyed
-        && symbols.join(',')
-        !== this.market.pins().join(',')) {
-        void this.refreshWatchlist();
-      }
     }
   }
 
