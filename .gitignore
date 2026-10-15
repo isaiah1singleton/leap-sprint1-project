@@ -9,5 +9,5 @@ backend/target
 .venv/
 __pycache__/
 *.pyc
-analytics/duckdb/*.duckdb
-analytics/duckdb/*.duckdb.wal
+analytics/**/*.duckdb
+analytics/**/*.duckdb.wal

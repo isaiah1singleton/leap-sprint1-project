@@ -96,8 +96,8 @@ Never include .env, monitor.json, passwords, session tokens or SSH private keys.
 
 ## Scope boundaries
 
-The existing implemented star and metric semantics are preserved; exact parity
-with a live Databricks warehouse/session has not been independently measured.
+The implemented star and metric semantics are validated against the seed
+baseline and full-refresh proof; external warehouse parity is not claimed.
 There is no source CDC, SCD Type 2 history, FX conversion, execution-fill quantity
 model correction, zero-downtime dashboard activation, external host-outage alert,
 or production availability/performance guarantee. These are follow-up work, not

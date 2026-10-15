@@ -1,10 +1,10 @@
 # Standalone DuckDB BR-16 proof
 
-This full-load proof preserves the **implemented** Databricks Gold star: one
+This full-load proof preserves the implemented Gold star: one
 `gold.fact_trade` row per fill, joined to `dim_client`, `dim_account`,
-`dim_instrument`, `dim_date`, and `dim_time`. Original Databricks SQL and the
-older flattened DuckDB prototype are unchanged. It is not incremental ETL or
-a deployed Superset integration.
+`dim_instrument`, `dim_date`, and `dim_time`. Its SQL and shared helpers are also used by the deployed ETL and warehouse
+containers. The standalone command itself is full-load; deployment adds
+incremental processing and Superset separately.
 
 ## Run offline first
 
@@ -46,8 +46,7 @@ read-only using DuckDB. Keep output files outside the repository.
 
 - Bronze copies only explicitly listed analytical columns; no emails,
   passwords, or sessions. Silver and Gold are local to this standalone proof.
-- UTC is explicit for source and target. Confirm the existing Databricks
-  session timezone before claiming production parity.
+- UTC is explicit for source and target. This is the reporting timezone contract.
 - Source quantities/prices are staged as DECIMAL(18,8); larger or higher-scale
   source values are outside this proof's supported precision contract. Silver
   notional remains DECIMAL(24,8), with wider multiplication intermediates.
@@ -57,12 +56,11 @@ read-only using DuckDB. Keep output files outside the repository.
   across changing snapshots; incremental deployment needs persistent mappings.
 - Dimensions include only entities represented in executed trades and use
   current attributes, matching the implemented SQL, not the richer ER diagram.
-- Original reporting SQL is reused with only `leap.gold` changed to `gold`.
+- Reporting SQL in `analytics/queries` runs directly against DuckDB.
   Currency totals stay grouped by instrument and quote currency.
 - Validation rejects missing/duplicated fills and orphan dimension references.
   The offline tests verify counts, exact quantities/notionals, date/time keys,
-  repeatable refreshes, and rollback. They do not prove live PostgreSQL or actual
-  Databricks parity; compare the JSON reports against the same source snapshot.
+  repeatable refreshes, and rollback. They do not prove live PostgreSQL parity; compare the JSON reports against the same source snapshot.
 
 Expected fixture checks: 12 facts; segments RETAIL=5, PREMIUM=3,
 PROFESSIONAL=4; months August=2, September=5, October=5. Instrument notionals:

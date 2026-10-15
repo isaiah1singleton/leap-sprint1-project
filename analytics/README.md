@@ -90,8 +90,9 @@ Superset restart; this creates a brief dashboard interruption.
 | Gmail alerts and monitoring installation | [Monitoring](scheduler/MONITORING.md) |
 | Incident response and evidence collection | [Operations](OPERATIONS.md) |
 
-Original Databricks SQL in silver/, gold/ and queries/ remains the migration
-reference. DuckDB dialect translations live in proof/sql/. The older duckdb/
-flattened snapshot script remains a legacy prototype and is not the deployed
-star-schema pipeline. OLAP_diagram.mmd describes additional attributes/history
-not present in the implemented SQL; do not treat those as delivered features.
+DuckDB SQL in proof/sql/ is the analytical transformation source of truth;
+queries/ contains native DuckDB BR-16 reporting SQL. The proof directory also
+supplies shared extraction/validation helpers and offline regression tests used
+by the deployed containers; it is an active dependency, not a legacy pipeline.
+OLAP_diagram.mmd describes additional attributes/history not present in the
+implemented SQL; do not treat those as delivered features.

@@ -35,7 +35,7 @@ def publish(source, destination, reuse=False):
             for table in ('dim_client', 'dim_account', 'dim_instrument', 'dim_date', 'dim_time', 'fact_trade'):
                 con.execute(f'CREATE TABLE gold.{table} AS SELECT * FROM source.gold.{table}')
             for query in sorted((ANALYTICS / 'queries').glob('*.sql')):
-                sql = query.read_text().replace('leap.gold.', 'gold.').strip().rstrip(';')
+                sql = query.read_text().strip().rstrip(';')
                 con.execute(f'CREATE VIEW gold.{query.stem} AS {sql}')
                 con.execute(f'SELECT * FROM gold.{query.stem}').fetchall()
             con.execute('CHECKPOINT')

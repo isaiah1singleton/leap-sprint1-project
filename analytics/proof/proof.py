@@ -80,7 +80,7 @@ def validate(con, expected_fills=None):
 def reports(con):
     result = {}
     for path in sorted((ANALYTICS / 'queries').glob('*.sql')):
-        cursor = con.execute(path.read_text().replace('leap.gold.', 'gold.'))
+        cursor = con.execute(path.read_text())
         result[path.stem] = [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
     return result
 
