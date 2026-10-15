@@ -26,6 +26,10 @@ export class ShellComponent {
     { path: '/app/account', label: 'Account details' },
   ];
 
+  readonly adminNavItems = [
+    { path: '/app/admin-audit', label: 'Admin audit' },
+  ];
+
   pageTitle(): string {
     return this.title.getTitle() || 'Dashboard';
   }

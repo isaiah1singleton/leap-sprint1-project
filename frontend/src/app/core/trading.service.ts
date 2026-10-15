@@ -2,6 +2,7 @@ import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AccountSelectionService } from './account-selection.service';
+import { AdminAuditService } from './admin-audit.service';
 
 export interface Position {
   instrumentId: number;
@@ -51,6 +52,7 @@ interface TransferDto { movement: MovementDto; balance: BalanceDto; }
 export class TradingService {
   private readonly http = inject(HttpClient);
   private readonly account = inject(AccountSelectionService);
+  private readonly audit = inject(AdminAuditService);
   private loadVersion = 0;
   readonly cash = signal(0);
   readonly positions = signal<Position[]>([]);
@@ -132,6 +134,16 @@ export class TradingService {
       const order = await firstValueFrom(this.http.post<OrderDto>('/api/orders', {
         accountId, instrumentId, side: mode.toUpperCase(), quantity: qty,
       }));
+      this.audit.recordTrade({
+        orderId: order.orderId,
+        accountId,
+        instrument: order.symbol,
+        side: order.side,
+        quantity: Number(order.quantity),
+        indicativePrice: Number(order.indicativePrice),
+        status: order.status,
+        reason: order.reason ?? undefined,
+      });
       await this.refresh(accountId);
       return {
         head: `Order ${order.status.toLowerCase()}`,
@@ -143,6 +155,16 @@ export class TradingService {
         ],
       };
     } catch (error) {
+      this.audit.recordTrade({
+        orderId: null,
+        accountId,
+        instrument: `#${instrumentId}`,
+        side: mode.toUpperCase() as 'BUY' | 'SELL',
+        quantity: qty,
+        indicativePrice: 0,
+        status: 'FAILED',
+        reason: this.errorMessage(error),
+      });
       return { message: this.errorMessage(error), fields: [] };
     }
   }
@@ -175,9 +197,29 @@ export class TradingService {
   async cancel(orderId: number): Promise<string | null> {
     try {
       await firstValueFrom(this.http.post<OrderDto>(`/api/orders/${orderId}/cancel`, {}));
+      this.audit.recordTrade({
+        orderId,
+        accountId: this.account.selectedAccount()?.accountId ?? null,
+        instrument: '-',
+        side: 'BUY',
+        quantity: 0,
+        indicativePrice: 0,
+        status: 'CANCELLED',
+        reason: 'Cancelled from frontend action.',
+      });
       await this.refresh();
       return null;
     } catch (error) {
+      this.audit.recordTrade({
+        orderId,
+        accountId: this.account.selectedAccount()?.accountId ?? null,
+        instrument: '-',
+        side: 'BUY',
+        quantity: 0,
+        indicativePrice: 0,
+        status: 'CANCEL_FAILED',
+        reason: this.errorMessage(error),
+      });
       return this.errorMessage(error);
     }
   }

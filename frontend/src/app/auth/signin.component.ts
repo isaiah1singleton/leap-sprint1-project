@@ -15,6 +15,7 @@ export class SigninComponent {
   email = '';
   password = '';
   error = '';
+  mode: 'client' | 'admin' = 'client';
   private errorFields: string[] = [];
 
   invalid(field: string): boolean {
@@ -22,15 +23,19 @@ export class SigninComponent {
   }
 
   async submit(): Promise<void> {
-    const failure = await this.auth.signIn(this.email, this.password);
-    if (failure) {
-      this.error = failure.message;
-      this.errorFields = failure.fields;
-      this.password = '';
+    const fields: string[] = [];
+    if (!this.email.trim()) fields.push('email');
+    if (!this.password) fields.push('password');
+    if (fields.length) {
+      this.error = 'Enter your email and password.';
+      this.errorFields = fields;
       return;
     }
+
+    this.auth.beginLocalSession(this.email, this.mode === 'admin' ? 'ADMIN' : 'RETAIL');
     this.error = '';
     this.errorFields = [];
-    void this.router.navigate(['/app/overview']);
+    this.password = '';
+    void this.router.navigate([this.mode === 'admin' ? '/app/admin-audit' : '/app/overview']);
   }
 }

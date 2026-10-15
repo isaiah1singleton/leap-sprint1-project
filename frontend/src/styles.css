@@ -50,6 +50,8 @@ body { margin: 0; background: var(--ground); color: var(--ink); font-family: sys
 .nav-link:hover { background: var(--ground); }
 .nav-link.active { background: var(--ink); color: #fff; font-weight: 600; }
 .sidebar-note { margin-top: auto; padding: 10px 6px 0; border-top: 1px solid var(--line-soft); font: 10px/1.5 ui-monospace, Menlo, monospace; color: var(--faint); }
+.sidebar-admin-group { margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+.sidebar-admin-title { margin: 0 6px 6px; font: 10px/1.4 ui-monospace, Menlo, monospace; color: var(--muted); letter-spacing: .04em; }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .topbar { height: 58px; flex: none; background: var(--surface); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
 .topbar h1 { font-size: 17px; font-weight: 600; margin: 0; }
@@ -75,11 +77,16 @@ body { margin: 0; background: var(--ground); color: var(--ink); font-family: sys
 .table .num { text-align: right; }
 .table .sym { font-weight: 600; }
 .table .dim { color: var(--ink-soft); }
+.sub { font-size: 12px; color: var(--muted); margin: 8px 0 14px; }
 .list-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line-soft); font-size: 13px; font-variant-numeric: tabular-nums; }
 .list-row .sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 .definition { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line-soft); font-size: 13px; }
 .definition dt { color: var(--muted); }
 .definition dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.audit-filters { margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.audit-filters .label { margin-top: 8px; }
+.audit-filters .input { height: 42px; }
 
 .seg { display: flex; gap: 6px; padding: 4px; background: var(--ground); border-radius: 22px; }
 .seg-opt { flex: 1; text-align: center; padding: 8px 0; border-radius: 18px; font-size: 12.5px; cursor: pointer; background: var(--surface); color: var(--ink-soft); border: none; font-family: inherit; }

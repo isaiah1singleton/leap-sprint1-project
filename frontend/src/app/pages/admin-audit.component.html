@@ -1,0 +1,178 @@
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+    <h2 class="card-title" style="margin:0">Trade audit dashboard</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn-chip" (click)="audit.refresh()">Reload local data</button>
+      <button class="btn-chip" (click)="resetFilters()">Reset filters</button>
+      <button class="btn-chip" (click)="audit.clear()">Clear records</button>
+    </div>
+  </div>
+  <p class="sub">Frontend-only local audit records captured after sign-in. Admin accounts are restricted to audit views only.</p>
+
+  @if (audit.error()) {
+    <p class="error-text">{{ audit.error() }}</p>
+  }
+
+  @if (audit.loading()) {
+    <p class="sub">Loading audit records...</p>
+  }
+
+  <div class="audit-filters">
+    <div>
+      <label class="label" for="audit-client">Client</label>
+      <input id="audit-client" class="input" [ngModel]="clientFilter()" (ngModelChange)="setClientFilter($event)" placeholder="Name or email" />
+    </div>
+    <div>
+      <label class="label" for="audit-instrument">Instrument</label>
+      <select id="audit-instrument" class="input" [ngModel]="instrumentFilter()" (ngModelChange)="setInstrumentFilter($event)">
+        <option value="ALL">All instruments</option>
+        @for (item of instrumentOptions(); track item) {
+          <option [value]="item">{{ item }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="label" for="audit-account">Account</label>
+      <select id="audit-account" class="input" [ngModel]="accountFilter()" (ngModelChange)="setAccountFilter($event)">
+        <option value="ALL">All accounts</option>
+        @for (item of accountOptions(); track item) {
+          <option [value]="item">{{ item }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="label" for="audit-status">Status</label>
+      <select id="audit-status" class="input" [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
+        <option value="ALL">All statuses</option>
+        @for (item of statusOptions(); track item) {
+          <option [value]="item">{{ item }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="label" for="audit-side">Side</label>
+      <select id="audit-side" class="input" [ngModel]="sideFilter()" (ngModelChange)="setSideFilter($event)">
+        <option value="ALL">All sides</option>
+        @for (item of sideOptions(); track item) {
+          <option [value]="item">{{ item }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="label" for="audit-from">From date</label>
+      <input id="audit-from" class="input" type="date" [ngModel]="dateFrom()" (ngModelChange)="setDateFrom($event)" />
+    </div>
+    <div>
+      <label class="label" for="audit-to">To date</label>
+      <input id="audit-to" class="input" type="date" [ngModel]="dateTo()" (ngModelChange)="setDateTo($event)" />
+    </div>
+    <div>
+      <label class="label" for="audit-search">Keyword</label>
+      <input id="audit-search" class="input" [ngModel]="searchFilter()" (ngModelChange)="setSearchFilter($event)" placeholder="Order, reason, symbol" />
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:14px">
+    <div class="card" style="flex:1">
+      <p class="stat-label">Visible records</p>
+      <p class="stat-value">{{ summary().total }}</p>
+    </div>
+    <div class="card" style="flex:1">
+      <p class="stat-label">Distinct clients</p>
+      <p class="stat-value">{{ summary().uniqueClients }}</p>
+    </div>
+    <div class="card" style="flex:1">
+      <p class="stat-label">Distinct instruments</p>
+      <p class="stat-value">{{ summary().uniqueInstruments }}</p>
+    </div>
+    <div class="card" style="flex:1">
+      <p class="stat-label">Rejected or failed</p>
+      <p class="stat-value loss">{{ summary().rejectedCount }}</p>
+    </div>
+    <div class="card" style="flex:1">
+      <p class="stat-label">Cancelled</p>
+      <p class="stat-value">{{ summary().cancelledCount }}</p>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:14px">
+    <div class="card" style="flex:1">
+      <h3 class="card-title" style="margin-top:0">By status</h3>
+      <table class="table">
+        <thead><tr><th>Status</th><th class="num">Count</th></tr></thead>
+        <tbody>
+          @for (item of statusBreakdown(); track item.key) {
+            <tr><td>{{ item.key }}</td><td class="num">{{ item.count }}</td></tr>
+          } @empty {
+            <tr><td colspan="2" class="dim">No data</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="card" style="flex:1">
+      <h3 class="card-title" style="margin-top:0">Top clients</h3>
+      <table class="table">
+        <thead><tr><th>Client</th><th class="num">Count</th></tr></thead>
+        <tbody>
+          @for (item of clientBreakdown(); track item.key) {
+            <tr><td>{{ item.key }}</td><td class="num">{{ item.count }}</td></tr>
+          } @empty {
+            <tr><td colspan="2" class="dim">No data</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="card" style="flex:1">
+      <h3 class="card-title" style="margin-top:0">Top instruments</h3>
+      <table class="table">
+        <thead><tr><th>Instrument</th><th class="num">Count</th></tr></thead>
+        <tbody>
+          @for (item of instrumentBreakdown(); track item.key) {
+            <tr><td>{{ item.key }}</td><td class="num">{{ item.count }}</td></tr>
+          } @empty {
+            <tr><td colspan="2" class="dim">No data</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Audit</th>
+        <th>Order</th>
+        <th>Actor</th>
+        <th>Account</th>
+        <th>Instrument</th>
+        <th>Side</th>
+        <th class="num">Quantity</th>
+        <th class="num">Indicative</th>
+        <th>Status</th>
+        <th>Recorded at</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (record of filteredRecords(); track record.auditId) {
+        <tr>
+          <td class="sym">#{{ record.auditId }}</td>
+          <td>{{ record.orderRef }}</td>
+          <td>{{ record.actor }}</td>
+          <td>{{ record.account }}</td>
+          <td>{{ record.instrument }}</td>
+          <td>{{ record.side }}</td>
+          <td class="num">{{ record.quantity }}</td>
+          <td class="num">{{ record.indicativePrice }}</td>
+          <td>{{ record.status }}</td>
+          <td>{{ record.recordedAt }}</td>
+          <td class="dim">{{ record.reason }}</td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="11" class="dim">No trade audit records yet.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

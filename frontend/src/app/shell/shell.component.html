@@ -1,10 +1,18 @@
 <div class="shell">
   <nav class="sidebar">
     <div class="brand"><span class="brand-mark"></span> Inside Tr8ders</div>
-    @for (item of navItems; track item.path) {
-      <a class="nav-link" [routerLink]="item.path" routerLinkActive="active">{{ item.label }}</a>
+    @if (auth.isAdmin()) {
+      <p class="sidebar-admin-title">ADMIN TOOLS</p>
+      @for (item of adminNavItems; track item.path) {
+        <a class="nav-link" [routerLink]="item.path" routerLinkActive="active">{{ item.label }}</a>
+      }
+      <p class="sidebar-note">ADMIN SESSION ACTIVE</p>
+    } @else {
+      @for (item of navItems; track item.path) {
+        <a class="nav-link" [routerLink]="item.path" routerLinkActive="active">{{ item.label }}</a>
+      }
+      <p class="sidebar-note">REGULAR USER — NO ADMIN TOOLS</p>
     }
-    <p class="sidebar-note">REGULAR USER — NO ADMIN TOOLS</p>
   </nav>
 
   <div class="main">
