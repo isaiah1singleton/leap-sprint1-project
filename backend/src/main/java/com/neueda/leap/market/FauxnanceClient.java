@@ -1,6 +1,7 @@
 package com.neueda.leap.market;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.neueda.leap.models.MarketErrorDto;
 import com.neueda.leap.models.MarketQuoteDto;
 import com.neueda.leap.models.MarketQuoteResultDto;
 import com.neueda.leap.service.MarketDataService;
@@ -12,10 +13,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.math.BigDecimal;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
@@ -45,11 +44,11 @@ public class FauxnanceClient implements QuoteProvider {
             var response = client.get()
                     .uri("quotes/{symbol}", symbol)
                     .retrieve()
-                    .toEntity(MarketDataService.QuoteEnvelope.class);
+                    .toEntity(QuoteEnvelope.class);
             if (response.getStatusCode().value() == 202) {
                 throw pending(response.getHeaders());
             }
-            MarketDataService.QuoteEnvelope body = response.getBody();
+           QuoteEnvelope body = response.getBody();
 
             if (body == null
                     || body.meta() == null
@@ -89,13 +88,13 @@ public class FauxnanceClient implements QuoteProvider {
                             .queryParam("symbols", String.join(",", symbols))
                             .build())
                     .retrieve()
-                    .toEntity(MarketDataService.BatchEnvelope.class);
+                    .toEntity(BatchEnvelope.class);
 
             if (response.getStatusCode().value() == 202) {
                 throw pending(response.getHeaders());
             }
 
-            MarketDataService.BatchEnvelope body = response.getBody();
+            BatchEnvelope body = response.getBody();
 
             if (body == null
                     || body.data() == null
@@ -276,7 +275,4 @@ public class FauxnanceClient implements QuoteProvider {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record BatchEnvelope(BatchData data) {
     }
-}
-
-
 }
