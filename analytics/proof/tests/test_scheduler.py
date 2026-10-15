@@ -3,6 +3,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -13,6 +14,11 @@ if sys.platform != 'win32':
 
 @unittest.skipIf(sys.platform == 'win32', 'The systemd scheduler targets Linux hosts')
 class SchedulerTests(unittest.TestCase):
+    def setUp(self):
+        patcher=patch('scheduler.refresh.compose_command',return_value=['docker','compose'])
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_failed_warehouse_retries_same_batch_without_new_extraction(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

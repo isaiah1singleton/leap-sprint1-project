@@ -4,6 +4,10 @@ import fcntl
 import json
 from pathlib import Path
 import subprocess
+try:
+    from .common import compose_command
+except ImportError:
+    from common import compose_command
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -19,7 +23,9 @@ def cleanup(env_file, state_dir, days=7, keep=24, apply=False):
             path=state_dir/name
             if path.exists():
                 protected.add(json.loads(path.read_text())['generation'])
+
         base=['docker-compose','-p','leap-analytics','--env-file',str(Path(env_file).resolve()),
+aac614dac9b152c95cc8cc5ce8b67d42c070736e
               '-f',str(ROOT/'analytics/compose.yml'),'--profile','bi']
         def run(*args,**kwargs):
             return subprocess.run(base+list(args),cwd=ROOT,check=True,timeout=600,**kwargs)
