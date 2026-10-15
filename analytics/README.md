@@ -1,85 +1,97 @@
-# LEAP Trading Analytics
+# LEAP Trading Analytics — BR-16
 
-This directory contains the Databricks analytical implementation for the LEAP Direct Trading Platform.
-
-The design supports BR-16: analyse trading activity over time, by instrument, and by client segment without analytical workloads competing with the live trading system.
+DuckDB is the analytical warehouse and Apache Superset serves reporting for the
+LEAP trading platform. PostgreSQL remains the system of record for trading.
+BR-16 is implemented as activity reporting over time, by instrument, and by client
+segment, using the original implemented Gold star schema.
 
 ## Architecture
 
 ```text
-PostgreSQL OLTP
-      |
-      | asynchronous ingestion
-      v
-Databricks Bronze
-      |
-      v
-Databricks Silver
-      |
-      v
-Databricks Gold
-      |
-      v
-Analytics
+PostgreSQL OLTP (existing trading stack)
+    | SELECT-only, repeatable-read snapshot
+    v
+ETL container: Bronze projections -> Silver executed trades
+    | immutable Parquet batches + manifests + deletion IDs
+    v
+DuckDB owner container: retained Silver + Gold star + pipeline state
+    | checkpointed, closed, immutable Gold-only generations
+    v
+Superset: embedded DuckDB read-only queries -> BR-16 dashboard
+    |
+    +-- dedicated PostgreSQL metadata database (separate from OLTP)
+
+EC2 systemd: hourly refresh orchestration; health/email checks every 15 minutes
 ```
 
-PostgreSQL remains the system of record for live trading. Databricks handles analytical processing.
+The ETL and warehouse containers run as sequential jobs, not database servers.
+DuckDB has no PostgreSQL-compatible listener in this deployment. Superset uses
+`duckdb-engine` to execute queries locally against a published file. Only the
+warehouse writes the working Gold database. Superset never opens that working
+file or queries PostgreSQL OLTP. Source extraction still consumes OLTP resources;
+no production trading-load impact benchmark has been captured.
 
-## Bronze
+## Data contract
 
-Bronze contains raw data ingested from PostgreSQL. The initial implementation uses:
+Bronze contains analytical projections of clients, accounts, instruments, orders,
+and fills, excluding credentials, sessions and unrelated personal data. Silver
+joins these sources at one row per executed fill. Missing joins and duplicate
+fill IDs fail validation.
 
-- clients
-- accounts
-- instruments
-- orders
-- fills
+| Gold table | Key / relationship | Purpose |
+|---|---|---|
+| fact_trade | trade_key; lineage fill_id/order_id | One row per fill; quantity, price, notional and side |
+| dim_client | client_key; source_client_id | Current client segment |
+| dim_account | account_key; source_account_id | Source account lineage |
+| dim_instrument | instrument_key; source_instrument_id | Symbol, name, asset class, market, quote currency |
+| dim_date | date_key = YYYYMMDD | Execution date attributes |
+| dim_time | time_key = HHMMSS | Execution hour, minute and second |
 
-For the project prototype, these can be exported from PostgreSQL and loaded manually. This can later be replaced by automated ingestion or CDC.
+Fact foreign-key columns are client_key, account_key, instrument_key,
+execution_date_key and execution_time_key. Relationships are validated explicitly;
+CTAS-generated tables do not declare physical foreign-key constraints. Persistent
+pipeline key registries retain existing surrogate keys across reconciliations.
+Dimensions use current attributes, not SCD Type 2 history.
 
-## Silver
+Execution dates/times use UTC. Quantity and price are DECIMAL(18,8); notional is
+DECIMAL(24,8), with wider multiplication intermediates. Trade quantity currently
+comes from orders.requested_quantity because fills has no executed quantity.
+This preserves the existing prototype calculation, but does not correctly model
+partial/multiple fills. Monetary totals remain separated by quote currency;
+there is no FX conversion or portfolio valuation feature here.
 
-`leap.silver.executed_trades` joins the relevant Bronze tables into a clean analytical dataset.
+## Incremental behavior
 
-**Grain:** one row per executed fill.
+Each ETL run reads a consistent full source snapshot, recomputes Silver and
+compares it to retained Silver. The first stateful batch is full; subsequent
+batches contain new/changed fills and explicit deletion IDs. This is snapshot
+differencing, not CDC or reduced-volume PostgreSQL extraction. It handles late
+commits without relying on MAX(fill_id).
 
-It derives:
+The warehouse requires parent batches in order, merges Silver, reconciles
+dimensions, and updates only changed/deleted Gold facts. It checks merged Silver
+against the complete source snapshot. Key updates, data, batch registration and
+warehouse head commit together. Duplicate delivery is a no-op; changing content
+under an applied batch ID is rejected. Snapshots activate through a controlled
+Superset restart; this creates a brief dashboard interruption.
 
-```text
-notional_amount = executed_quantity * execution_price
-```
+## Documentation and entry points
 
-## Gold
+| Need | Reference |
+|---|---|
+| BR-16 acceptance, expected results and evidence gaps | [Acceptance record](BR16_ACCEPTANCE.md) |
+| Standalone proof and offline test setup | [Proof](proof/README.md) |
+| Initial ETL/warehouse Docker deployment | [Docker](DOCKER.md) |
+| Stateful extraction, delta ordering and recovery | [Incremental pipeline](etl/INCREMENTAL.md) |
+| Stable keys and batch replay | [Warehouse](warehouse/README.md) |
+| Superset setup, SSH access and rollback | [Superset](superset/README.md) |
+| Hourly orchestration and systemd installation | [Scheduler](scheduler/README.md) |
+| Dry-run/apply retention | [Retention](scheduler/RETENTION.md) |
+| Gmail alerts and monitoring installation | [Monitoring](scheduler/MONITORING.md) |
+| Incident response and evidence collection | [Operations](OPERATIONS.md) |
 
-Gold implements the reporting star schema.
-
-Fact:
-- `fact_trade`
-
-Dimensions:
-- `dim_client`
-- `dim_account`
-- `dim_instrument`
-- `dim_date`
-- `dim_time`
-
-The grain of `fact_trade` is one row per executed fill. Source OLTP identifiers are retained where appropriate for lineage.
-
-## BR-16
-
-The queries directory demonstrates analysis by:
-- period
-- instrument
-- client segment
-
-These queries run against Databricks rather than the PostgreSQL transactional database.
-
-## Currency
-
-Trade notional is denominated in the instrument's quote currency. Amounts in different currencies must not be treated as one monetary total without FX conversion.
-
-## Consistency and availability
-
-The analytical store is derived from PostgreSQL and is eventually consistent. PostgreSQL remains authoritative for live balances, holdings, orders, and trade execution.
-
-Failure or delay of the analytics pipeline must not prevent users from trading.
+Original Databricks SQL in silver/, gold/ and queries/ remains the migration
+reference. DuckDB dialect translations live in proof/sql/. The older duckdb/
+flattened snapshot script remains a legacy prototype and is not the deployed
+star-schema pipeline. OLAP_diagram.mmd describes additional attributes/history
+not present in the implemented SQL; do not treat those as delivered features.
