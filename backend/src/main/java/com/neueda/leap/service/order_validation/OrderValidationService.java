@@ -1,5 +1,6 @@
 package com.neueda.leap.service.order_validation;
 
+import com.neueda.leap.service.TradeAmountCalculator;
 import com.neueda.leap.entities.Account;
 import com.neueda.leap.entities.Instrument;
 import com.neueda.leap.entities.Money;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class OrderValidationService {
     private final TradingRules rules;
+    private static final TradeAmountCalculator tradeAmountCalculator = new TradeAmountCalculator();
     private final Clock clock;
 
     public OrderValidationService(TradingRules rules, Clock clock) {
@@ -143,7 +145,7 @@ public class OrderValidationService {
     private void validateResources(OrderSide side, BigDecimal quantity, QuoteSnapshot submittedQuote,
                                    Instrument instrument, Money totalCash, BigDecimal availableUnits) {
         if (side == OrderSide.BUY) {
-            BigDecimal requiredCash = submittedQuote.price().amount().multiply(quantity);
+            BigDecimal requiredCash = tradeAmountCalculator.calculate(quantity, submittedQuote.price()).amount();
             if (totalCash == null || totalCash.amount() == null
                     || totalCash.currency() != instrument.getQuoteCurrency()
                     || totalCash.amount().compareTo(requiredCash) < 0) {

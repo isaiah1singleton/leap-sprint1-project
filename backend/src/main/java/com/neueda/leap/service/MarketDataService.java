@@ -1,152 +1,335 @@
 package com.neueda.leap.service;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.neueda.leap.models.*;
+import com.neueda.leap.models.MarketErrorDto;
+import com.neueda.leap.models.MarketQuoteResultDto;
+import com.neueda.leap.models.MarketQuotesDto;
+import com.neueda.leap.market.QuoteProvider;
+import com.neueda.leap.market.QuoteProviderException;
+import org.springframework.stereotype.Service;
+
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.server.ResponseStatusException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static com.neueda.leap.market.QuoteProviderException.Kind.RATE_LIMITED;
 
 @Service
 public class MarketDataService {
-    public static final String DISCLAIMER = "Educational data. Not for investment use.";
-    private static final Duration CACHE_TTL = Duration.ofSeconds(30);
-    private final MarketSymbolService symbols;
-    private final RestClient client;
-    private final String apiKey;
-    private final Map<String, CachedQuote> cache = new HashMap<>();
 
-    public MarketDataService(MarketSymbolService symbols, @Qualifier("marketRestClient") RestClient client,
-            @Value("${market.fauxnance.api-key}") String apiKey) {
+    public static final String DISCLAIMER =
+            "Educational data. Not for investment use.";
+
+    private static final Duration CACHE_TTL = Duration.ofSeconds(30);
+
+    private final MarketSymbolService symbols;
+    private final QuoteProvider provider;
+    private final Clock clock;
+
+    // Recent responses, including per-symbol errors, limit repeated batch calls.
+    private final ConcurrentMap<String, CachedResult> recentResults =
+            new ConcurrentHashMap<>();
+
+    // Failed responses never overwrite a usable backup quote.
+    private final ConcurrentMap<String, MarketQuoteResultDto> lastQuotes =
+            new ConcurrentHashMap<>();
+
+    private final ConcurrentMap<
+            String, CompletableFuture<MarketQuoteResultDto>> inFlight =
+            new ConcurrentHashMap<>();
+
+    private final AtomicReference<Instant> quotaRetryAt =
+            new AtomicReference<>();
+
+    public MarketDataService(
+            MarketSymbolService symbols,
+            QuoteProvider provider,
+            Clock clock
+    ) {
         this.symbols = symbols;
-        this.apiKey = apiKey;
-        this.client = client;
+        this.provider = provider;
+        this.clock = clock;
     }
 
-    public synchronized MarketQuoteResultDto quote(String input) {
+    public MarketQuoteResultDto quote(String input) {
         String symbol = symbols.requireSymbol(input).symbol();
-        requireKey();
+
         try {
-            var response = client.get().uri("/quotes/{symbol}", symbol).retrieve().toEntity(QuoteEnvelope.class);
-            QuoteEnvelope body = response.getBody();
-            if (response.getStatusCode().value() == 202) throw pending();
-            if (body == null || body.data() == null || body.meta() == null
-                    || !validQuote(body.data(), symbol)) throw invalidResponse();
-            var result = new MarketQuoteResultDto(symbol, body.data(), body.meta().source(), body.meta().stale(), null);
-            cache.put(symbol, new CachedQuote(result, Instant.now()));
-            return result;
-        } catch (RestClientException exception) {
-            return fallbackOrThrow(symbol, translate(exception));
-        } catch (ResponseStatusException exception) {
-            return fallbackOrThrow(symbol, exception);
+            // Completed cached responses are not used on this path.
+            return load(List.of(symbol), false).get(0);
+        } catch (QuoteProviderException failure) {
+            MarketQuoteResultDto backup = lastQuotes.get(symbol);
+
+            if (backup == null) {
+                throw failure;
+            }
+
+            return new MarketQuoteResultDto(
+                    symbol,
+                    backup.quote(),
+                    "local-cache",
+                    true,
+                    new MarketErrorDto(
+                            "CACHED_FALLBACK",
+                            failure.getMessage()
+                                    + " Showing a saved quote; trading is disabled."
+                    )
+            );
         }
     }
 
-    private MarketQuoteResultDto fallbackOrThrow(String symbol, ResponseStatusException failure) {
-        CachedQuote cached = cache.get(symbol);
-        if (cached == null || cached.result().quote() == null) throw failure;
-        // Preserve the observation time and identify this as display-only backup data.
-        return new MarketQuoteResultDto(symbol, cached.result().quote(), "local-cache", true,
-                new MarketErrorDto("CACHED_FALLBACK",
-                        "Fauxnance is unavailable. Showing a saved quote; trading is disabled."));
+    public MarketQuotesDto quotes(String input) {
+        return new MarketQuotesDto(
+                load(normalizeSymbols(input), true),
+                DISCLAIMER
+        );
     }
 
-    /** One provider request for all cache misses; partial symbol errors remain visible. */
-    public synchronized MarketQuotesDto quotes(String input) {
-        if (input == null || input.isBlank()) throw new IllegalArgumentException("Provide at least one symbol.");
+    private List<String> normalizeSymbols(String input) {
+        if (input == null || input.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Provide at least one symbol."
+            );
+        }
+
         String[] requested = input.split(",", -1);
-        if (requested.length > 25) throw new IllegalArgumentException("Request at most 25 symbols.");
+
+        if (requested.length > 25) {
+            throw new IllegalArgumentException(
+                    "Request at most 25 symbols."
+            );
+        }
+
         LinkedHashSet<String> normalized = new LinkedHashSet<>();
+
         for (String symbol : requested) {
-            if (symbol.isBlank()) throw new IllegalArgumentException("Symbols cannot be empty.");
+            if (symbol.isBlank()) {
+                throw new IllegalArgumentException(
+                        "Symbols cannot be empty."
+                );
+            }
+
             normalized.add(symbols.requireSymbol(symbol).symbol());
         }
-        List<String> missing = normalized.stream().filter(symbol -> !isFresh(cache.get(symbol))).toList();
-        if (!missing.isEmpty()) {
-            requireKey();
-            try {
-                var response = client.get().uri(uri -> uri.path("/quotes")
-                        .queryParam("symbols", String.join(",", missing)).build())
-                        .retrieve().toEntity(BatchEnvelope.class);
-                BatchEnvelope body = response.getBody();
-                if (response.getStatusCode().value() == 202) throw pending();
-                if (body == null || body.data() == null || body.data().quotes() == null) throw invalidResponse();
-                Map<String, MarketQuoteResultDto> received = new HashMap<>();
-                for (MarketQuoteResultDto item : body.data().quotes()) {
-                    if (item != null && missing.contains(item.symbol())) received.put(item.symbol(), item);
-                }
-                Instant now = Instant.now();
-                for (String symbol : missing) {
-                    MarketQuoteResultDto item = received.get(symbol);
-                    if (item == null || (item.error() == null && !validQuote(item.quote(), symbol))) {
-                        item = new MarketQuoteResultDto(symbol, null, null, false,
-                                new MarketErrorDto("QUOTE_UNAVAILABLE", "The provider did not return a valid quote."));
-                    }
-                    cache.put(symbol, new CachedQuote(item, now));
-                }
-            } catch (RestClientException exception) {
-                throw translate(exception);
+
+        return List.copyOf(normalized);
+    }
+
+    private List<MarketQuoteResultDto> load(
+            List<String> requested,
+            boolean allowRecentResults
+    ) {
+        Map<String, CompletableFuture<MarketQuoteResultDto>> pending =
+                new LinkedHashMap<>();
+
+        List<String> owned = new ArrayList<>();
+
+        for (String symbol : requested) {
+            CachedResult cached = recentResults.get(symbol);
+
+            if (allowRecentResults && reusable(cached)) {
+                pending.put(
+                        symbol,
+                        CompletableFuture.completedFuture(cached.result())
+                );
+                continue;
+            }
+
+            CompletableFuture<MarketQuoteResultDto> created =
+                    new CompletableFuture<>();
+
+            CompletableFuture<MarketQuoteResultDto> existing =
+                    inFlight.putIfAbsent(symbol, created);
+
+            pending.put(symbol, existing == null ? created : existing);
+
+            if (existing == null) {
+                owned.add(symbol);
             }
         }
-        List<MarketQuoteResultDto> results = new ArrayList<>();
-        for (String symbol : normalized) results.add(cache.get(symbol).result());
-        return new MarketQuotesDto(results, DISCLAIMER);
-    }
 
-    private boolean isFresh(CachedQuote quote) {
-        return quote != null && quote.cachedAt().plus(CACHE_TTL).isAfter(Instant.now());
-    }
-
-    private boolean validQuote(MarketQuoteDto quote, String symbol) {
-        return quote != null && symbol.equals(quote.symbol()) && quote.price() != null && quote.price().signum() > 0
-                && quote.bid() != null && quote.bid().signum() > 0 && quote.ask() != null && quote.ask().signum() > 0
-                && quote.asOf() != null;
-    }
-
-    private void requireKey() {
-        if (apiKey == null || apiKey.isBlank()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                "Market data is not configured. Set FAUXNANCE_API_KEY on the backend.");
-    }
-
-    private ResponseStatusException translate(RestClientException exception) {
-        if (exception instanceof RestClientResponseException response) {
-            int status = response.getStatusCode().value();
-            if (status == 404) return new ResponseStatusException(HttpStatus.NOT_FOUND, "The provider has no data for this symbol.");
-            if (status == 429) return new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Market data quota or rate limit reached. Please try again later.");
-            if (status == 401 || status == 403) return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "The market data provider rejected the backend API key. Check FAUXNANCE_API_KEY.");
+        if (!owned.isEmpty()) {
+            fetchOwned(owned, pending, allowRecentResults);
         }
-        // Do not expose upstream response bodies, credentials, or transport internals.
-        return new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Market data is temporarily unavailable. Please try again.");
+
+        return requested.stream()
+                .map(symbol -> await(pending.get(symbol)))
+                .toList();
     }
 
-    private ResponseStatusException pending() {
-        return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "This symbol's data is being prepared. Please try again shortly.");
+    private void fetchOwned(
+            List<String> owned,
+            Map<String, CompletableFuture<MarketQuoteResultDto>> pending,
+            boolean batchRequest
+    ) {
+        try {
+            requireQuotaAvailable();
+
+            List<MarketQuoteResultDto> results = batchRequest
+                    ? provider.fetchQuotes(List.copyOf(owned))
+                    : List.of(provider.fetchQuote(owned.get(0)));
+
+            Map<String, MarketQuoteResultDto> bySymbol = new HashMap<>();
+
+            for (MarketQuoteResultDto result : results) {
+                if (result != null && owned.contains(result.symbol())) {
+                    bySymbol.put(result.symbol(), result);
+                }
+            }
+
+            for (String symbol : owned) {
+                MarketQuoteResultDto result = bySymbol.get(symbol);
+
+                if (result == null) {
+                    result = new MarketQuoteResultDto(
+                            symbol,
+                            null,
+                            null,
+                            false,
+                            new MarketErrorDto(
+                                    "QUOTE_UNAVAILABLE",
+                                    "The provider returned no result for this symbol."
+                            )
+                    );
+                }
+
+                remember(symbol, result);
+                pending.get(symbol).complete(result);
+            }
+        } catch (QuoteProviderException failure) {
+            if (failure.kind() == RATE_LIMITED) {
+                rememberQuotaFailure(failure);
+            }
+
+            completeExceptionally(owned, pending, failure);
+        } catch (RuntimeException | Error failure) {
+            // Ensure other threads waiting for these symbols are released.
+            completeExceptionally(owned, pending, failure);
+        } finally {
+            for (String symbol : owned) {
+                inFlight.remove(symbol, pending.get(symbol));
+            }
+        }
     }
 
-    private ResponseStatusException invalidResponse() {
-        return new ResponseStatusException(HttpStatus.BAD_GATEWAY, "The provider returned an incomplete quote.");
+    private void remember(
+            String symbol,
+            MarketQuoteResultDto result
+    ) {
+        recentResults.put(
+                symbol,
+                new CachedResult(result, clock.instant())
+        );
+
+        if (result.error() != null || result.quote() == null) {
+            return;
+        }
+
+        lastQuotes.compute(symbol, (key, previous) -> {
+            if (previous == null) {
+                return result;
+            }
+
+            Instant previousTime =
+                    OffsetDateTime.parse(previous.quote().asOf()).toInstant();
+
+            Instant incomingTime =
+                    OffsetDateTime.parse(result.quote().asOf()).toInstant();
+
+            return incomingTime.isBefore(previousTime) ? previous : result;
+        });
     }
 
-    private record CachedQuote(MarketQuoteResultDto result, Instant cachedAt) {}
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record QuoteMeta(String source, boolean stale) {}
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record QuoteEnvelope(MarketQuoteDto data, QuoteMeta meta) {}
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record BatchData(List<MarketQuoteResultDto> quotes) {}
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record BatchEnvelope(BatchData data) {}
+    private boolean reusable(CachedResult cached) {
+        return cached != null
+                && cached.fetchedAt().plus(CACHE_TTL)
+                .isAfter(clock.instant());
+    }
+
+    private void requireQuotaAvailable() {
+        Instant retryAt = quotaRetryAt.get();
+
+        if (retryAt != null && retryAt.isAfter(clock.instant())) {
+            throw new QuoteProviderException(
+                    RATE_LIMITED,
+                    "Market data quota is exhausted. "
+                            + "Requests will resume after the quota resets.",
+                    retryAt
+            );
+        }
+    }
+
+    private void rememberQuotaFailure(QuoteProviderException failure) {
+        Instant candidate = failure.retryAt();
+
+        if (candidate == null) {
+            candidate = clock.instant()
+                    .atZone(ZoneOffset.UTC)
+                    .toLocalDate()
+                    .plusDays(1)
+                    .atStartOfDay(ZoneOffset.UTC)
+                    .toInstant();
+        }
+
+        Instant retryAt = candidate;
+
+        quotaRetryAt.accumulateAndGet(
+                retryAt,
+                (existing, incoming) ->
+                        existing == null || incoming.isAfter(existing)
+                                ? incoming
+                                : existing
+        );
+    }
+
+    private void completeExceptionally(
+            List<String> owned,
+            Map<String, CompletableFuture<MarketQuoteResultDto>> pending,
+            Throwable failure
+    ) {
+        for (String symbol : owned) {
+            pending.get(symbol).completeExceptionally(failure);
+        }
+    }
+
+    private MarketQuoteResultDto await(
+            CompletableFuture<MarketQuoteResultDto> future
+    ) {
+        try {
+            return future.join();
+        } catch (CompletionException failure) {
+            Throwable cause = failure.getCause();
+
+            if (cause instanceof RuntimeException runtime) {
+                throw runtime;
+            }
+
+            if (cause instanceof Error error) {
+                throw error;
+            }
+
+            throw new IllegalStateException(
+                    "Quote retrieval failed.",
+                    cause
+            );
+        }
+    }
+
+    private record CachedResult(
+            MarketQuoteResultDto result,
+            Instant fetchedAt
+    ) {
+    }
 }
