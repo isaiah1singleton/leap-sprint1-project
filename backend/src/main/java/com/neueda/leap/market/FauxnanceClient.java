@@ -42,7 +42,7 @@ public class FauxnanceClient implements QuoteProvider {
 
         try {
             var response = client.get()
-                    .uri("quotes/{symbol}", symbol)
+                    .uri("/quotes/{symbol}", symbol)
                     .retrieve()
                     .toEntity(QuoteEnvelope.class);
             if (response.getStatusCode().value() == 202) {
