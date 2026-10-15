@@ -63,13 +63,14 @@ class MarketDataServiceTest {
     }
 
     @Test
-    void usesServerKeyCanonicalSymbolAndCachesSingleQuote() {
+    void selectedTickerAlwaysContactsProviderEvenWithCachedQuote() {
         var first = service.quote(" aapl ");
         assertThat(first.quote().price()).isEqualByComparingTo("210.5");
         assertThat(first.quote().changePercent()).isNegative();
-        assertThat(service.quote("AAPL")).isEqualTo(first);
-        assertThat(paths).containsExactly("/v1/quotes/AAPL");
-        assertThat(keys).containsExactly("test-server-key");
+        responseBody = responseBody.replace("210.5", "211.5");
+        assertThat(service.quote("AAPL").quote().price()).isEqualByComparingTo("211.5");
+        assertThat(paths).containsExactly("/v1/quotes/AAPL", "/v1/quotes/AAPL");
+        assertThat(keys).containsExactly("test-server-key", "test-server-key");
     }
 
     @Test
@@ -81,10 +82,31 @@ class MarketDataServiceTest {
         assertThat(result.quotes().get(0).stale()).isTrue();
         assertThat(result.quotes().get(0).source()).isEqualTo("synthetic");
         assertThat(result.quotes().get(1).error().code()).isEqualTo("UPSTREAM_UNAVAILABLE");
-        assertThat(service.quote("AAPL")).isEqualTo(result.quotes().get(0));
         assertThat(service.quotes("MSFT,AAPL").quotes().get(0).symbol()).isEqualTo("MSFT");
         assertThat(paths).hasSize(1);
         assertThat(paths.get(0)).contains("symbols=AAPL,MSFT");
+    }
+
+    @Test
+    void providerFailureReturnsExplicitlyStaleBackupWithOriginalTimestamp() {
+        var original = service.quote("AAPL");
+        responseStatus = 503;
+        responseBody = "{}";
+        var fallback = service.quote("AAPL");
+        assertThat(fallback.quote()).isEqualTo(original.quote());
+        assertThat(fallback.stale()).isTrue();
+        assertThat(fallback.source()).isEqualTo("local-cache");
+        assertThat(fallback.error().code()).isEqualTo("CACHED_FALLBACK");
+        assertThat(paths).hasSize(2);
+    }
+
+    @Test
+    void staleProviderResponseIsNeverRelabelledAsFresh() {
+        responseBody = responseBody.replace("\"stale\":false", "\"stale\":true");
+        var result = service.quote("AAPL");
+        assertThat(result.stale()).isTrue();
+        assertThat(result.source()).isEqualTo("cache");
+        assertThat(result.quote().asOf()).isEqualTo("2026-10-07T12:00:00Z");
     }
 
     @Test

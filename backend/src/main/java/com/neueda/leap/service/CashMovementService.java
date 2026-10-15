@@ -3,6 +3,7 @@ package com.neueda.leap.service;
 import com.neueda.leap.entities.Account;
 import com.neueda.leap.entities.CashMovement;
 import com.neueda.leap.entities.Fill;
+import com.neueda.leap.entities.Money;
 import com.neueda.leap.enums.Currency;
 import com.neueda.leap.models.CashMovementResponse;
 import com.neueda.leap.repository.AccountRepository;
@@ -57,11 +58,18 @@ public class CashMovementService {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    public CashMovement recordTrade(Fill fill) {
-        if (fill == null || fill.getFillId() == null || fill.getFillId() <= 0) {
-            throw new IllegalArgumentException("A persisted fill is required.");
+    public CashMovement recordTrade(Fill fill, Money settlementAmount) {
+        if (fill == null
+                || fill.getFillId() == null
+                || fill.getFillId() <= 0) {
+            throw new IllegalArgumentException(
+                    "A persisted fill is required."
+            );
         }
-        return saveMovement(CashMovement.forTrade(fill));
+
+        return saveMovement(
+                CashMovement.forTrade(fill, settlementAmount)
+        );
     }
     
     @Transactional(propagation = Propagation.MANDATORY)

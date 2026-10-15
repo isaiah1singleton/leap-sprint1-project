@@ -36,8 +36,6 @@ public class MarketDataService {
 
     public synchronized MarketQuoteResultDto quote(String input) {
         String symbol = symbols.requireSymbol(input).symbol();
-        CachedQuote existing = cache.get(symbol);
-        if (isFresh(existing)) return existing.result();
         requireKey();
         try {
             var response = client.get().uri("/quotes/{symbol}", symbol).retrieve().toEntity(QuoteEnvelope.class);
@@ -49,8 +47,19 @@ public class MarketDataService {
             cache.put(symbol, new CachedQuote(result, Instant.now()));
             return result;
         } catch (RestClientException exception) {
-            throw translate(exception);
+            return fallbackOrThrow(symbol, translate(exception));
+        } catch (ResponseStatusException exception) {
+            return fallbackOrThrow(symbol, exception);
         }
+    }
+
+    private MarketQuoteResultDto fallbackOrThrow(String symbol, ResponseStatusException failure) {
+        CachedQuote cached = cache.get(symbol);
+        if (cached == null || cached.result().quote() == null) throw failure;
+        // Preserve the observation time and identify this as display-only backup data.
+        return new MarketQuoteResultDto(symbol, cached.result().quote(), "local-cache", true,
+                new MarketErrorDto("CACHED_FALLBACK",
+                        "Fauxnance is unavailable. Showing a saved quote; trading is disabled."));
     }
 
     /** One provider request for all cache misses; partial symbol errors remain visible. */

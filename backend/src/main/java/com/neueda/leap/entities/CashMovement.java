@@ -162,7 +162,7 @@ public class CashMovement {
         this.reason = normalizedReason;
     }
 
-    public static CashMovement forTrade(Fill fill) {
+    public static CashMovement forTrade(Fill fill, Money settlementAmount) {
         if (fill == null) {
             throw new IllegalArgumentException("Fill is required.");
         }
@@ -178,8 +178,31 @@ public class CashMovement {
         requirePositive(fill.getFillQuantity());
         requirePositive(fill.getExecutionPrice());
 
-        BigDecimal amount = fill.getFillQuantity()
-                .multiply(fill.getExecutionPrice());
+        if (settlementAmount == null) {
+            throw new IllegalArgumentException("Settlement amount is required.");
+        }
+
+        if (settlementAmount.currency() != fill.getExecutionCurrency()) {
+            throw new IllegalArgumentException(
+                    "Settlement currency must match the fill currency."
+            );
+        }
+
+        BigDecimal amount = settlementAmount.amount();
+        requirePositive(amount);
+
+        BigDecimal normalizedAmount = amount.stripTrailingZeros();
+        int fractionalDigits = Math.max(0, normalizedAmount.scale());
+        int integerDigits = Math.max(
+                0,
+                normalizedAmount.precision() - normalizedAmount.scale()
+        );
+
+        if (fractionalDigits > 8 || integerDigits > 16) {
+            throw new IllegalArgumentException(
+                    "Settlement amount must fit NUMERIC(24, 8)."
+            );
+        }
 
         if (order.getSide() == OrderSide.BUY) {
             amount = amount.negate();

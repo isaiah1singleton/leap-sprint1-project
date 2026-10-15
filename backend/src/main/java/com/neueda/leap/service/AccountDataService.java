@@ -7,6 +7,7 @@ import com.neueda.leap.models.*;
 import com.neueda.leap.repository.AccountRepository;
 import com.neueda.leap.repository.CashBalanceRepository;
 import com.neueda.leap.repository.HoldingRepository;
+import com.neueda.leap.repository.OrderRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import java.math.BigDecimal;
@@ -20,14 +21,17 @@ public class AccountDataService {
     private final AccountRepository accounts;
     private final CashBalanceRepository balances;
     private final HoldingRepository holdings;
+    private final OrderRepository orders;
     private final CashMovementService movements;
     private final EntityManager entityManager;
 
     public AccountDataService(AccountRepository accounts, CashBalanceRepository balances,
-            HoldingRepository holdings, CashMovementService movements, EntityManager entityManager) {
+            HoldingRepository holdings, OrderRepository orders, CashMovementService movements,
+            EntityManager entityManager) {
         this.accounts = accounts;
         this.balances = balances;
         this.holdings = holdings;
+        this.orders = orders;
         this.movements = movements;
         this.entityManager = entityManager;
     }
@@ -57,6 +61,9 @@ public class AccountDataService {
         Account account = owned(accountId, clientId);
         entityManager.lock(account, LockModeType.PESSIMISTIC_WRITE);
         if (!account.isActive()) throw new IllegalStateException("This account is inactive.");
+        if (orders.existsPendingAcceptedOrder(accountId)) {
+            throw new IllegalStateException("Resolve the accepted order before transferring cash.");
+        }
         CashBalance balance = entityManager.find(CashBalance.class,
                 new CashBalanceId(accountId, Currency.USD), LockModeType.PESSIMISTIC_WRITE);
         if (balance == null) balance = balances.saveAndFlush(new CashBalance(account, Currency.USD));

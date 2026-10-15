@@ -148,8 +148,8 @@ public class OrderEvent {
             case ACCEPTED ->
                     next == OrderStatus.FILLED
                             || next == OrderStatus.REJECTED
-                            || next == OrderStatus.CANCELLED;
-            case FILLED, REJECTED, CANCELLED -> false;
+                            || next == OrderStatus.EXPIRED;
+            case FILLED, REJECTED, EXPIRED -> false;
         };
     }
 

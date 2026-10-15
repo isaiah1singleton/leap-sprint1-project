@@ -4,7 +4,7 @@ import com.neueda.leap.ApiRoutes;
 import com.neueda.leap.models.OrderResponse;
 import com.neueda.leap.models.SubmitOrderRequest;
 import com.neueda.leap.service.ClientService;
-import com.neueda.leap.service.OrderDecisionService;
+import com.neueda.leap.service.OrderQueryService;
 import com.neueda.leap.service.OrderSubmissionService;
 import java.net.URI;
 import java.security.Principal;
@@ -20,12 +20,12 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping(ApiRoutes.ORDERS)
 public class OrderController {
     private final OrderSubmissionService submission;
-    private final OrderDecisionService decisions;
+    private final OrderQueryService queries;
     private final ClientService clients;
 
-    public OrderController(OrderSubmissionService submission, OrderDecisionService decisions, ClientService clients) {
+    public OrderController(OrderSubmissionService submission, OrderQueryService queries, ClientService clients) {
         this.submission = submission;
-        this.decisions = decisions;
+        this.queries = queries;
         this.clients = clients;
     }
 
@@ -38,17 +38,12 @@ public class OrderController {
 
     @GetMapping
     public List<OrderResponse> list(@RequestParam Integer accountId, Principal principal) {
-        return decisions.list(accountId, clientId(principal));
+        return queries.list(accountId, clientId(principal));
     }
 
     @GetMapping(ApiRoutes.ORDER)
     public OrderResponse get(@PathVariable Integer orderId, Principal principal) {
-        return decisions.get(orderId, clientId(principal));
-    }
-
-    @PostMapping(ApiRoutes.ORDER_CANCEL)
-    public OrderResponse cancel(@PathVariable Integer orderId, Principal principal) {
-        return decisions.cancel(orderId, clientId(principal));
+        return queries.get(orderId, clientId(principal));
     }
 
     private int clientId(Principal principal) {
