@@ -10,10 +10,13 @@ describe('Portfolio summary', () => {
   const selected = signal<{ accountId: number } | null>(null);
   const revision = signal(0);
   const summary: PortfolioSummary = {
-    accountId: 1, currency: 'USD', estimatedPortfolioValue: 1100, buyingPower: 800,
+    accountId: 1, currency: 'USD', cashBalance: 800, estimatedPortfolioValue: 1100, buyingPower: 800,
     investedAssetsValue: 300, lifetimeProfitLoss: 100, buyingPowerUnavailableReason: null,
     profitLossUnavailableReason: null, accountAsOf: '2026-10-15T18:00:00Z',
     oldestQuoteAt: '2026-10-15T17:50:00Z', valuationWarnings: [],
+    holdings: [{ instrumentId: 1, symbol: 'AAPL', name: 'Apple', quantity: 2,
+      reservedQuantity: 0, availableQuantity: 2, quotePrice: 150,
+      estimatedValue: 300, quoteAsOf: '2026-10-15T17:50:00Z' }],
   };
   let http: HttpTestingController;
 

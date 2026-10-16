@@ -8,6 +8,7 @@ import java.util.List;
 public record PortfolioSummaryResponse(
         Integer accountId,
         String currency,
+        BigDecimal cashBalance,
         BigDecimal estimatedPortfolioValue,
         BigDecimal buyingPower,
         BigDecimal investedAssetsValue,
@@ -16,5 +17,6 @@ public record PortfolioSummaryResponse(
         String profitLossUnavailableReason,
         Instant accountAsOf,
         Instant oldestQuoteAt,
-        List<String> valuationWarnings
+        List<String> valuationWarnings,
+        List<PortfolioHoldingValue> holdings
 ) { }

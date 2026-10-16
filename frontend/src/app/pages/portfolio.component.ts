@@ -1,10 +1,43 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { AccountSelectionService } from '../core/account-selection.service';
 import { TradingService } from '../core/trading.service';
+import { PortfolioSummary, PortfolioSummaryComponent } from './portfolio-summary.component';
 
 @Component({
   selector: 'app-portfolio',
+  imports: [RouterLink, PortfolioSummaryComponent],
   templateUrl: './portfolio.component.html',
 })
 export class PortfolioComponent {
   readonly trading = inject(TradingService);
+  readonly selectedAccount = inject(AccountSelectionService).selectedAccount;
+  readonly snapshot = signal<PortfolioSummary | null>(null);
+
+  holdingValue(instrumentId: number) {
+    return this.snapshot()?.holdings?.find(holding => holding.instrumentId === instrumentId);
+  }
+
+  allocation(value: number | null | undefined): string {
+    const total = this.snapshot()?.estimatedPortfolioValue;
+    if (value == null || total == null || total <= 0) return '—';
+    return `${(value / total * 100).toFixed(1)}%`;
+  }
+
+  share(value: number | null | undefined): number {
+    const total = this.snapshot()?.estimatedPortfolioValue;
+    if (value == null || total == null || total <= 0) return 0;
+    return Math.min(100, Math.max(0, value / total * 100));
+  }
+
+  money(value: number | null | undefined): string {
+    return value == null ? '—' : this.trading.money(value);
+  }
+
+  quoteMoney(value: number | null | undefined): string {
+    if (value == null) return '—';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 8,
+    }).format(value);
+  }
 }

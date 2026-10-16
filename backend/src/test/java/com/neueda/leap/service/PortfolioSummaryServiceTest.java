@@ -36,6 +36,10 @@ class PortfolioSummaryServiceTest {
         assertThat(result.buyingPower()).isEqualByComparingTo("800");
         assertThat(result.lifetimeProfitLoss()).isEqualByComparingTo("100");
         assertThat(result.oldestQuoteAt()).isEqualTo(now.minusSeconds(600));
+        assertThat(result.cashBalance()).isEqualByComparingTo("800");
+        assertThat(result.holdings()).hasSize(1);
+        assertThat(result.holdings().get(0).quotePrice()).isEqualByComparingTo("150");
+        assertThat(result.holdings().get(0).estimatedValue()).isEqualByComparingTo("300");
         assertThat(result.valuationWarnings()).contains("Valuation includes delayed provider quotes.");
     }
 
@@ -90,6 +94,7 @@ class PortfolioSummaryServiceTest {
             assertThat(result.investedAssetsValue()).isNull();
             assertThat(result.lifetimeProfitLoss()).isNull();
             assertThat(result.buyingPower()).isEqualByComparingTo("800");
+            assertThat(result.holdings().get(0).estimatedValue()).isNull();
         }
     }
 
@@ -129,7 +134,9 @@ class PortfolioSummaryServiceTest {
     }
 
     private PortfolioSnapshotReader.Position position(int id, String symbol, String quantity) {
-        return new PortfolioSnapshotReader.Position(id, symbol, Currency.USD, new BigDecimal(quantity));
+        BigDecimal units = new BigDecimal(quantity);
+        return new PortfolioSnapshotReader.Position(id, symbol, symbol + " Inc.", Currency.USD,
+                units, BigDecimal.ZERO, units);
     }
     private MarketQuotesDto batch(MarketQuoteResultDto result) { return new MarketQuotesDto(List.of(result), ""); }
     private MarketQuoteResultDto quote(String symbol, String price, String currency, Instant time, boolean stale) {

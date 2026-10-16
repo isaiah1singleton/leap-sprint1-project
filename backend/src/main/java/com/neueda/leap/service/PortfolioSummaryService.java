@@ -3,6 +3,7 @@ package com.neueda.leap.service;
 import com.neueda.leap.enums.Currency;
 import com.neueda.leap.market.QuoteProviderException;
 import com.neueda.leap.models.MarketQuoteResultDto;
+import com.neueda.leap.models.PortfolioHoldingValue;
 import com.neueda.leap.models.PortfolioSummaryResponse;
 import org.springframework.stereotype.Service;
 
@@ -52,30 +53,37 @@ public class PortfolioSummaryService {
         BigDecimal assets = BigDecimal.ZERO;
         Instant oldestQuote = null;
         boolean complete = usdOnly;
-        if (usdOnly) {
-            for (var position : account.positions()) {
-                var result = quotes.get(position.symbol());
-                Instant quoteTime = quoteTime(position.symbol(), result);
-                if (quoteTime == null) {
+        List<PortfolioHoldingValue> details = new ArrayList<>();
+        for (var position : account.positions()) {
+            var result = quotes.get(position.symbol());
+            Instant quoteTime = usdOnly ? quoteTime(position.symbol(), result) : null;
+            BigDecimal price = quoteTime == null ? null : result.quote().price();
+            BigDecimal value = price == null ? null : position.quantity().multiply(price);
+            details.add(new PortfolioHoldingValue(position.instrumentId(), position.symbol(), position.name(),
+                    position.quantity(), position.reservedQuantity(), position.availableQuantity(),
+                    price, dollars(value), quoteTime));
+            if (quoteTime == null) {
+                if (usdOnly) {
                     complete = false;
                     warnings.add("Price unavailable for " + position.symbol() + ". Totals cannot be calculated.");
-                    continue;
                 }
-                assets = assets.add(position.quantity().multiply(result.quote().price()));
-                if (oldestQuote == null || quoteTime.isBefore(oldestQuote)) oldestQuote = quoteTime;
-                if (result.stale()) warnings.add("Valuation includes delayed provider quotes.");
-                if ("synthetic".equals(result.source())) warnings.add("Valuation includes synthetic provider prices.");
+                continue;
             }
+            assets = assets.add(value);
+            if (oldestQuote == null || quoteTime.isBefore(oldestQuote)) oldestQuote = quoteTime;
+            if (result.stale()) warnings.add("Valuation includes delayed provider quotes.");
+            if ("synthetic".equals(result.source())) warnings.add("Valuation includes synthetic provider prices.");
         }
 
         BigDecimal portfolioValue = complete ? account.usdCash().add(assets) : null;
         String profitProblem = account.historyProblem() != null ? account.historyProblem()
                 : !complete ? "A complete portfolio valuation is needed to calculate lifetime profit/loss." : null;
-        return new PortfolioSummaryResponse(accountId, "USD", dollars(portfolioValue),
+        return new PortfolioSummaryResponse(accountId, "USD", dollars(account.usdCash()), dollars(portfolioValue),
                 account.buyingPowerProblem() == null ? dollars(account.usdCash()) : null,
                 complete ? dollars(assets) : null,
                 profitProblem == null ? dollars(portfolioValue.subtract(account.netFunding())) : null,
-                account.buyingPowerProblem(), profitProblem, account.asOf(), oldestQuote, List.copyOf(warnings));
+                account.buyingPowerProblem(), profitProblem, account.asOf(), oldestQuote,
+                List.copyOf(warnings), List.copyOf(details));
     }
 
     private Instant quoteTime(String symbol, MarketQuoteResultDto result) {

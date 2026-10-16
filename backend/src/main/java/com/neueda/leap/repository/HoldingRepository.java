@@ -17,6 +17,7 @@ public interface HoldingRepository
             from Holding holding
             where holding.account.accountId = :accountId
               and holding.account.client.clientId = :clientId
+              and holding.totalQuantity > 0
             order by holding.instrument.instrumentId
             """)
     List<Holding> findOwnedHoldings(

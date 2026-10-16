@@ -55,7 +55,8 @@ class PortfolioSummaryIntegrationTest {
                 .andExpect(jsonPath("$.estimatedPortfolioValue").value(1000.0))
                 .andExpect(jsonPath("$.buyingPower").value(1000.0))
                 .andExpect(jsonPath("$.investedAssetsValue").value(0.0))
-                .andExpect(jsonPath("$.lifetimeProfitLoss").value(0.0));
+                .andExpect(jsonPath("$.lifetimeProfitLoss").value(0.0))
+                .andExpect(jsonPath("$.holdings.length()").value(0));
         verifyNoInteractions(market);
     }
 
@@ -100,6 +101,31 @@ class PortfolioSummaryIntegrationTest {
                 .andExpect(jsonPath("$.profitLossUnavailableReason").isNotEmpty());
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM cash_movements WHERE account_id=?", Integer.class,
                 owner.accountId())).isZero();
+    }
+
+    @Test void zeroQuantityHoldingDisappearsFromCurrentPortfolioButOrderHistoryRemains() throws Exception {
+        var owner = createAccount();
+        String symbol = "Z" + owner.accountId();
+        jdbc.update("INSERT INTO instruments (market,symbol,asset_class,instrument_name,is_tradable,quote_currency) " +
+                "VALUES ('NASDAQ',?,'EQUITY',?,TRUE,'USD')", symbol, symbol);
+        Integer instrumentId = jdbc.queryForObject("SELECT instrument_id FROM instruments WHERE symbol=?", Integer.class, symbol);
+        jdbc.update("INSERT INTO account_holdings (account_id,instrument_id,total_quantity,reserved_quantity) VALUES (?,?,0,0)",
+                owner.accountId(), instrumentId);
+        Instant quoteAt = Instant.now().minusSeconds(60);
+        jdbc.update("INSERT INTO orders (account_id,instrument_id,side,requested_quantity,submitted_quote_price,submitted_quote_at) " +
+                "VALUES (?,?,'SELL',1,10,?)", owner.accountId(), instrumentId, quoteAt);
+        Integer orderId = jdbc.queryForObject("SELECT MAX(order_id) FROM orders WHERE account_id=?", Integer.class, owner.accountId());
+        jdbc.update("INSERT INTO order_events (order_id,status,reason) VALUES (?,'REJECTED','No shares available')", orderId);
+        String authorization = bearer(owner.client());
+
+        mvc.perform(get("/api/accounts/" + owner.accountId() + "/holdings")
+                        .header("Authorization", authorization))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(get(path(owner.accountId())).header("Authorization", authorization))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.holdings.length()").value(0));
+        mvc.perform(get("/api/orders").param("accountId", owner.accountId().toString())
+                        .header("Authorization", authorization))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].symbol").value(symbol));
     }
 
     private AccountOwner createAccount() {

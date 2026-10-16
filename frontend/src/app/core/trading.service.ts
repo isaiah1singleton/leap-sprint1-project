@@ -106,7 +106,7 @@ export class TradingService {
       if (version !== this.loadVersion) return;
 
       this.cash.set(Number(balance.totalBalance));
-      this.positions.set(holdings.map(item => ({
+      this.positions.set(holdings.filter(item => Number(item.totalQuantity) > 0).map(item => ({
         instrumentId: item.instrumentId,
         sym: item.symbol,
         name: item.name,

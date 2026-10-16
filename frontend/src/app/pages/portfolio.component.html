@@ -1,22 +1,58 @@
-<div class="page-intro"><div><p class="eyebrow">The bigger picture</p><h2>Your portfolio, in focus.</h2><p class="sub">Keep track of your cash and the instruments you hold.</p></div></div>
-<div class="stack">
-  <div class="row">
-    <div class="card stat-primary" style="flex:1"><p class="stat-label">Cash balance</p><p class="stat-value">{{ trading.loading() ? '—' : trading.money(trading.cash()) }}</p></div>
-    <div class="card" style="flex:1"><p class="stat-label">Open positions</p><p class="stat-value">{{ trading.positions().length }}</p></div>
-    <div class="card" style="flex:1"><p class="stat-label">Orders awaiting execution</p><p class="stat-value">{{ trading.pendingOrderCount() }}</p></div>
-  </div>
-  <div class="card">
-    <h2 class="card-title">Holdings</h2>
-    @if (trading.error()) { <p class="error-text">{{ trading.error() }}</p><button class="btn-chip" (click)="trading.refresh()">Retry</button> }
-    @if (trading.loading()) { <p class="sub">Loading holdings…</p> }
-    <div class="table-scroll" tabindex="0" role="region" aria-label="Portfolio holdings"><table class="table">
-      <thead><tr><th>Instrument</th><th class="num">Total quantity</th><th class="num">Reserved for sells</th><th class="num">Available</th></tr></thead>
-      <tbody>
-        @for (row of trading.positions(); track row.instrumentId) {
-          <tr><td><span class="sym">{{ row.sym }}</span> <span class="dim">{{ row.name }}</span></td>
-            <td class="num">{{ row.qty }}</td><td class="num">{{ row.reserved }}</td><td class="num">{{ row.available }}</td></tr>
-        } @empty { <tr><td colspan="4" class="dim">No holdings for this account.</td></tr> }
-      </tbody>
-    </table></div>
-  </div>
+<div class="page-intro">
+  <div><p class="eyebrow">Your positions and allocation</p><h2>Your portfolio, in focus.</h2>
+    <p class="sub">See what you hold, how it is valued, and how much is available to trade.</p></div>
 </div>
+
+@if (!selectedAccount()) {
+  <div class="empty-state"><strong>Select a trading account</strong>Choose an account from the dashboard to view its portfolio.</div>
+} @else {
+  <app-portfolio-summary (summaryChange)="snapshot.set($event)" />
+
+  <div class="portfolio-insights">
+    <section class="card" aria-label="Portfolio allocation">
+      <div class="section-heading"><h2 class="card-title">Portfolio allocation</h2><span class="sub">Based on estimated value</span></div>
+      @if (snapshot()?.estimatedPortfolioValue != null && (snapshot()?.estimatedPortfolioValue ?? 0) > 0) {
+        <div class="allocation-track" role="img" [attr.aria-label]="'Cash ' + allocation(snapshot()?.cashBalance) + ', invested assets ' + allocation(snapshot()?.investedAssetsValue)">
+          <span class="allocation-cash" [style.width.%]="share(snapshot()?.cashBalance)"></span>
+          <span class="allocation-assets" [style.width.%]="share(snapshot()?.investedAssetsValue)"></span>
+        </div>
+        <div class="allocation-legend">
+          <div><span class="allocation-dot cash"></span><span>Cash</span><strong>{{ money(snapshot()?.cashBalance) }}</strong><span class="sub">{{ allocation(snapshot()?.cashBalance) }}</span></div>
+          <div><span class="allocation-dot assets"></span><span>Invested assets</span><strong>{{ money(snapshot()?.investedAssetsValue) }}</strong><span class="sub">{{ allocation(snapshot()?.investedAssetsValue) }}</span></div>
+        </div>
+      } @else {
+        <p class="sub">Allocation will appear when a complete portfolio valuation is available.</p>
+      }
+    </section>
+    <section class="card" aria-label="Portfolio activity">
+      <div class="section-heading"><h2 class="card-title">Account activity</h2><a routerLink="/app/orders">Order history →</a></div>
+      <dl class="portfolio-facts">
+        <div><dt>Current holdings</dt><dd>{{ trading.loading() || trading.error() ? '—' : trading.positions().length }}</dd></div>
+        <div><dt>Orders awaiting execution</dt><dd>{{ trading.loading() || trading.error() ? '—' : trading.pendingOrderCount() }}</dd></div>
+        <div><dt>Cash balance</dt><dd>{{ snapshot() ? money(snapshot()?.cashBalance) : trading.loading() || trading.error() ? '—' : trading.money(trading.cash()) }}</dd></div>
+      </dl>
+    </section>
+  </div>
+
+  <section class="card portfolio-holdings" aria-label="Current holdings">
+    <div class="section-heading"><div><h2 class="card-title">Current holdings</h2><p class="sub">Only instruments with shares currently owned appear here. Past trades remain in order history.</p></div></div>
+    <p class="portfolio-scroll-hint">Swipe across the table to see quote, value, and allocation.</p>
+    @if (trading.error()) { <p class="error-text" role="alert">{{ trading.error() }}</p><button class="btn-chip" (click)="trading.refresh()">Retry</button> }
+    @if (trading.loading()) { <p class="sub" role="status">Loading holdings…</p> }
+    @if (!trading.loading() && !trading.error()) {
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Portfolio holdings table"><table class="table">
+        <thead><tr><th>Instrument</th><th class="num">Shares</th><th class="num">Reserved</th><th class="num">Available</th><th class="num">Latest quote</th><th class="num">Est. value</th><th class="num">Portfolio share</th></tr></thead>
+        <tbody>
+          @for (row of trading.positions(); track row.instrumentId) {
+            @let valuation = holdingValue(row.instrumentId);
+            <tr><td><span class="sym">{{ row.sym }}</span><span class="holding-name dim">{{ row.name }}</span></td>
+              <td class="num">{{ row.qty }}</td><td class="num">{{ row.reserved }}</td><td class="num">{{ row.available }}</td>
+              <td class="num">{{ quoteMoney(valuation?.quotePrice) }}</td><td class="num">{{ money(valuation?.estimatedValue) }}</td>
+              <td class="num">{{ allocation(valuation?.estimatedValue) }}</td></tr>
+          } @empty { <tr><td colspan="7" class="dim">No current holdings. Your completed trades are still available in order history.</td></tr> }
+        </tbody>
+      </table></div>
+      @if (!snapshot() && trading.positions().length) { <p class="note">Price and allocation columns will appear when the portfolio snapshot is available.</p> }
+    }
+  </section>
+}

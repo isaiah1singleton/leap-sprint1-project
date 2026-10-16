@@ -36,7 +36,8 @@ public class PortfolioSnapshotReader {
         this.clock = clock;
     }
 
-    public record Position(Integer instrumentId, String symbol, Currency currency, BigDecimal quantity) { }
+    public record Position(Integer instrumentId, String symbol, String name, Currency currency,
+            BigDecimal quantity, BigDecimal reservedQuantity, BigDecimal availableQuantity) { }
     public record Snapshot(Integer accountId, BigDecimal usdCash, List<Position> positions,
             boolean foreignBalance, BigDecimal netFunding, String historyProblem,
             String buyingPowerProblem, Instant asOf) { }
@@ -53,9 +54,9 @@ public class PortfolioSnapshotReader {
                 cash.put(balance.getCurrency(), balance.getTotalBalance().amount()));
         var positions = holdings.findOwnedHoldings(accountId, clientId).stream()
                 .map(holding -> new Position(holding.getInstrument().getInstrumentId(),
-                        holding.getInstrument().getSymbol(), holding.getInstrument().getQuoteCurrency(),
-                        holding.getTotalQuantity()))
-                .filter(position -> position.quantity().signum() != 0)
+                        holding.getInstrument().getSymbol(), holding.getInstrument().getInstrumentName(),
+                        holding.getInstrument().getQuoteCurrency(), holding.getTotalQuantity(),
+                        holding.getReservedQuantity(), holding.availableQuantity()))
                 .toList();
 
         Map<Currency, BigDecimal> recordedCash = new EnumMap<>(Currency.class);

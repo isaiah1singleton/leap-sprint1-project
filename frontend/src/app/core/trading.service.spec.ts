@@ -85,6 +85,23 @@ describe('TradingService account data', () => {
       expect(service.loading()).toBe(false));
   });
 
+  it('excludes fully sold holdings while keeping their orders in activity', async () => {
+    http.expectOne('/api/accounts/42/balance').flush({ totalBalance: 100, currency: 'USD' });
+    http.expectOne('/api/accounts/42/holdings').flush([
+      { instrumentId: 1, symbol: 'SOLD', name: 'Sold shares', totalQuantity: 0,
+        reservedQuantity: 0, availableQuantity: 0 },
+      { instrumentId: 2, symbol: 'HELD', name: 'Held shares', totalQuantity: 2,
+        reservedQuantity: 0, availableQuantity: 2 },
+    ]);
+    http.expectOne(request => request.url === '/api/orders' && request.params.get('accountId') === '42')
+      .flush([{ accountId: 42, orderId: 8, symbol: 'SOLD', side: 'SELL', quantity: 1,
+        indicativePrice: 50, submittedAt: '2026-10-07T12:00:00Z', status: 'FILLED', reason: null }]);
+    http.expectOne('/api/accounts/42/cash-movements').flush([]);
+    await vi.waitFor(() => expect(service.loading()).toBe(false));
+    expect(service.positions().map(position => position.sym)).toEqual(['HELD']);
+    expect(service.orders().map(order => order.sym)).toContain('SOLD');
+  });
+
   it('submits the displayed side price and quote metadata', async () => {
     flushAccount(42, 100);
     await Promise.resolve();

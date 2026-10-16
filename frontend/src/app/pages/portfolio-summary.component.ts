@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, output, signal } from '@angular/core';
 import { AccountSelectionService } from '../core/account-selection.service';
 import { TradingService } from '../core/trading.service';
 
 export interface PortfolioSummary {
   accountId: number;
   currency: string;
+  cashBalance: number;
   estimatedPortfolioValue: number | null;
   buyingPower: number | null;
   investedAssetsValue: number | null;
@@ -16,6 +17,19 @@ export interface PortfolioSummary {
   accountAsOf: string;
   oldestQuoteAt: string | null;
   valuationWarnings: string[];
+  holdings: PortfolioHoldingValue[];
+}
+
+export interface PortfolioHoldingValue {
+  instrumentId: number;
+  symbol: string;
+  name: string;
+  quantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+  quotePrice: number | null;
+  estimatedValue: number | null;
+  quoteAsOf: string | null;
 }
 
 @Component({
@@ -51,6 +65,7 @@ export class PortfolioSummaryComponent {
   private readonly trading = inject(TradingService);
   private readonly manualRefresh = signal(0);
   readonly summary = signal<PortfolioSummary | null>(null);
+  readonly summaryChange = output<PortfolioSummary | null>();
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -60,11 +75,12 @@ export class PortfolioSummaryComponent {
       this.trading.refreshRevision();
       this.manualRefresh();
       this.summary.set(null);
+      this.summaryChange.emit(null);
       this.error.set('');
       this.loading.set(accountId != null);
       if (accountId == null) return;
       const request = this.http.get<PortfolioSummary>(`/api/accounts/${accountId}/portfolio-summary`).subscribe({
-        next: data => { this.summary.set(data); this.loading.set(false); },
+        next: data => { this.summary.set(data); this.summaryChange.emit(data); this.loading.set(false); },
         error: (failure: HttpErrorResponse) => {
           this.error.set(failure.status === 401 ? 'Your session expired. Sign in again to view this account.'
             : 'Portfolio values could not be loaded. Refresh values to try again.');
