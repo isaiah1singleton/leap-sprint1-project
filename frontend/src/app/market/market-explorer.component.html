@@ -1,8 +1,8 @@
 @if (showSearch()) {
 <section class="card market-panel" aria-label="Stock and crypto search">
   <div class="market-heading">
-    <div><h2 class="card-title">Explore instruments</h2><p class="sub">Search instruments available in your database.</p></div>
-    <span class="data-badge">Select a ticker or refresh its quote to request the latest available price from Fauxnance.</span>
+    <div><p class="eyebrow">Find your next opportunity</p><h2 class="card-title">Explore instruments</h2><p class="sub">Find a company or ticker to view its quote and place an order.</p></div>
+    <span class="data-badge">Quotes update on selection</span>
   </div>
   <div class="symbol-search">
     <label class="label" for="ticker-search">Symbol or company name</label>
@@ -19,7 +19,7 @@
             <span><strong>{{ item.symbol }}</strong><span class="sub">{{ item.name }}</span></span>
             <span class="data-badge">{{ item.type === 'crypto' ? 'Crypto' : 'US stock' }}</span>
           </button>
-        } @empty { <p class="sub empty-search">No matching symbols in the catalogues.</p> }
+        } @empty { <p class="sub empty-search">No matches. Try another company name or symbol.</p> }
       </div>
     }
   </div>

@@ -11,6 +11,7 @@ public final class ApiRoutes {
     public static final String ACCOUNTS = "/api/accounts";
     public static final String ACCOUNT_BALANCE = "/{accountId}/balance";
     public static final String ACCOUNT_HOLDINGS = "/{accountId}/holdings";
+    public static final String ACCOUNT_PORTFOLIO_SUMMARY = "/{accountId}/portfolio-summary";
     public static final String ACCOUNT_TRANSFERS = "/{accountId}/transfers";
     public static final String ORDERS = "/api/orders";
     public static final String ORDER = "/{orderId}";

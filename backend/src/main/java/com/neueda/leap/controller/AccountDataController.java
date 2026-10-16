@@ -4,6 +4,7 @@ import com.neueda.leap.ApiRoutes;
 import com.neueda.leap.models.*;
 import com.neueda.leap.service.AccountDataService;
 import com.neueda.leap.service.ClientService;
+import com.neueda.leap.service.PortfolioSummaryService;
 import java.security.Principal;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -17,10 +18,17 @@ import org.springframework.web.server.ResponseStatusException;
 public class AccountDataController {
     private final AccountDataService data;
     private final ClientService clients;
+    private final PortfolioSummaryService portfolio;
 
-    public AccountDataController(AccountDataService data, ClientService clients) {
+    public AccountDataController(AccountDataService data, ClientService clients, PortfolioSummaryService portfolio) {
         this.data = data;
         this.clients = clients;
+        this.portfolio = portfolio;
+    }
+
+    @GetMapping(ApiRoutes.ACCOUNT_PORTFOLIO_SUMMARY)
+    public PortfolioSummaryResponse portfolioSummary(@PathVariable Integer accountId, Principal principal) {
+        return portfolio.summary(accountId, clientId(principal));
     }
 
     @GetMapping(ApiRoutes.ACCOUNT_BALANCE)

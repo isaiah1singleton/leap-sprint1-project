@@ -1,17 +1,16 @@
+<div class="page-intro"><div><p class="eyebrow">Your trading record</p><h2>Every order. In view.</h2><p class="sub">Review your orders, outcomes and cash movements in one place.</p></div></div>
 <div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:baseline">
-    <h2 class="card-title">Orders and cash movements</h2>
+  <h2 class="card-title">Orders and cash movements</h2>
+  @if (trading.error()) { <p class="error-text" role="alert">{{ trading.error() }}</p><button class="btn-chip" (click)="trading.refresh()">Retry</button> }
+  @if (trading.loading()) { <p class="sub" role="status">Loading activity…</p> }
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Order and cash movement history">
+    <table class="table">
+      <thead><tr><th scope="col">Reference</th><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Symbol</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Indicative price / amount</th><th scope="col">Status</th></tr></thead>
+      <tbody>
+        @for (order of trading.orders(); track order.id) {
+          <tr><td class="sym">{{ order.id }}</td><td class="dim">{{ order.date }}</td><td>{{ order.type }}</td><td class="sym">{{ order.sym }}</td><td class="num">{{ order.qty }}</td><td class="num">{{ order.price }}</td><td><span class="status-badge" [attr.data-status]="order.status">{{ order.status }}</span>@if (order.reason) { <p class="sub">{{ order.reason }}</p> }</td></tr>
+        } @empty { <tr><td colspan="7"><div class="empty-state"><strong>Your activity will appear here</strong>Orders and cash movements are shown for your selected account.</div></td></tr> }
+      </tbody>
+    </table>
   </div>
-  @if (trading.error()) { <p class="error-text">{{ trading.error() }}</p><button class="btn-chip" (click)="trading.refresh()">Retry</button> }
-  @if (trading.loading()) { <p class="sub">Loading activity…</p> }
-  <table class="table">
-    <thead><tr><th>Reference</th><th>Date</th><th>Type</th><th>Symbol</th><th class="num">Qty</th><th class="num">Indicative price / amount</th><th>Status</th></tr></thead>
-    <tbody>
-      @for (order of trading.orders(); track order.id) {
-        <tr><td class="sym">{{ order.id }}</td><td class="dim">{{ order.date }}</td><td>{{ order.type }}</td>
-          <td>{{ order.sym }}</td><td class="num">{{ order.qty }}</td><td class="num">{{ order.price }}</td>
-          <td>{{ order.status }} @if (order.reason) { <span class="dim" [title]="order.reason">— {{ order.reason }}</span> }</td></tr>
-      } @empty { <tr><td colspan="7" class="dim">No orders or cash movements for this account yet.</td></tr> }
-    </tbody>
-  </table>
 </div>

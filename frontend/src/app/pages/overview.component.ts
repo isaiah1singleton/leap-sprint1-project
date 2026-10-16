@@ -5,12 +5,12 @@ import { TradingService } from '../core/trading.service';
 import { AuthService } from '../core/auth.service';
 import { AccountSelectionService } from '../core/account-selection.service';
 import { AccountsCacheService } from '../core/accounts-cache.service';
-import { AccountResponse } from '../core/account.service';
 import { MarketExplorerComponent } from '../market/market-explorer.component';
+import { PortfolioSummaryComponent } from './portfolio-summary.component';
 
 @Component({
   selector: 'app-overview',
-  imports: [RouterLink, CommonModule, MarketExplorerComponent],
+  imports: [RouterLink, CommonModule, MarketExplorerComponent, PortfolioSummaryComponent],
   templateUrl: './overview.component.html',
 })
 export class OverviewComponent implements OnInit {
@@ -36,8 +36,9 @@ export class OverviewComponent implements OnInit {
     await this.accountsCache.loadAccounts();
   }
 
-  async selectAccount(account: AccountResponse): Promise<void> {
-    this.accountSelection.selectAccount(account);
+  selectAccountById(value: string): void {
+    const account = this.activeAccounts().find(item => item.accountId === Number(value));
+    if (account) this.accountSelection.selectAccount(account);
   }
 
   createAccount(): void {

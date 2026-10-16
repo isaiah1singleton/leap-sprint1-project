@@ -54,6 +54,7 @@ export class TradingService {
   private readonly http = inject(HttpClient);
   private readonly account = inject(AccountSelectionService);
   private loadVersion = 0;
+  readonly refreshRevision = signal(0);
   readonly cash = signal(0);
   readonly positions = signal<Position[]>([]);
   readonly orders = signal<Activity[]>([]);
@@ -78,6 +79,7 @@ export class TradingService {
       return;
     }
     const version = ++this.loadVersion;
+    this.refreshRevision.update(value => value + 1);
     this.cash.set(0);
     this.positions.set([]);
     this.orders.set([]);

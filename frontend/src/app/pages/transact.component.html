@@ -1,5 +1,6 @@
-<div class="row">
-  <div class="card card-pad-lg" style="flex:2">
+<div class="page-intro"><div><p class="eyebrow">Take your next step</p><h2>Make your move.</h2><p class="sub">Place a market order or manage cash in your selected account.</p></div></div>
+<div class="transaction-layout">
+  <div class="card card-pad-lg transaction-main">
     <div class="seg">
       @for (option of modes; track option.id) {
         <button class="seg-opt" [class.active]="mode === option.id" (click)="setMode(option.id)">{{ option.label }}</button>
@@ -19,7 +20,7 @@
         <app-market-explorer [showWatchlist]="false" />
       } @else {
         <label class="label" for="amount">Amount</label>
-        <input id="amount" class="input" [class.invalid]="invalid('amount')" [(ngModel)]="amount" (keyup.enter)="submit()" placeholder="0.00" />
+        <input id="amount" class="input" inputmode="decimal" [class.invalid]="invalid('amount')" [(ngModel)]="amount" (keyup.enter)="submit()" placeholder="0.00" />
         <p class="stat-note">Cash available {{ trading.money(trading.cash()) }}</p>
       }
       @if (error) { <p class="error-text">{{ error }}</p> }
@@ -27,11 +28,13 @@
     }
   </div>
 
-  <div class="card card-pad-lg" style="flex:1;display:flex;flex-direction:column">
+  <aside class="card card-pad-lg transaction-aside">
+    <p class="stat-label">Cash balance</p>
+    <p class="stat-value">{{ trading.loading() || trading.error() ? '—' : trading.money(trading.cash()) }}</p>
     <h2 class="card-title">Your holdings</h2>
     @for (row of holdings(); track row.sym) {
       <div class="list-row"><div><strong>{{ row.sym }}</strong><div class="sub">{{ row.qty }} held</div></div><div style="text-align:right">{{ row.available }}<div class="sub">available</div></div></div>
-    }
+    } @empty { <p class="sub">No holdings to display for this account.</p> }
     <p class="note" style="margin-top:auto;padding-top:14px">Cash and holdings come from the selected account. Orders await execution; transfers update cash immediately.</p>
-  </div>
+  </aside>
 </div>

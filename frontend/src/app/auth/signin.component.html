@@ -1,18 +1,24 @@
 <div class="auth-page">
+  <aside class="auth-story">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">↗</span><span>Inside Tr8ders<small>YOUR TRADING SPACE</small></span></div>
+    <div><p class="eyebrow">A clearer view of your investments</p><h2>Your markets.<br />Your portfolio.<br /><em>Your next move.</em></h2><p>Explore instruments, place orders and follow your holdings from one focused workspace.</p><div class="auth-features"><span>Explore markets</span><span>Track orders</span><span>Manage holdings</span></div></div>
+    <p class="auth-story-foot">A trading simulation built for learning. No real money is moved.</p>
+  </aside>
   <div class="auth-card">
-    <h1 class="auth-title">Sign in</h1>
-    <p class="auth-sub">Access your investor dashboard.</p>
+    <p class="eyebrow">Welcome back</p>
+    <h1 class="auth-title">Sign in to your workspace</h1>
+    <p class="auth-sub">Your portfolio and markets, all in one place.</p>
 
     @if (error) {
       <p class="error-banner">{{ error }}</p>
     }
 
     <label class="label" for="email">Email</label>
-    <input id="email" class="input" type="email" [class.invalid]="invalid('email')"
+    <input id="email" class="input" type="email" autocomplete="username" [class.invalid]="invalid('email')"
            [(ngModel)]="email" (keyup.enter)="submit()" placeholder="you@example.com" />
 
     <label class="label" for="password">Password</label>
-    <input id="password" type="password" class="input" [class.invalid]="invalid('password')"
+    <input id="password" type="password" autocomplete="current-password" class="input" [class.invalid]="invalid('password')"
            [(ngModel)]="password" (keyup.enter)="submit()" placeholder="Your password" />
 
     <button class="btn btn-primary" (click)="submit()">Sign in</button>

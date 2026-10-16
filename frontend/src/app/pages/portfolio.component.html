@@ -1,6 +1,7 @@
+<div class="page-intro"><div><p class="eyebrow">The bigger picture</p><h2>Your portfolio, in focus.</h2><p class="sub">Keep track of your cash and the instruments you hold.</p></div></div>
 <div class="stack">
   <div class="row">
-    <div class="card" style="flex:1"><p class="stat-label">Cash balance</p><p class="stat-value">{{ trading.money(trading.cash()) }}</p></div>
+    <div class="card stat-primary" style="flex:1"><p class="stat-label">Cash balance</p><p class="stat-value">{{ trading.loading() ? '—' : trading.money(trading.cash()) }}</p></div>
     <div class="card" style="flex:1"><p class="stat-label">Open positions</p><p class="stat-value">{{ trading.positions().length }}</p></div>
     <div class="card" style="flex:1"><p class="stat-label">Orders awaiting execution</p><p class="stat-value">{{ trading.pendingOrderCount() }}</p></div>
   </div>
@@ -8,7 +9,7 @@
     <h2 class="card-title">Holdings</h2>
     @if (trading.error()) { <p class="error-text">{{ trading.error() }}</p><button class="btn-chip" (click)="trading.refresh()">Retry</button> }
     @if (trading.loading()) { <p class="sub">Loading holdings…</p> }
-    <table class="table">
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Portfolio holdings"><table class="table">
       <thead><tr><th>Instrument</th><th class="num">Total quantity</th><th class="num">Reserved for sells</th><th class="num">Available</th></tr></thead>
       <tbody>
         @for (row of trading.positions(); track row.instrumentId) {
@@ -16,6 +17,6 @@
             <td class="num">{{ row.qty }}</td><td class="num">{{ row.reserved }}</td><td class="num">{{ row.available }}</td></tr>
         } @empty { <tr><td colspan="4" class="dim">No holdings for this account.</td></tr> }
       </tbody>
-    </table>
+    </table></div>
   </div>
 </div>
