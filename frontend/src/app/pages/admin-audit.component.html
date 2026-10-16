@@ -2,12 +2,11 @@
   <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
     <h2 class="card-title" style="margin:0">Trade audit dashboard</h2>
     <div style="display:flex;gap:8px">
-      <button class="btn-chip" (click)="audit.refresh()">Reload local data</button>
+      <button class="btn-chip" (click)="audit.refresh()">Reload audit data</button>
       <button class="btn-chip" (click)="resetFilters()">Reset filters</button>
-      <button class="btn-chip" (click)="audit.clear()">Clear records</button>
     </div>
   </div>
-  <p class="sub">Frontend-only local audit records captured after sign-in. Admin accounts are restricted to audit views only.</p>
+  <p class="sub">Backend audit records refresh automatically for administrator accounts.</p>
 
   @if (audit.error()) {
     <p class="error-text">{{ audit.error() }}</p>

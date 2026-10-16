@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminAuditService, AuditRecord } from '../core/admin-audit.service';
 
@@ -7,7 +7,7 @@ import { AdminAuditService, AuditRecord } from '../core/admin-audit.service';
   imports: [FormsModule],
   templateUrl: './admin-audit.component.html',
 })
-export class AdminAuditComponent {
+export class AdminAuditComponent implements OnDestroy {
   readonly audit = inject(AdminAuditService);
 
   readonly clientFilter = signal('');
@@ -100,9 +100,14 @@ export class AdminAuditComponent {
   readonly statusBreakdown = computed(() => this.breakdown(this.filteredRecords(), (row) => row.status));
   readonly clientBreakdown = computed(() => this.breakdown(this.filteredRecords(), (row) => row.clientEmail).slice(0, 8));
   readonly instrumentBreakdown = computed(() => this.breakdown(this.filteredRecords(), (row) => row.instrumentKey).slice(0, 8));
+  private readonly refreshTimer = window.setInterval(() => void this.audit.refresh(), 3000);
 
   constructor() {
-    this.audit.refresh();
+    void this.audit.refresh();
+  }
+
+  ngOnDestroy(): void {
+    window.clearInterval(this.refreshTimer);
   }
 
   resetFilters(): void {

@@ -2,7 +2,6 @@ import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { AccountSelectionService } from './account-selection.service';
-import { AdminAuditService } from './admin-audit.service';
 
 export interface Position {
   instrumentId: number;
@@ -54,7 +53,6 @@ interface TransferDto { movement: MovementDto; balance: BalanceDto; }
 export class TradingService {
   private readonly http = inject(HttpClient);
   private readonly account = inject(AccountSelectionService);
-  private readonly audit = inject(AdminAuditService);
   private loadVersion = 0;
   readonly cash = signal(0);
   readonly positions = signal<Position[]>([]);

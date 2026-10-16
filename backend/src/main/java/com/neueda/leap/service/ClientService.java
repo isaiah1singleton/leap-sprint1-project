@@ -68,6 +68,15 @@ public class ClientService {
     }
 
     @Transactional
+    public AuthResponse signInAdmin(SignInRequest request) {
+        AuthResponse response = signIn(request);
+        if (!"ADMIN".equalsIgnoreCase(response.clientSegment())) {
+            throw new NoSuchElementException("Administrator access is required.");
+        }
+        return response;
+    }
+
+    @Transactional
     public Optional<Integer> findActiveClientIdByEmail(String email) {
         if (email == null || email.isBlank()) {
             return Optional.empty();
@@ -86,6 +95,13 @@ public class ClientService {
 
         return clientRepository.findByEmailIgnoreCase(email.trim())
                 .filter(client -> client.getClientStatus() == ClientStatus.ACTIVE);
+    }
+
+    @Transactional
+    public boolean isActiveAdmin(String email) {
+        return findActiveClientByEmail(email)
+                .map(client -> "ADMIN".equalsIgnoreCase(client.getClientSegment()))
+                .orElse(false);
     }
 
     private String normalizedEmail(String emailInput) {

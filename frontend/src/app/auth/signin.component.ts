@@ -32,7 +32,15 @@ export class SigninComponent {
       return;
     }
 
-    this.auth.beginLocalSession(this.email, this.mode === 'admin' ? 'ADMIN' : 'RETAIL');
+    const failure = this.mode === 'admin'
+      ? await this.auth.signInAdmin(this.email, this.password)
+      : await this.auth.signIn(this.email, this.password);
+    if (failure) {
+      this.error = failure.message;
+      this.errorFields = failure.fields;
+      return;
+    }
+
     this.error = '';
     this.errorFields = [];
     this.password = '';

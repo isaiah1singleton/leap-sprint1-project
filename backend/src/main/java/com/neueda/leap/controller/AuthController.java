@@ -39,6 +39,11 @@ public class AuthController {
         return ResponseEntity.ok(clientService.signIn(request));
     }
 
+    @PostMapping(ApiRoutes.ADMIN_SIGN_IN)
+    public ResponseEntity<?> signInAdmin(@RequestBody SignInRequest request) {
+        return ResponseEntity.ok(clientService.signInAdmin(request));
+    }
+
     @PostMapping(ApiRoutes.SIGN_OUT)
     public ResponseEntity<Void> signOut(@RequestHeader("Authorization") String authorization) {
         String token = authorization.substring("Bearer ".length()).trim();
