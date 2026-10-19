@@ -19,8 +19,8 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Inte
                 movement.cashMovementId asc
             """)
     List<CashMovement> findOwnedHistory(
-        @Param("accountId") Integer accountId,
-        @Param("clientId") Integer clientId
+            @Param("accountId") Integer accountId,
+            @Param("clientId") Integer clientId
     );
 
     @Query("""
@@ -30,8 +30,8 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Inte
                 and movement.account.client.clientId = :clientId
             """)
     Optional<CashMovement> findOwnedMovement(
-        @Param("movementId") Integer movementId,
-        @Param("clientId") Integer clientId
+            @Param("movementId") Integer movementId,
+            @Param("clientId") Integer clientId
     );
-    
+
 }

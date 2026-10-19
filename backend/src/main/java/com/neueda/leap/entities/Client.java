@@ -23,7 +23,7 @@ public class Client {
     @Column(name = "client_name", nullable = false)
     private String clientName;
 
-    @Column(nullable = false)
+    @Column(name = "email", nullable = false)
     private String email;
 
     @Column(name = "password_hash", nullable = false)

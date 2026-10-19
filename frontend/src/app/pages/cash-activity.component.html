@@ -1,0 +1,32 @@
+<div class="page-intro"><div><h2>Your Money Movements</h2><p class="sub">Deposits, withdrawals, and account adjustments for your selected account. Trades appear in Order history.</p></div><a class="toolbar-link" routerLink="/app/orders">View order history →</a></div>
+<div class="card">
+  <h2 class="card-title">Cash activity</h2>
+  @if (trading.error()) { <p class="error-text" role="alert">{{ trading.error() }}</p><button class="btn-chip" (click)="trading.refresh()">Retry</button> }
+  @if (trading.loading()) { <p class="sub" role="status">Loading cash activity…</p> }
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Cash activity">
+    <table class="table">
+      <thead><tr><th scope="col">Reference</th><th scope="col">Date</th><th scope="col">Type</th><th scope="col" class="num">Amount</th></tr></thead>
+      <tbody>
+        @for (movement of visibleMovements(); track movement.id) {
+          <tr><td class="sym">{{ movement.id }}</td><td class="dim">{{ movement.date }}</td><td>{{ movement.type }}</td><td class="num" [class.gain]="movement.type === 'Deposit'" [class.loss]="movement.type === 'Withdraw'">{{ movement.amount }}</td></tr>
+        } @empty {
+          @if (!trading.loading() && !trading.error()) {
+            <tr><td colspan="4"><div class="empty-state"><strong>No cash activity yet</strong>Deposits and withdrawals will appear here.</div></td></tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  @if (trading.cashActivity().length > 0 && !trading.loading()) {
+    <nav class="history-pagination" aria-label="Cash activity pages">
+      <p class="sub" aria-live="polite">Showing {{ firstItem() }}–{{ lastItem() }} of {{ trading.cashActivity().length }} cash movements</p>
+      @if (pageCount() > 1) {
+        <div class="page-controls">
+          <button type="button" class="btn-chip" [disabled]="currentPage() === 1" (click)="previousPage()">Previous</button>
+          <span aria-live="polite">Page {{ currentPage() }} of {{ pageCount() }}</span>
+          <button type="button" class="btn-chip" [disabled]="currentPage() === pageCount()" (click)="nextPage()">Next</button>
+        </div>
+      }
+    </nav>
+  }
+</div>

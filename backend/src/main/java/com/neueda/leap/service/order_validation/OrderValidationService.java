@@ -1,5 +1,6 @@
 package com.neueda.leap.service.order_validation;
 
+import com.neueda.leap.service.TradeAmountCalculator;
 import com.neueda.leap.entities.Account;
 import com.neueda.leap.entities.Instrument;
 import com.neueda.leap.entities.Money;
@@ -7,6 +8,7 @@ import com.neueda.leap.entities.Order;
 import com.neueda.leap.entities.QuoteSnapshot;
 import com.neueda.leap.enums.ClientStatus;
 import com.neueda.leap.enums.OrderSide;
+import com.neueda.leap.models.SubmitOrderRequest;
 import com.neueda.leap.service.TradingRules;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class OrderValidationService {
     private final TradingRules rules;
+    private static final TradeAmountCalculator tradeAmountCalculator = new TradeAmountCalculator();
     private final Clock clock;
 
     public OrderValidationService(TradingRules rules, Clock clock) {
@@ -23,13 +26,38 @@ public class OrderValidationService {
         this.clock = clock;
     }
 
+    /** Invalid request or quote data never creates an order record. */
+    public void validateSubmissionRequest(SubmitOrderRequest request) {
+        if (request == null
+                || request.accountId() == null || request.accountId() <= 0
+                || request.instrumentId() == null || request.instrumentId() <= 0
+                || request.side() == null
+                || !fitsOrderNumeric(request.quantity())
+                || !fitsOrderNumeric(request.indicativePrice())
+                || request.quoteAsOf() == null
+                || request.quoteCurrency() == null || request.quoteCurrency().isBlank()) {
+            throw new IllegalArgumentException("A valid account, instrument, BUY or SELL side, "
+                    + "positive quantity, and indicative quote are required.");
+        }
+    }
+
+    public QuoteSnapshot quoteFromSubmittedRequest(SubmitOrderRequest request, Instrument instrument) {
+        if (!instrument.getQuoteCurrency().name().equalsIgnoreCase(request.quoteCurrency())) {
+            throw new IllegalArgumentException("The quote currency does not match the instrument.");
+        }
+        if (request.quoteAsOf().toInstant().isAfter(clock.instant())) {
+            throw new IllegalArgumentException("The quote timestamp cannot be in the future.");
+        }
+        return new QuoteSnapshot(new Money(request.indicativePrice(), instrument.getQuoteCurrency()),
+                request.quoteAsOf());
+    }
+
     /**
-     * Validates an already submitted order and its available resource snapshot.
-     * The caller supplies available amounts after pending reservations have been deducted.
+     * Validates a submitted order against total cash and unreserved sell quantity.
      * This method does not look up, save, accept, or reserve an order.
      */
     public void validate(Order order, QuoteSnapshot submittedQuote, String authenticatedEmail,
-                         Money availableCash, BigDecimal availableUnits) {
+                         Money totalCash, BigDecimal availableUnits) {
         validateSubmittedOrder(order, authenticatedEmail);
         Instrument instrument = order.getInstrument();
         Instant now = validateInstrument(instrument);
@@ -37,7 +65,7 @@ public class OrderValidationService {
         BigDecimal quantity = order.getRequestedQuantity();
         validateOrderFields(side, quantity, instrument);
         validateQuote(submittedQuote, instrument, now);
-        validateAvailableResources(side, quantity, submittedQuote, instrument, availableCash, availableUnits);
+        validateResources(side, quantity, submittedQuote, instrument, totalCash, availableUnits);
     }
 
     private static void validateSubmittedOrder(Order order, String authenticatedEmail) {
@@ -100,20 +128,28 @@ public class OrderValidationService {
             throw failure(OrderValidationErrorCodes.QUOTE_CURRENCY_MISMATCH, "The quote currency does not match the instrument.");
         }
         Instant quotedAt = submittedQuote.quoteAt().toInstant();
-        if (quotedAt.isAfter(now) || quotedAt.isBefore(now.minusSeconds(rules.maxQuoteAgeSeconds()))) {
-            throw failure(OrderValidationErrorCodes.QUOTE_STALE, "The submitted quote is outside the allowed age.");
+        if (quotedAt.isAfter(now)) {
+            throw failure(OrderValidationErrorCodes.QUOTE_TIME_INVALID, "The quote timestamp cannot be in the future.");
         }
     }
 
-    private void validateAvailableResources(OrderSide side, BigDecimal quantity, QuoteSnapshot submittedQuote,
-                                            Instrument instrument, Money availableCash, BigDecimal availableUnits) {
+    private static boolean fitsOrderNumeric(BigDecimal value) {
+        if (value == null || value.signum() <= 0) {
+            return false;
+        }
+        BigDecimal normalized = value.stripTrailingZeros();
+        return Math.max(0, normalized.scale()) <= 8
+                && Math.max(0, normalized.precision() - normalized.scale()) <= 16;
+    }
+
+    private void validateResources(OrderSide side, BigDecimal quantity, QuoteSnapshot submittedQuote,
+                                   Instrument instrument, Money totalCash, BigDecimal availableUnits) {
         if (side == OrderSide.BUY) {
-            BigDecimal requiredCash = submittedQuote.price().amount().multiply(quantity)
-                    .multiply(rules.fundingMultiplier(instrument.getAssetClass()));
-            if (availableCash == null || availableCash.amount() == null
-                    || availableCash.currency() != instrument.getQuoteCurrency()
-                    || availableCash.amount().compareTo(requiredCash) < 0) {
-                throw failure(OrderValidationErrorCodes.INSUFFICIENT_CASH, "Available cash does not cover the order and configured charges.");
+            BigDecimal requiredCash = tradeAmountCalculator.calculate(quantity, submittedQuote.price()).amount();
+            if (totalCash == null || totalCash.amount() == null
+                    || totalCash.currency() != instrument.getQuoteCurrency()
+                    || totalCash.amount().compareTo(requiredCash) < 0) {
+                throw failure(OrderValidationErrorCodes.INSUFFICIENT_CASH, "Cash balance does not cover the order.");
             }
         } else if (side == OrderSide.SELL) {
             if (availableUnits == null || availableUnits.compareTo(quantity) < 0) {

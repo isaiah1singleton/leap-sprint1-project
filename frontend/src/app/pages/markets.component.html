@@ -1,11 +1,38 @@
 <div class="row">
   <div class="card" style="flex:1">
     <h2 class="card-title">Indices, FX and commodities</h2>
-    @for (row of trading.markets; track row.name) {
-      <div class="list-row">
-        <span>{{ row.name }}</span>
-        <span style="display:flex;gap:14px"><span>{{ row.level }}</span><span class="dim" style="min-width:58px;text-align:right">{{ row.change }}</span></span>
-      </div>
+    @if (loading()) {
+      <p role="status">Loading market data...</p>
+    }
+
+    @if (error()) {
+      <p class="error-text" role="alert">{{ error() }}</p>
+      <button type="button" class="btn-chip" (click)="loadMarkets()">Retry</button>
+    }
+
+    @if (!loading() && !error()) {
+      @for (row of rows(); track row.instrument.symbol) {
+        <div class="list-row">
+      <span>
+        <strong>{{ row.instrument.symbol }}</strong>
+        <span class="dim">{{ row.instrument.name }}</span>
+      </span>
+
+          <span style="display:flex;gap:14px">
+        <span>{{ price(row.result) }}</span>
+        <span
+          class="dim"
+          style="min-width:58px;text-align:right"
+          [class.gain]="(row.result.quote?.changePercent ?? 0) > 0"
+          [class.loss]="(row.result.quote?.changePercent ?? 0) < 0"
+        >
+          {{ change(row.result) }}
+        </span>
+      </span>
+        </div>
+      } @empty {
+        <p class="dim">No market instruments are available.</p>
+      }
     }
   </div>
   <div class="card" style="width:250px;flex:none">

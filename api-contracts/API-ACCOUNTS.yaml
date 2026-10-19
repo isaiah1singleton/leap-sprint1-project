@@ -682,7 +682,7 @@ components:
 
     CashMovementType:
       type: string
-      enum: [DEPOSIT, WITHDRAW, FEE]
+      enum: [DEPOSIT, WITHDRAW]
 
     Money:
       type: object

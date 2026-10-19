@@ -19,10 +19,10 @@ import java.util.NoSuchElementException;
 @RestController
 @RequestMapping("/api/instruments")
 public class InstrumentController {
-    
+
     private final InstrumentService instrumentService;
     private final ClientService clientService;
-    
+
     public InstrumentController(
             InstrumentService instrumentService,
             ClientService clientService
@@ -30,26 +30,26 @@ public class InstrumentController {
         this.instrumentService = instrumentService;
         this.clientService = clientService;
     }
-    
+
     @GetMapping
     public List<InstrumentResponse> getInstruments(
             Principal principal
     ) {
         requireActiveClient(principal);
-        
+
         return instrumentService.getInstruments();
     }
-    
+
     @GetMapping("/{instrumentId}")
     public InstrumentResponse getInstrument(
             @PathVariable("instrumentId") Integer instrumentId,
             Principal principal
     ) {
         requireActiveClient(principal);
-        
+
         return instrumentService.getInstrument(instrumentId);
     }
-    
+
     private void requireActiveClient(Principal principal) {
         if (principal == null) {
             throw new ResponseStatusException(
@@ -57,7 +57,7 @@ public class InstrumentController {
                     "Sign in to access instruments."
             );
         }
-        
+
         clientService.findActiveClientIdByEmail(principal.getName())
                 .orElseThrow(() ->
                         new ResponseStatusException(
@@ -66,7 +66,7 @@ public class InstrumentController {
                         )
                 );
     }
-    
+
     @ExceptionHandler(NoSuchElementException.class)
     public ProblemDetail handleNotFound(
             NoSuchElementException exception
@@ -76,7 +76,7 @@ public class InstrumentController {
                 exception.getMessage()
         );
     }
-    
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleBadRequest(
             IllegalArgumentException exception

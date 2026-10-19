@@ -10,6 +10,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -18,6 +19,12 @@ import java.util.Objects;
 @Entity
 @Table(name = "account_balances")
 public class CashBalance {
+
+    private static final int BALANCE_SCALE = 8;
+
+    private static final BigDecimal MAX_BALANCE =
+            new BigDecimal("9999999999999999.99999999");
+
     @EmbeddedId
     private CashBalanceId id;
 
@@ -26,11 +33,13 @@ public class CashBalance {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    @Column(name = "total_balance", nullable = false, precision = 24, scale = 8)
+    @Column(
+            name = "total_balance",
+            nullable = false,
+            precision = 24,
+            scale = 8
+    )
     private BigDecimal totalBalance;
-
-    @Column(name = "reserved_balance", nullable = false, precision = 24, scale = 8)
-    private BigDecimal reservedBalance;
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
@@ -39,67 +48,112 @@ public class CashBalance {
     }
 
     public CashBalance(Account account, Currency currency) {
-        this.account = Objects.requireNonNull(account, "Account is required.");
-        this.id = new CashBalanceId(account.getAccountId(), currency);
+        this.account = Objects.requireNonNull(
+                account,
+                "Account is required."
+        );
+        this.id = new CashBalanceId(
+                account.getAccountId(),
+                Objects.requireNonNull(currency, "Currency is required.")
+        );
         this.totalBalance = BigDecimal.ZERO;
-        this.reservedBalance = BigDecimal.ZERO;
         touch();
     }
 
     @PrePersist
     private void beforeInsert() {
-        if (updatedAt == null) touch();
+        if (updatedAt == null) {
+            touch();
+        }
     }
 
-    public CashBalanceId getId() { return id; }
-    public Account getAccount() { return account; }
-    public Currency getCurrency() { return id.getCurrency(); }
-    public Money getTotalBalance() { return new Money(totalBalance, getCurrency()); }
-    public Money getReservedBalance() { return new Money(reservedBalance, getCurrency()); }
-    public OffsetDateTime getUpdatedAt() { return updatedAt; }
-    public Money availableBalance() { return new Money(totalBalance.subtract(reservedBalance), getCurrency()); }
-
-    public void reserveCash(Money amount) {
-        BigDecimal value = requirePositiveAmount(amount);
-        if (availableBalance().amount().compareTo(value) < 0) {
-            throw new IllegalStateException("Insufficient available cash to reserve.");
-        }
-        reservedBalance = reservedBalance.add(value);
-        touch();
+    public CashBalanceId getId() {
+        return id;
     }
 
-    public void releaseReservedCash(Money amount) {
-        BigDecimal value = requirePositiveAmount(amount);
-        if (reservedBalance.compareTo(value) < 0) {
-            throw new IllegalStateException("Cannot release more cash than is reserved.");
-        }
-        reservedBalance = reservedBalance.subtract(value);
-        touch();
+    public Account getAccount() {
+        return account;
+    }
+
+    public Currency getCurrency() {
+        return id.getCurrency();
+    }
+
+    public Money getTotalBalance() {
+        return new Money(totalBalance, getCurrency());
+    }
+
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
     public void depositCash(Money amount) {
-        totalBalance = totalBalance.add(requirePositiveAmount(amount));
+        BigDecimal value = requirePositiveAmount(amount);
+        BigDecimal resultingBalance = totalBalance.add(value);
+
+        if (resultingBalance.compareTo(MAX_BALANCE) > 0) {
+            throw new IllegalStateException(
+                    "Resulting cash balance exceeds the supported balance range."
+            );
+        }
+
+        totalBalance = resultingBalance;
         touch();
     }
 
     public void withdrawCash(Money amount) {
         BigDecimal value = requirePositiveAmount(amount);
-        if (availableBalance().amount().compareTo(value) < 0) {
-            throw new IllegalStateException("Insufficient available cash to withdraw.");
+
+        if (totalBalance.compareTo(value) < 0) {
+            throw new IllegalStateException(
+                    "Insufficient cash to withdraw."
+            );
         }
+
         totalBalance = totalBalance.subtract(value);
         touch();
     }
 
     private BigDecimal requirePositiveAmount(Money amount) {
-        if (amount == null || amount.currency() != getCurrency()
-                || amount.amount().signum() <= 0
-                || Math.max(0, amount.amount().stripTrailingZeros().scale()) > 8) {
-            throw new IllegalArgumentException(
-                    "Amount must be positive, in the balance currency, and have at most 8 decimal places.");
+        if (amount == null) {
+            throw new IllegalArgumentException("Amount is required.");
         }
-        return amount.amount();
+
+        if (amount.currency() != getCurrency()) {
+            throw new IllegalArgumentException(
+                    "Amount must be in the balance currency."
+            );
+        }
+
+        BigDecimal value = amount.amount();
+
+        if (value.signum() <= 0) {
+            throw new IllegalArgumentException(
+                    "Amount must be positive."
+            );
+        }
+
+        int fractionalDigits = Math.max(
+                0,
+                value.stripTrailingZeros().scale()
+        );
+
+        if (fractionalDigits > BALANCE_SCALE) {
+            throw new IllegalArgumentException(
+                    "Amount must have at most 8 decimal places."
+            );
+        }
+
+        if (value.compareTo(MAX_BALANCE) > 0) {
+            throw new IllegalArgumentException(
+                    "Amount exceeds the supported balance range."
+            );
+        }
+
+        return value;
     }
 
-    private void touch() { updatedAt = OffsetDateTime.now(ZoneOffset.UTC); }
+    private void touch() {
+        updatedAt = OffsetDateTime.now(ZoneOffset.UTC);
+    }
 }

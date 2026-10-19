@@ -21,16 +21,16 @@ import com.neueda.leap.enums.Currency;
 import com.neueda.leap.enums.OrderSide;
 
 
-@Entity 
+@Entity
 @Table(
-    name = "cash_movements",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uk_cash_movements_fill",
-        columnNames = "fill_id"
-    )
+        name = "cash_movements",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_cash_movements_fill",
+                columnNames = "fill_id"
+        )
 )
 public class CashMovement {
-    @Id 
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cash_movement_id")
     private Integer cashMovementId;
@@ -76,7 +76,7 @@ public class CashMovement {
     )
     private OffsetDateTime occurredAt;
 
-     @Column(
+    @Column(
             name = "reason",
             updatable = false,
             columnDefinition = "text"
@@ -92,7 +92,7 @@ public class CashMovement {
     }
 
     protected CashMovement() {}
-    
+
     private CashMovement(Account account, Fill fill, BigDecimal amount, CashMovementType cashMovementType, Currency currency, OffsetDateTime occurredAt, String reason) {
         if (account == null) {
             throw new IllegalArgumentException("Account is required.");
@@ -135,11 +135,9 @@ public class CashMovement {
             );
         }
 
-        if ((cashMovementType == CashMovementType.WITHDRAW
-                || cashMovementType == CashMovementType.FEE)
-                && amount.signum() >= 0) {
+        if (cashMovementType == CashMovementType.WITHDRAW && amount.signum() >= 0) {
             throw new IllegalArgumentException(
-                    "Withdrawals and fees must decrease cash."
+                    "Withdrawals must decrease cash."
             );
         }
 
@@ -164,7 +162,7 @@ public class CashMovement {
         this.reason = normalizedReason;
     }
 
-    public static CashMovement forTrade(Fill fill) {
+    public static CashMovement forTrade(Fill fill, Money settlementAmount) {
         if (fill == null) {
             throw new IllegalArgumentException("Fill is required.");
         }
@@ -180,8 +178,31 @@ public class CashMovement {
         requirePositive(fill.getFillQuantity());
         requirePositive(fill.getExecutionPrice());
 
-        BigDecimal amount = fill.getFillQuantity()
-                .multiply(fill.getExecutionPrice());
+        if (settlementAmount == null) {
+            throw new IllegalArgumentException("Settlement amount is required.");
+        }
+
+        if (settlementAmount.currency() != fill.getExecutionCurrency()) {
+            throw new IllegalArgumentException(
+                    "Settlement currency must match the fill currency."
+            );
+        }
+
+        BigDecimal amount = settlementAmount.amount();
+        requirePositive(amount);
+
+        BigDecimal normalizedAmount = amount.stripTrailingZeros();
+        int fractionalDigits = Math.max(0, normalizedAmount.scale());
+        int integerDigits = Math.max(
+                0,
+                normalizedAmount.precision() - normalizedAmount.scale()
+        );
+
+        if (fractionalDigits > 8 || integerDigits > 16) {
+            throw new IllegalArgumentException(
+                    "Settlement amount must fit NUMERIC(24, 8)."
+            );
+        }
 
         if (order.getSide() == OrderSide.BUY) {
             amount = amount.negate();
@@ -223,21 +244,6 @@ public class CashMovement {
         return new CashMovement(
                 account, null, amount.negate(),
                 CashMovementType.WITHDRAW,
-                currency, occurredAt, null
-        );
-    }
-
-    public static CashMovement fee(
-            Account account,
-            BigDecimal amount,
-            Currency currency,
-            OffsetDateTime occurredAt
-    ) {
-        requirePositive(amount);
-
-        return new CashMovement(
-                account, null, amount.negate(),
-                CashMovementType.FEE,
                 currency, occurredAt, null
         );
     }
@@ -288,3 +294,4 @@ public class CashMovement {
         return reason;
     }
 }
+

@@ -72,7 +72,7 @@ public class OrderEvent {
             throw new IllegalArgumentException("Order is required.");
         }
 
-        if (status == null || status == OrderStatus.CANCELLED) {
+        if (status == null) {
             throw new IllegalArgumentException(
                     "Unsupported order event status."
             );
@@ -147,8 +147,9 @@ public class OrderEvent {
                             || next == OrderStatus.REJECTED;
             case ACCEPTED ->
                     next == OrderStatus.FILLED
-                            || next == OrderStatus.REJECTED;
-            case FILLED, REJECTED, CANCELLED -> false;
+                            || next == OrderStatus.REJECTED
+                            || next == OrderStatus.EXPIRED;
+            case FILLED, REJECTED, EXPIRED -> false;
         };
     }
 

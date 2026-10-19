@@ -1,10 +1,8 @@
--- Initial schema for an empty database. PostgreSQL's Docker initializer runs
--- this file only when creating a new data volume.
 CREATE TABLE clients
 (
-	client_id SERIAL PRIMARY KEY,
+    client_id SERIAL PRIMARY KEY,
     client_name TEXT NOT NULL,
-	email TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     client_status TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -25,18 +23,18 @@ CREATE TABLE sessions
 
 CREATE TABLE accounts
 (
-	account_id SERIAL PRIMARY KEY,
-	client_id INTEGER NOT NULL REFERENCES clients(client_id),
-	account_status TEXT NOT NULL,
+    account_id SERIAL PRIMARY KEY,
+    client_id INTEGER NOT NULL REFERENCES clients(client_id),
+    account_status TEXT NOT NULL,
 
-	account_name TEXT NOT NULL,
+    account_name TEXT NOT NULL,
 
-	opened_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    opened_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE instruments
 (
-	instrument_id SERIAL PRIMARY KEY,
+    instrument_id SERIAL PRIMARY KEY,
     market TEXT NOT NULL,
     symbol TEXT NOT NULL,
     asset_class TEXT NOT NULL,
@@ -78,40 +76,40 @@ CREATE TABLE order_events
 (
     event_id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL REFERENCES orders(order_id),
-    status TEXT NOT NULL CHECK( status IN ('SUBMITTED', 'ACCEPTED', 'FILLED', 'REJECTED')),
-	reason TEXT,
+    status TEXT NOT NULL CHECK( status IN ('SUBMITTED', 'ACCEPTED', 'FILLED', 'REJECTED', 'EXPIRED')),
+    reason TEXT,
 
-	decision_quote_price NUMERIC CHECK(decision_quote_price > 0),
+    decision_quote_price NUMERIC CHECK(decision_quote_price > 0),
 
-	occurred_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	decision_quote_at TIMESTAMP WITH TIME ZONE,
+    occurred_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    decision_quote_at TIMESTAMP WITH TIME ZONE,
 
     CONSTRAINT uk_order_events_order_status UNIQUE (order_id, status),
     CONSTRAINT ck_order_events_quote_pair CHECK (
         (decision_quote_price IS NULL AND decision_quote_at IS NULL)
-        OR
+            OR
         (decision_quote_price IS NOT NULL AND decision_quote_at IS NOT NULL)
-    ),
+        ),
     CONSTRAINT ck_order_events_rejection_reason
         CHECK (
             status <> 'REJECTED'
-            OR (reason IS NOT NULL AND length(trim(reason)) > 0)
-        ),
+                OR (reason IS NOT NULL AND length(trim(reason)) > 0)
+            ),
 
     CONSTRAINT ck_order_events_required_quote
         CHECK (
             status NOT IN ('ACCEPTED', 'FILLED')
-            OR (
+                OR (
                 decision_quote_price IS NOT NULL
-                AND decision_quote_at IS NOT NULL
-            )
-        ),
+                    AND decision_quote_at IS NOT NULL
+                )
+            ),
 
     CONSTRAINT ck_order_events_quote_time
         CHECK (
             decision_quote_at IS NULL
-            OR decision_quote_at <= occurred_at
-        )
+                OR decision_quote_at <= occurred_at
+            )
 
 );
 
@@ -122,7 +120,6 @@ CREATE TABLE account_balances
     PRIMARY KEY (account_id, currency),
 
     total_balance NUMERIC(24, 8) NOT NULL CHECK(total_balance >= 0),
-    reserved_balance NUMERIC(24, 8) NOT NULL CHECK(reserved_balance >= 0 AND reserved_balance <= total_balance),
 
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
@@ -163,13 +160,12 @@ CREATE TABLE cash_movements
     movement_type TEXT NOT NULL
         CHECK (
             movement_type IN (
-                'DEPOSIT',
-                'WITHDRAW',
-                'FEE',
-                'TRADE',
-                'ADJUSTMENT'
-            )
-        ),
+                              'DEPOSIT',
+                              'WITHDRAW',
+                              'TRADE',
+                              'ADJUSTMENT'
+                )
+            ),
 
     currency TEXT NOT NULL
         CHECK (currency IN ('EUR', 'USD', 'GBP', 'INR')),
@@ -185,27 +181,27 @@ CREATE TABLE cash_movements
     CONSTRAINT ck_cash_movements_fill_type
         CHECK (
             (movement_type = 'TRADE' AND fill_id IS NOT NULL)
-            OR
+                OR
             (movement_type <> 'TRADE' AND fill_id IS NULL)
-        ),
+            ),
 
     CONSTRAINT ck_cash_movements_direction
         CHECK (
             (movement_type = 'DEPOSIT' AND amount > 0)
-            OR
-            (movement_type IN ('WITHDRAW', 'FEE') AND amount < 0)
-            OR
+                OR
+            (movement_type = 'WITHDRAW' AND amount < 0)
+                OR
             movement_type IN ('TRADE', 'ADJUSTMENT')
-        ),
+            ),
 
     CONSTRAINT ck_cash_movements_adjustment_reason
         CHECK (
             movement_type <> 'ADJUSTMENT'
-            OR (
+                OR (
                 reason IS NOT NULL
-                AND length(trim(reason)) > 0
+                    AND length(trim(reason)) > 0
+                )
             )
-        )
 );
 
 CREATE TABLE fifo_allocations
@@ -216,3 +212,5 @@ CREATE TABLE fifo_allocations
 
     allocated_quantity INTEGER NOT NULL CHECK(allocated_quantity > 0)
 );
+
+
