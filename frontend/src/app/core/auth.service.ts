@@ -146,15 +146,11 @@ export class AuthService {
 
   private apiFailure(error: unknown, fields: string[]): AuthFailure {
     if (error instanceof HttpErrorResponse && error.status === 0) {
-<<<<<<< HEAD
       return {
         message:
           'Cannot reach the backend. Check that the backend container is running and port 8082 is reachable.',
         fields: [],
       };
-=======
-      return { message: 'Cannot reach the backend. Check that the backend container is running and port 8082 is reachable.', fields: [] };
->>>>>>> feature/admin-kafka
     }
     if (error instanceof HttpErrorResponse && error.error?.detail) {
       return { message: error.error.detail, fields };
@@ -163,15 +159,11 @@ export class AuthService {
       return { message: error.error, fields };
     }
     if (error instanceof HttpErrorResponse && error.status >= 500) {
-<<<<<<< HEAD
       return {
         message:
           'The backend failed to process this request. Check its container logs and try again.',
         fields: [],
       };
-=======
-      return { message: 'The backend failed to process this request. Check its container logs and try again.', fields: [] };
->>>>>>> feature/admin-kafka
     }
     return { message: 'An error occurred. Please try again.', fields };
   }

@@ -1,7 +1,5 @@
 import { CommonModule } from '@angular/common';
-
 import { OrderProgressComponent, OrderReview } from './order-progress.component';
-
 import {
   Component,
   computed,
@@ -14,10 +12,24 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AccountSelectionService } from '../core/account-selection.service';
-import { MarketService, MarketSymbol, QuoteResult } from '../core/market.service';
-import { OrderDto, TradeMode, TradingService } from '../core/trading.service';
+import {
+  ActivatedRoute,
+  Router,
+  RouterLink,
+} from '@angular/router';
+import {
+  AccountSelectionService,
+} from '../core/account-selection.service';
+import {
+  MarketService,
+  MarketSymbol,
+  QuoteResult,
+} from '../core/market.service';
+import {
+  OrderDto,
+  TradeMode,
+  TradingService,
+} from '../core/trading.service';
 
 @Component({
   selector: 'app-market-explorer',
@@ -55,15 +67,14 @@ export class MarketExplorerComponent
   readonly review = signal<OrderReview | null>(null);
   readonly submittedOrder = signal<OrderDto | null>(null);
   readonly common = computed(() =>
-    this.market
-      .catalogue()
-      .filter((item) => item.type === 'equity')
-      .slice(0, 5),
-  );
+    this.market.catalogue()
+      .filter(item => item.type === 'equity')
+      .slice(0, 5));
   readonly submitting = signal(false);
   readonly quoteClock = signal(Date.now());
 
-  private quoteClockTimer?: ReturnType<typeof setInterval>;
+  private quoteClockTimer?:
+    ReturnType<typeof setInterval>;
   private selectionVersion = 0;
   private destroyed = false;
 
@@ -71,29 +82,38 @@ export class MarketExplorerComponent
     const term = this.query().trim().toUpperCase();
     if (!term) return [];
 
-    return this.market
-      .catalogue()
-      .filter((item) => item.symbol.includes(term) || item.name.toUpperCase().includes(term))
-      .sort(
-        (a, b) =>
-          this.rank(a.symbol, term) - this.rank(b.symbol, term) || a.symbol.localeCompare(b.symbol),
-      )
+    return this.market.catalogue()
+      .filter(item =>
+        item.symbol.includes(term)
+        || item.name.toUpperCase().includes(term))
+      .sort((a, b) =>
+        this.rank(a.symbol, term)
+        - this.rank(b.symbol, term)
+        || a.symbol.localeCompare(b.symbol))
       .slice(0, 12);
   });
 
-  readonly held = computed(
-    () => this.trading.positions().find((item) => item.sym === this.selected()?.symbol)?.qty ?? 0,
-  );
-  readonly qty = computed(() => Number(this.quantity()));
-  readonly validQuantity = computed(() => Number.isFinite(this.qty()) && this.qty() > 0);
-  readonly quote = computed(() => this.result()?.quote ?? null);
-  readonly buyDisabled = computed(() => !!this.disabledReason('buy'));
-  readonly sellDisabled = computed(() => !!this.disabledReason('sell'));
+  readonly held = computed(() =>
+    this.trading.positions()
+      .find(item =>
+        item.sym === this.selected()?.symbol)?.qty ?? 0);
+  readonly qty = computed(() =>
+    Number(this.quantity()));
+  readonly validQuantity = computed(() =>
+    Number.isFinite(this.qty()) && this.qty() > 0);
+  readonly quote = computed(() =>
+    this.result()?.quote ?? null);
+  readonly buyDisabled = computed(() =>
+    !!this.disabledReason('buy'));
+  readonly sellDisabled = computed(() =>
+    !!this.disabledReason('sell'));
 
   ngOnInit(): void {
     void this.loadCatalogue();
 
-    this.quoteClockTimer = setInterval(() => this.quoteClock.set(Date.now()), 1_000);
+    this.quoteClockTimer = setInterval(
+      () => this.quoteClock.set(Date.now()),
+      1_000);
   }
 
   ngOnDestroy(): void {
@@ -110,12 +130,14 @@ export class MarketExplorerComponent
 
     try {
       await this.market.loadCatalogue();
-      const requested = this.route.snapshot.queryParamMap.get('symbol');
+      const requested =
+        this.route.snapshot.queryParamMap.get('symbol');
       if (requested && this.showSearch()) {
         this.selectSymbol(requested);
       }
     } catch (error) {
-      this.catalogueError.set(this.market.errorMessage(error));
+      this.catalogueError.set(
+        this.market.errorMessage(error));
     } finally {
       this.loadingCatalogue.set(false);
     }
@@ -135,13 +157,15 @@ export class MarketExplorerComponent
     }
     if (!items.length) return;
 
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    if (event.key === 'ArrowDown'
+      || event.key === 'ArrowUp') {
       event.preventDefault();
       this.expanded.set(true);
-      this.activeIndex.update(
-        (index) => (index + (event.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length,
-      );
-    } else if (event.key === 'Enter' && this.expanded()) {
+      this.activeIndex.update(index =>
+        (index + (event.key === 'ArrowDown'
+          ? 1 : items.length - 1)) % items.length);
+    } else if (event.key === 'Enter'
+      && this.expanded()) {
       event.preventDefault();
       this.select(items[Math.max(
         0, this.activeIndex())]);
@@ -150,7 +174,8 @@ export class MarketExplorerComponent
 
   @HostListener('document:click', ['$event'])
   outsideClick(event: Event): void {
-    if (!this.element.nativeElement.contains(event.target as Node)) {
+    if (!this.element.nativeElement.contains(
+      event.target as Node)) {
       this.expanded.set(false);
     }
   }
@@ -173,7 +198,8 @@ export class MarketExplorerComponent
   }
 
   selectSymbol(symbol: string): void {
-    const item = this.market.catalogue().find((entry) => entry.symbol === symbol);
+    const item = this.market.catalogue()
+      .find(entry => entry.symbol === symbol);
     if (item) this.select(item);
   }
 
@@ -189,8 +215,10 @@ export class MarketExplorerComponent
     if (!background) this.result.set(null);
 
     try {
-      const result = await this.market.quote(item.symbol);
-      if (this.destroyed || version !== this.selectionVersion) {
+      const result =
+        await this.market.quote(item.symbol);
+      if (this.destroyed
+        || version !== this.selectionVersion) {
         return;
       }
 
@@ -207,7 +235,8 @@ export class MarketExplorerComponent
           this.market.errorMessage(error));
       }
     } finally {
-      if (!this.destroyed && version === this.selectionVersion) {
+      if (!this.destroyed
+        && version === this.selectionVersion) {
         this.loadingQuote.set(false);
       }
     }
@@ -233,21 +262,20 @@ export class MarketExplorerComponent
     const snapshot = this.result();
     const quote = snapshot?.quote;
 
-    if (
-      !instrument ||
-      !quote ||
-      snapshot?.error ||
-      this.loadingQuote() ||
-      quote.symbol !== instrument.symbol ||
-      !quote.currency ||
-      quote.currency !== instrument.currency
-    ) {
+    if (!instrument
+      || !quote
+      || snapshot?.error
+      || this.loadingQuote()
+      || quote.symbol !== instrument.symbol
+      || !quote.currency
+      || quote.currency !== instrument.currency) {
       return 'A valid provider quote is required to trade.';
     }
 
     const quoteTime = Date.parse(quote.asOf);
     const now = this.quoteClock();
-    if (!Number.isFinite(quoteTime) || quoteTime > now) {
+    if (!Number.isFinite(quoteTime)
+      || quoteTime > now) {
       return 'A valid quote timestamp that is not in the future is required.';
     }
 
@@ -255,8 +283,11 @@ export class MarketExplorerComponent
       return 'Enter a quantity greater than zero.';
     }
 
-    const price = mode === 'buy' ? quote.ask : quote.bid;
-    if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(price * this.qty())) {
+    const price =
+      mode === 'buy' ? quote.ask : quote.bid;
+    if (!Number.isFinite(price)
+      || price <= 0
+      || !Number.isFinite(price * this.qty())) {
       return 'A valid side price and quantity are required.';
     }
 
@@ -276,7 +307,8 @@ export class MarketExplorerComponent
     const account = this.account()!;
     const snapshot = this.result()!;
     const quote = this.result()!.quote!;
-    const price = mode === 'buy' ? quote.ask : quote.bid;
+    const price =
+      mode === 'buy' ? quote.ask : quote.bid;
     const quantityInput = this.quantity();
 
     this.review.set({
@@ -297,10 +329,8 @@ export class MarketExplorerComponent
       source: snapshot.source,
       stale: snapshot.stale,
       cashBalance: this.trading.cash(),
-      availableShares:
-        this.trading
-          .positions()
-          .find((position) => position.instrumentId === instrument.instrumentId)?.available ?? 0,
+      availableShares: this.trading.positions().find(
+        position => position.instrumentId === instrument.instrumentId)?.available ?? 0,
     });
     this.submittedOrder.set(null);
     this.tradeError.set('');
@@ -311,9 +341,7 @@ export class MarketExplorerComponent
     const review = this.review();
     if (!review || !this.orderPopupOpen() || this.submitting()) return;
     if (this.account()?.accountId !== review.accountId) {
-      this.tradeError.set(
-        'The selected account changed. Close this window and review the order again.',
-      );
+      this.tradeError.set('The selected account changed. Close this window and review the order again.');
       return;
     }
 
@@ -326,8 +354,7 @@ export class MarketExplorerComponent
         review.quantityInput,
         review.price,
         review.quoteAsOf,
-        review.currency,
-      );
+        review.currency);
 
       if ('message' in result) {
         this.tradeError.set(result.message);
@@ -335,9 +362,7 @@ export class MarketExplorerComponent
         this.submittedOrder.set(result.order);
       }
     } catch {
-      this.tradeError.set(
-        'The order could not be submitted. Check order history before trying again.',
-      );
+      this.tradeError.set('The order could not be submitted. Check order history before trying again.');
     } finally {
       this.submitting.set(false);
     }
@@ -351,15 +376,22 @@ export class MarketExplorerComponent
     this.tradeError.set('');
   }
 
-  money(value: number, currency = 'USD'): string {
+  money(
+    value: number,
+    currency = 'USD',
+  ): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
-      maximumFractionDigits: value < 1 ? 6 : 2,
+      maximumFractionDigits:
+        value < 1 ? 6 : 2,
     }).format(value);
   }
 
-  quoteMoney(value: number, currency = 'USD'): string {
+  quoteMoney(
+    value: number,
+    currency = 'USD',
+  ): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
@@ -368,7 +400,22 @@ export class MarketExplorerComponent
     }).format(value);
   }
 
-  private rank(symbol: string, term: string): number {
-    return symbol === term ? 0 : symbol.startsWith(term) ? 1 : 2;
+  change(
+    result: QuoteResult | undefined | null,
+  ): string {
+    const value =
+      result?.quote?.changePercent;
+    return value == null
+      ? 'Change unavailable'
+      : `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
+  }
+
+  private rank(
+    symbol: string,
+    term: string,
+  ): number {
+    return symbol === term
+      ? 0
+      : symbol.startsWith(term) ? 1 : 2;
   }
 }
