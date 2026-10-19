@@ -27,6 +27,23 @@ export class OverviewComponent implements OnInit {
   readonly accountsError = this.accountsCache.error;
 
   readonly recent = computed(() => this.trading.orders().slice(0, 4));
+  readonly holdingMix = computed(() => {
+    const positions = this.trading.positions();
+    const total = positions.reduce((sum, position) => sum + position.qty, 0);
+    return positions.map(position => ({
+      ...position,
+      share: total > 0 ? position.qty / total * 100 : 0,
+    }));
+  });
+  readonly orderStatuses = computed(() => {
+    const orders = this.trading.orders();
+    const total = orders.length;
+    return (['FILLED', 'ACCEPTED', 'SUBMITTED', 'REJECTED', 'EXPIRED'] as const).map(status => ({
+      status,
+      count: orders.filter(order => order.status === status).length,
+      share: total > 0 ? orders.filter(order => order.status === status).length / total * 100 : 0,
+    }));
+  });
 
   constructor() {
     effect(() => {
