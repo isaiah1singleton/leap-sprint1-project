@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./login.dto";
 import { RegisterDto } from "./register.dto";
+import { UUID } from "node:crypto";
 
 @ApiTags("auth")
 @Controller("auth")
@@ -17,12 +18,21 @@ export class AuthController {
     return this.authService.register(body.email, body.password, body.name);
   }
 
-  // @Post("login")
-  // @HttpCode(200)
-  // @ApiOperation({ summary: "Log in and receive an access token and a refresh token" })
-  // @ApiResponse({ status: 200, description: "Login succeeded, tokens issued" })
-  // @ApiResponse({ status: 401, description: "Invalid username or password" })
-  // login(@Body() body: LoginDto) {
-  //   return this.authService.login(body.username, body.password);
-  // }
+  @Post("login")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Log in and receive an access token and a refresh token" })
+  @ApiResponse({ status: 200, description: "Login succeeded, tokens issued" })
+  @ApiResponse({ status: 401, description: "Invalid email or password" })
+  login(@Body() body: LoginDto) {
+    return this.authService.login(body.email, body.password);
+  }
+
+  @Post("refresh")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Use refresh token to receive new access token and refresh token" })
+  @ApiResponse({ status: 200, description: "Refresh succeeded, tokens issued" })
+  @ApiResponse({ status: 401, description: "Invalid refresh token"})
+  refresh(@Body() body: {body: string, uuid: UUID}){
+    return this.authService.refresh(body)
+  }
 }
