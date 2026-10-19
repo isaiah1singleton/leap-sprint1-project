@@ -42,22 +42,6 @@
         </div>
       }
     </section>
-    <section class="card dashboard-chart" aria-labelledby="orders-chart-title">
-      <div class="section-heading"><div><h2 id="orders-chart-title" class="card-title">Order activity</h2><p class="sub">Current order status mix</p></div><a routerLink="/app/orders">History →</a></div>
-      @if (trading.loading()) { <p class="sub" role="status">Loading orders…</p> }
-      @else if (trading.error()) { <p class="sub">Order activity unavailable.</p> }
-      @else if (!trading.orders().length) { <p class="sub">Your order activity will appear here.</p> }
-      @else {
-        <div class="status-chart" role="list" aria-label="Orders by status">
-          @for (item of orderStatuses(); track item.status) {
-            <div class="status-column" role="listitem">
-              <div class="status-bar-wrap"><span class="status-bar" [attr.data-status]="item.status" [style.height.%]="item.share"></span></div>
-              <strong>{{ item.count }}</strong><span>{{ item.status | titlecase }}</span>
-            </div>
-          }
-        </div>
-      }
-    </section>
   </div>
   <div class="portfolio-context"><a routerLink="/app/portfolio">{{ trading.loading() || trading.error() ? '—' : trading.positions().length }} open positions →</a><a routerLink="/app/orders">{{ trading.loading() || trading.error() ? '—' : trading.pendingOrderCount() }} orders awaiting execution →</a></div>
 }

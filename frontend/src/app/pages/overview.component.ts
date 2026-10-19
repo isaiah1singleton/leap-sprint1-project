@@ -35,16 +35,6 @@ export class OverviewComponent implements OnInit {
       share: total > 0 ? position.qty / total * 100 : 0,
     }));
   });
-  readonly orderStatuses = computed(() => {
-    const orders = this.trading.orders();
-    const total = orders.length;
-    return (['FILLED', 'ACCEPTED', 'SUBMITTED', 'REJECTED', 'EXPIRED'] as const).map(status => ({
-      status,
-      count: orders.filter(order => order.status === status).length,
-      share: total > 0 ? orders.filter(order => order.status === status).length / total * 100 : 0,
-    }));
-  });
-
   constructor() {
     effect(() => {
       for (const order of this.recent()) {
@@ -70,5 +60,9 @@ export class OverviewComponent implements OnInit {
 
   createAccount(): void {
     this.router.navigate(['/app/account']);
+  }
+
+  chartColor(index: number): string {
+    return `hsl(${(220 + index * 137.5) % 360} 58% 47%)`;
   }
 }
