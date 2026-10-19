@@ -50,7 +50,7 @@ export const routes: Routes = [
       },
       {
         path: 'markets',
-        title: 'Market summary',
+        title: 'Markets',
         canActivate: [clientGuard],
         loadComponent: () => import('./pages/markets.component').then((m) => m.MarketsComponent),
       },
