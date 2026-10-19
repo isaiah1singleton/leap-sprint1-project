@@ -49,8 +49,10 @@ export class AdminAuditService {
   readonly loading = signal(false);
   readonly error = signal('');
 
-  async refresh(): Promise<void> {
-    this.loading.set(true);
+  async refresh(silent = false): Promise<void> {
+    if (!silent) {
+      this.loading.set(true);
+    }
     this.error.set('');
     try {
       const rows = await firstValueFrom(
@@ -60,7 +62,9 @@ export class AdminAuditService {
     } catch {
       this.error.set('Could not load audit records from the backend.');
     } finally {
-      this.loading.set(false);
+      if (!silent) {
+        this.loading.set(false);
+      }
     }
   }
 

@@ -1,12 +1,16 @@
-<div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-    <h2 class="card-title" style="margin:0">Trade audit dashboard</h2>
-    <div style="display:flex;gap:8px">
-      <button class="btn-chip" (click)="audit.refresh()">Reload audit data</button>
+<div class="admin-page">
+  <header class="admin-header">
+    <div>
+      <p class="admin-eyebrow">ADMIN / OPERATIONS</p>
+      <h2>Trade audit</h2>
+      <p class="sub">Monitor order activity and review the latest backend records.</p>
+    </div>
+    <div class="admin-actions">
+      <span class="live-status"><span class="live-dot"></span>Live</span>
+      <button class="btn-chip" (click)="audit.refresh()">Reload data</button>
       <button class="btn-chip" (click)="resetFilters()">Reset filters</button>
     </div>
-  </div>
-  <p class="sub">Backend audit records refresh automatically for administrator accounts.</p>
+  </header>
 
   @if (audit.error()) {
     <p class="error-text">{{ audit.error() }}</p>
@@ -16,7 +20,15 @@
     <p class="sub">Loading audit records...</p>
   }
 
-  <div class="audit-filters">
+  <section class="admin-filter-panel" aria-label="Audit filters">
+    <div class="filter-heading">
+      <div>
+        <h3>Filter records</h3>
+        <p>Refine the activity shown below.</p>
+      </div>
+      <span class="filter-count">{{ filteredRecords().length }} records</span>
+    </div>
+    <div class="audit-filters">
     <div>
       <label class="label" for="audit-client">Client</label>
       <input id="audit-client" class="input" [ngModel]="clientFilter()" (ngModelChange)="setClientFilter($event)" placeholder="Name or email" />
@@ -65,38 +77,35 @@
       <label class="label" for="audit-to">To date</label>
       <input id="audit-to" class="input" type="date" [ngModel]="dateTo()" (ngModelChange)="setDateTo($event)" />
     </div>
-    <div>
-      <label class="label" for="audit-search">Keyword</label>
-      <input id="audit-search" class="input" [ngModel]="searchFilter()" (ngModelChange)="setSearchFilter($event)" placeholder="Order, reason, symbol" />
     </div>
-  </div>
+  </section>
 
-  <div class="row" style="margin-top:14px">
-    <div class="card" style="flex:1">
+  <section class="admin-metrics" aria-label="Audit summary">
+    <div class="metric">
       <p class="stat-label">Visible records</p>
       <p class="stat-value">{{ summary().total }}</p>
     </div>
-    <div class="card" style="flex:1">
+    <div class="metric">
       <p class="stat-label">Distinct clients</p>
       <p class="stat-value">{{ summary().uniqueClients }}</p>
     </div>
-    <div class="card" style="flex:1">
+    <div class="metric">
       <p class="stat-label">Distinct instruments</p>
       <p class="stat-value">{{ summary().uniqueInstruments }}</p>
     </div>
-    <div class="card" style="flex:1">
+    <div class="metric">
       <p class="stat-label">Rejected or failed</p>
       <p class="stat-value loss">{{ summary().rejectedCount }}</p>
     </div>
-    <div class="card" style="flex:1">
+    <div class="metric">
       <p class="stat-label">Cancelled</p>
       <p class="stat-value">{{ summary().cancelledCount }}</p>
     </div>
-  </div>
+  </section>
 
-  <div class="row" style="margin-top:14px">
-    <div class="card" style="flex:1">
-      <h3 class="card-title" style="margin-top:0">By status</h3>
+  <section class="admin-insights" aria-label="Audit breakdowns">
+    <div class="insight-panel">
+      <h3>By status</h3>
       <table class="table">
         <thead><tr><th>Status</th><th class="num">Count</th></tr></thead>
         <tbody>
@@ -108,8 +117,8 @@
         </tbody>
       </table>
     </div>
-    <div class="card" style="flex:1">
-      <h3 class="card-title" style="margin-top:0">Top clients</h3>
+    <div class="insight-panel">
+      <h3>Top clients</h3>
       <table class="table">
         <thead><tr><th>Client</th><th class="num">Count</th></tr></thead>
         <tbody>
@@ -121,8 +130,8 @@
         </tbody>
       </table>
     </div>
-    <div class="card" style="flex:1">
-      <h3 class="card-title" style="margin-top:0">Top instruments</h3>
+    <div class="insight-panel">
+      <h3>Top instruments</h3>
       <table class="table">
         <thead><tr><th>Instrument</th><th class="num">Count</th></tr></thead>
         <tbody>
@@ -134,9 +143,21 @@
         </tbody>
       </table>
     </div>
-  </div>
+  </section>
 
-  <table class="table">
+  <section class="admin-table-panel">
+    <div class="table-heading">
+      <div>
+        <h3>Audit records</h3>
+        <p>Most recent activity from all accounts.</p>
+      </div>
+      <div class="admin-export-actions">
+        <button class="btn-chip" type="button" (click)="exportSpreadsheet()">Export spreadsheet</button>
+        <button class="btn-chip" type="button" (click)="savePdf()">Save as PDF</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="table">
     <thead>
       <tr>
         <th>Audit</th>
@@ -173,5 +194,7 @@
         </tr>
       }
     </tbody>
-  </table>
+      </table>
+    </div>
+  </section>
 </div>

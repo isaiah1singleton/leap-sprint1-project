@@ -6,6 +6,7 @@ import { AdminAuditService, AuditRecord } from '../core/admin-audit.service';
   selector: 'app-admin-audit',
   imports: [FormsModule],
   templateUrl: './admin-audit.component.html',
+  styleUrl: './admin-audit.component.css',
 })
 export class AdminAuditComponent implements OnDestroy {
   readonly audit = inject(AdminAuditService);
@@ -17,7 +18,6 @@ export class AdminAuditComponent implements OnDestroy {
   readonly sideFilter = signal('ALL');
   readonly dateFrom = signal('');
   readonly dateTo = signal('');
-  readonly searchFilter = signal('');
 
   readonly clientOptions = computed(() => this.distinct(this.audit.records().map((record) => record.clientEmail)));
   readonly instrumentOptions = computed(() => this.distinct(this.audit.records().map((record) => record.instrumentKey)));
@@ -33,7 +33,6 @@ export class AdminAuditComponent implements OnDestroy {
     const account = this.accountFilter();
     const status = this.statusFilter();
     const side = this.sideFilter();
-    const search = this.searchFilter().toLowerCase().trim();
 
     return this.audit.records().filter((record) => {
       if (client && !record.clientEmail.toLowerCase().includes(client) && !record.clientName.toLowerCase().includes(client)) {
@@ -65,19 +64,6 @@ export class AdminAuditComponent implements OnDestroy {
         return false;
       }
 
-      if (search) {
-        const haystack = [
-          record.orderRef,
-          record.reason,
-          record.actor,
-          record.instrument,
-          record.status,
-        ].join(' ').toLowerCase();
-        if (!haystack.includes(search)) {
-          return false;
-        }
-      }
-
       return true;
     });
   });
@@ -100,7 +86,7 @@ export class AdminAuditComponent implements OnDestroy {
   readonly statusBreakdown = computed(() => this.breakdown(this.filteredRecords(), (row) => row.status));
   readonly clientBreakdown = computed(() => this.breakdown(this.filteredRecords(), (row) => row.clientEmail).slice(0, 8));
   readonly instrumentBreakdown = computed(() => this.breakdown(this.filteredRecords(), (row) => row.instrumentKey).slice(0, 8));
-  private readonly refreshTimer = window.setInterval(() => void this.audit.refresh(), 3000);
+  private readonly refreshTimer = window.setInterval(() => void this.audit.refresh(true), 3000);
 
   constructor() {
     void this.audit.refresh();
@@ -118,7 +104,6 @@ export class AdminAuditComponent implements OnDestroy {
     this.sideFilter.set('ALL');
     this.dateFrom.set('');
     this.dateTo.set('');
-    this.searchFilter.set('');
   }
 
   setClientFilter(value: string): void { this.clientFilter.set(value); }
@@ -128,7 +113,37 @@ export class AdminAuditComponent implements OnDestroy {
   setSideFilter(value: string): void { this.sideFilter.set(value); }
   setDateFrom(value: string): void { this.dateFrom.set(value); }
   setDateTo(value: string): void { this.dateTo.set(value); }
-  setSearchFilter(value: string): void { this.searchFilter.set(value); }
+
+  exportSpreadsheet(): void {
+    const headers = ['Audit', 'Order', 'Actor', 'Account', 'Instrument', 'Side', 'Quantity', 'Indicative', 'Status', 'Recorded at', 'Reason'];
+    const rows = this.filteredRecords().map((record) => [
+      `#${record.auditId}`,
+      record.orderRef,
+      record.actor,
+      record.account,
+      record.instrument,
+      record.side,
+      record.quantity,
+      record.indicativePrice,
+      record.status,
+      record.recordedAt,
+      record.reason,
+    ]);
+    const csv = [headers, ...rows].map((row) => row.map((value) => this.csvCell(value)).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `trade-audit-${this.fileDate()}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  savePdf(): void {
+    document.body.classList.add('printing-audit');
+    window.addEventListener('afterprint', () => document.body.classList.remove('printing-audit'), { once: true });
+    window.print();
+  }
 
   private breakdown(records: AuditRecord[], selector: (row: AuditRecord) => string): Array<{ key: string; count: number }> {
     const counts = new Map<string, number>();
@@ -143,5 +158,13 @@ export class AdminAuditComponent implements OnDestroy {
 
   private distinct(values: string[]): string[] {
     return [...new Set(values)].sort((a, b) => a.localeCompare(b));
+  }
+
+  private csvCell(value: unknown): string {
+    return `"${String(value).replaceAll('"', '""')}"`;
+  }
+
+  private fileDate(): string {
+    return new Date().toISOString().slice(0, 10);
   }
 }

@@ -96,6 +96,13 @@ body { margin: 0; background: var(--ground); color: var(--ink); font-family: sys
 .receipt-head { font-size: 20px; font-weight: 600; margin: 12px 0 0; }
 .receipt-body { font-size: 13px; color: var(--ink-soft); line-height: 1.6; margin-top: 9px; font-variant-numeric: tabular-nums; }
 
+@media print {
+  body.printing-audit { background: #fff; }
+  body.printing-audit .sidebar,
+  body.printing-audit .topbar { display: none; }
+  body.printing-audit .page { padding: 0; }
+}
+
 @media (max-width: 860px) {
   .row { flex-wrap: wrap; }
   .tx-panel { width: 100%; }
