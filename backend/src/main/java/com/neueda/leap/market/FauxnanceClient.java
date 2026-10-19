@@ -48,11 +48,7 @@ public class FauxnanceClient implements QuoteProvider {
             if (response.getStatusCode().value() == 202) {
                 throw pending(response.getHeaders());
             }
-<<<<<<< HEAD
             QuoteEnvelope body = response.getBody();
-=======
-           QuoteEnvelope body = response.getBody();
->>>>>>> refactors
 
             if (body == null
                     || body.meta() == null
