@@ -11,3 +11,4 @@ __pycache__/
 *.pyc
 analytics/**/*.duckdb
 analytics/**/*.duckdb.wal
+.vscode/*

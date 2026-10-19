@@ -1,11 +1,10 @@
-package com.neueda.leap.service.test;
+package com.neueda.leap.service;
 
 import com.neueda.leap.entities.Instrument;
 import com.neueda.leap.enums.AssetClass;
 import com.neueda.leap.enums.Currency;
 import com.neueda.leap.models.InstrumentResponse;
 import com.neueda.leap.repository.InstrumentRepository;
-import com.neueda.leap.service.InstrumentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

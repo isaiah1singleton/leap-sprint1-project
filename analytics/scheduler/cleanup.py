@@ -24,8 +24,7 @@ def cleanup(env_file, state_dir, days=7, keep=24, apply=False):
             if path.exists():
                 protected.add(json.loads(path.read_text())['generation'])
 
-        base=['docker-compose','-p','leap-analytics','--env-file',str(Path(env_file).resolve()),
-aac614dac9b152c95cc8cc5ce8b67d42c070736e
+        base=compose_command()+['-p','leap-analytics','--env-file',str(Path(env_file).resolve()),
               '-f',str(ROOT/'analytics/compose.yml'),'--profile','bi']
         def run(*args,**kwargs):
             return subprocess.run(base+list(args),cwd=ROOT,check=True,timeout=600,**kwargs)
