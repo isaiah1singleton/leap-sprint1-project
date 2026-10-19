@@ -7,30 +7,20 @@
       </button>
     </div>
     <div id="sidebar-links" class="sidebar-links">
-    <p class="nav-caption">Workspace</p>
-    @for (item of navItems; track item.path) {
-      <a class="nav-link" [class.nav-account]="item.path === '/app/account'" [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page" [attr.aria-label]="item.label" [title]="sidebarCollapsed() ? item.label : ''" (click)="closeMobileNavigation()">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
-        <span class="nav-label">{{ item.label }}</span>
-      </a>
-    }
+      <p class="nav-caption">Workspace</p>
+      @for (item of navItems; track item.path) {
+        <a class="nav-link" [class.nav-account]="item.path === '/app/account'" [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page" [attr.aria-label]="item.label" [title]="sidebarCollapsed() ? item.label : ''" (click)="closeMobileNavigation()">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+      @if (auth.isAdmin()) {
+        @for (item of adminNavItems; track item.path) {
+          <a class="nav-link" [routerLink]="item.path" routerLinkActive="active" [attr.aria-label]="item.label" [title]="sidebarCollapsed() ? item.label : ''" (click)="closeMobileNavigation()">{{ item.label }}</a>
+        }
+      }
     </div>
     <p class="sidebar-note"><strong>TRADING WORKSPACE</strong>Explore markets. Follow your orders.<br />Keep your portfolio in view.</p>
-<div class="shell" [class.admin-theme]="auth.isAdmin()">
-  <nav class="sidebar">
-    <div class="brand"><span class="brand-mark"></span> Inside Tr8ders</div>
-    @if (auth.isAdmin()) {
-      <p class="sidebar-admin-title">ADMIN TOOLS</p>
-      @for (item of adminNavItems; track item.path) {
-        <a class="nav-link" [routerLink]="item.path" routerLinkActive="active">{{ item.label }}</a>
-      }
-      <p class="sidebar-note">ADMIN SESSION ACTIVE</p>
-    } @else {
-      @for (item of navItems; track item.path) {
-        <a class="nav-link" [routerLink]="item.path" routerLinkActive="active">{{ item.label }}</a>
-      }
-      <p class="sidebar-note">REGULAR USER — NO ADMIN TOOLS</p>
-    }
   </nav>
 
   <div class="main">
