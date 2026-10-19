@@ -4,6 +4,7 @@ import com.neueda.leap.entities.Account;
 import com.neueda.leap.entities.CashBalance;
 import com.neueda.leap.entities.CashBalanceId;
 import com.neueda.leap.entities.Fill;
+import com.neueda.leap.entities.FifoAllocation;
 import com.neueda.leap.entities.Holding;
 import com.neueda.leap.entities.HoldingId;
 import com.neueda.leap.entities.Money;
@@ -13,6 +14,8 @@ import com.neueda.leap.entities.QuoteSnapshot;
 import com.neueda.leap.enums.OrderSide;
 import com.neueda.leap.enums.OrderStatus;
 import com.neueda.leap.models.MarketQuoteResultDto;
+import com.neueda.leap.repository.FifoAllocationRepository;
+import com.neueda.leap.repository.FillRepository;
 import com.neueda.leap.repository.OrderEventRepository;
 import com.neueda.leap.repository.OrderRepository;
 import jakarta.persistence.EntityManager;
@@ -44,6 +47,8 @@ public class OrderExecutionService {
     private final OrderEventRepository orderEvents;
     private final OrderEventService events;
     private final FillService fills;
+    private final FillRepository fillRepository;
+    private final FifoAllocationRepository fifoAllocations;
     private final CashMovementService cashMovements;
     private final OrderExecutionPolicy policy;
     private final TradeAmountCalculator amountCalculator;
@@ -55,6 +60,8 @@ public class OrderExecutionService {
             OrderEventRepository orderEvents,
             OrderEventService events,
             FillService fills,
+            FillRepository fillRepository,
+            FifoAllocationRepository fifoAllocations,
             CashMovementService cashMovements,
             OrderExecutionPolicy policy,
             TradeAmountCalculator amountCalculator,
@@ -65,6 +72,8 @@ public class OrderExecutionService {
         this.orderEvents = orderEvents;
         this.events = events;
         this.fills = fills;
+        this.fillRepository = fillRepository;
+        this.fifoAllocations = fifoAllocations;
         this.cashMovements = cashMovements;
         this.policy = policy;
         this.amountCalculator = amountCalculator;
@@ -221,6 +230,10 @@ public class OrderExecutionService {
                 OffsetDateTime.ofInstant(now, ZoneOffset.UTC)
         );
 
+        if (order.getSide() == OrderSide.SELL) {
+            allocateSellFill(fill);
+        }
+
         cashMovements.recordTrade(fill, settlementAmount);
 
         events.appendEvent(
@@ -232,6 +245,24 @@ public class OrderExecutionService {
         );
 
         return ExecutionResult.FILLED;
+    }
+
+    private void allocateSellFill(Fill sellFill) {
+        Order order = sellFill.getOrder();
+        // Account is already locked by execute(), serializing allocations with settlement.
+        var buyLots = fillRepository.findAvailableBuyLots(
+                order.getAccount().getAccountId(), order.getInstrument().getInstrumentId());
+
+        BigDecimal remaining = sellFill.getFillQuantity();
+        for (var lot : buyLots) {
+            BigDecimal allocated = remaining.min(lot.getAvailableQuantity());
+            fifoAllocations.save(new FifoAllocation(sellFill, lot.getBuyFill(), allocated));
+            remaining = remaining.subtract(allocated);
+            if (remaining.signum() == 0) {
+                return;
+            }
+        }
+        throw new IllegalStateException("Insufficient buy fills for FIFO allocation.");
     }
 
     private boolean settleBuy(
@@ -293,6 +324,8 @@ public class OrderExecutionService {
 
         boolean newCashBalance = cash == null;
 
+        // if account doesn't have any balance in the quotes currency
+        // ex: euros or USD
         if (newCashBalance) {
             cash = new CashBalance(
                     account,
@@ -314,6 +347,8 @@ public class OrderExecutionService {
             return false;
         }
 
+        // reserves amount of shares client wants to sell
+        // technically not necesssary because we already lock the client account at this point
         holding.settleReservedSale(order.getRequestedQuantity());
 
         if (newCashBalance) {

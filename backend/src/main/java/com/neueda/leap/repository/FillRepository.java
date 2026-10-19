@@ -5,10 +5,31 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.List;
 
 public interface FillRepository extends Repository<Fill, Integer> {
+    interface AvailableBuyLot {
+        Fill getBuyFill();
+        BigDecimal getAvailableQuantity();
+    }
+
+    @Query("""
+            select f as buyFill,
+                   o.requestedQuantity - coalesce(sum(a.allocatedQuantity), 0) as availableQuantity
+            from Fill f join f.order o
+            left join FifoAllocation a on a.buyFillId = f
+            where o.account.accountId = :accountId and o.instrument.instrumentId = :instrumentId
+              and o.side = com.neueda.leap.enums.OrderSide.BUY
+            group by f, o.requestedQuantity
+            having o.requestedQuantity > coalesce(sum(a.allocatedQuantity), 0)
+            order by f.executionTime, f.fillId
+            """)
+    List<AvailableBuyLot> findAvailableBuyLots(
+            @Param("accountId") Integer accountId,
+            @Param("instrumentId") Integer instrumentId);
+
     @Query("""
             select f from Fill f join fetch f.order o join fetch o.instrument
             where o.account.accountId = :accountId and o.account.client.clientId = :clientId

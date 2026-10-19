@@ -46,7 +46,7 @@ CREATE TABLE instruments
 
 CREATE TABLE orders
 (
-    order_id SERIAL PRIMARY KEY,
+    order_id SERIAL PRIMARY KEY, 
 
     account_id INTEGER NOT NULL
         REFERENCES accounts(account_id),
@@ -254,9 +254,10 @@ CREATE TABLE cash_movements
 
 CREATE TABLE fifo_allocations
 (
+    fifo_allocation_id BIGSERIAL PRIMARY KEY,
     sell_fill_id INTEGER NOT NULL REFERENCES fills(fill_id),
     buy_fill_id INTEGER NOT NULL REFERENCES fills(fill_id),
-    PRIMARY KEY(sell_fill_id, buy_fill_id),
+    CONSTRAINT uk_fifo_allocations_sell_buy UNIQUE(sell_fill_id, buy_fill_id),
 
-    allocated_quantity INTEGER NOT NULL CHECK(allocated_quantity > 0)
+    allocated_quantity NUMERIC(24, 8) NOT NULL CHECK(allocated_quantity > 0)
 );
