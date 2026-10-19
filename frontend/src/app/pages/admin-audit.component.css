@@ -3,8 +3,76 @@
 }
 
 .admin-page {
+  --ink: #102636;
+  --ink-soft: #3d5869;
+  --muted: #587183;
+  --faint: #70828e;
+  --line: #cedee4;
+  --line-soft: #e7eef1;
+  --surface: #ffffff;
+  --accent: #087d76;
+  --accent-soft: #e7f5f1;
+  --danger: #b63c48;
+  --danger-line: #da8790;
+  --danger-tint: #fff1f2;
+  --gain: #08775a;
+  color: var(--ink);
   max-width: 1500px;
   margin: 0 auto;
+}
+
+.admin-page,
+.admin-page * {
+  font-family: system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+}
+
+.admin-page .sub,
+.admin-page .filter-heading p,
+.admin-page .table-heading p,
+.admin-page .filter-count,
+.admin-page .admin-eyebrow,
+.admin-page .stat-label {
+  color: var(--muted);
+}
+
+.admin-page .admin-eyebrow {
+  font-family: inherit;
+}
+
+.admin-page .input {
+  border-color: #cdd9df;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.admin-page .input::placeholder {
+  color: #7c8b96;
+}
+
+.admin-page .input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px #087f751a;
+}
+
+.admin-page .btn-chip {
+  color: var(--ink-soft);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.admin-page .btn-chip:hover:not(:disabled) {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: #91bfb7;
+}
+
+.admin-page .error-text {
+  color: var(--danger);
+}
+
+.admin-page .loss {
+  color: var(--danger);
 }
 
 .admin-header,
@@ -137,6 +205,25 @@
 
 .insight-panel .table {
   margin-top: 14px;
+}
+
+.admin-page .table th {
+  font-family: system-ui, -apple-system, 'Helvetica Neue', sans-serif !important;
+  color: var(--muted);
+  border-bottom-color: var(--line);
+  background: #f5f9fa;
+}
+
+.admin-page .table td {
+  border-bottom-color: var(--line-soft);
+}
+
+.admin-page .table tbody tr:hover {
+  background: #f8fbfa;
+}
+
+.admin-page .table .dim {
+  color: var(--ink-soft);
 }
 
 .table-heading {

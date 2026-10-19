@@ -4,8 +4,8 @@
     <p class="auth-sub">Access your investor dashboard or admin audit console.</p>
 
     <div class="seg" style="margin-top:18px">
-      <button class="seg-opt" [class.active]="mode === 'client'" (click)="mode = 'client'">Client sign-in</button>
-      <button class="seg-opt" [class.active]="mode === 'admin'" (click)="mode = 'admin'">Sign in as admin</button>
+      <button class="seg-opt" [class.active]="mode === 'client'" (click)="setMode('client')">Client sign-in</button>
+      <button class="seg-opt" [class.active]="mode === 'admin'" (click)="setMode('admin')">Sign in as admin</button>
     </div>
 
     @if (error) {
