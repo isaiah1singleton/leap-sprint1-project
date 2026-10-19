@@ -2,7 +2,8 @@ package com.neueda.leap.service;
 
 import com.neueda.leap.entities.Client;
 import com.neueda.leap.enums.ClientStatus;
-import com.neueda.leap.models.AuthRequest;
+import com.neueda.leap.models.RegisterRequest;
+import com.neueda.leap.models.SignInRequest;
 import com.neueda.leap.models.AuthResponse;
 import com.neueda.leap.repository.ClientRepository;
 import jakarta.transaction.Transactional;
@@ -29,9 +30,9 @@ public class ClientService {
     }
 
     @Transactional
-    public AuthResponse register(AuthRequest request) {
+    public AuthResponse register(RegisterRequest request) {
         String name = request == null || request.name() == null ? null : request.name().trim();
-        String email = normalizedEmail(request);
+        String email = normalizedEmail(request.email());
         String password = request == null ? null : request.password();
 
         if (name == null || name.isBlank() || email == null || password == null || password.isBlank()) {
@@ -50,8 +51,8 @@ public class ClientService {
     }
 
     @Transactional
-    public AuthResponse signIn(AuthRequest request) {
-        String email = normalizedEmail(request);
+    public AuthResponse signIn(SignInRequest request) {
+        String email = normalizedEmail(request.email());
         String password = request == null ? null : request.password();
 
         if (email == null || password == null || password.isBlank()) {
@@ -64,6 +65,15 @@ public class ClientService {
                 .orElseThrow(() -> new NoSuchElementException("Invalid email or password."));
 
         return toResponseWithToken(client);
+    }
+
+    @Transactional
+    public AuthResponse signInAdmin(SignInRequest request) {
+        AuthResponse response = signIn(request);
+        if (!"ADMIN".equalsIgnoreCase(response.clientSegment())) {
+            throw new NoSuchElementException("Administrator access is required.");
+        }
+        return response;
     }
 
     @Transactional
@@ -87,11 +97,18 @@ public class ClientService {
                 .filter(client -> client.getClientStatus() == ClientStatus.ACTIVE);
     }
 
-    private String normalizedEmail(AuthRequest request) {
-        if (request == null || request.email() == null || request.email().isBlank()) {
+    @Transactional
+    public boolean isActiveAdmin(String email) {
+        return findActiveClientByEmail(email)
+                .map(client -> "ADMIN".equalsIgnoreCase(client.getClientSegment()))
+                .orElse(false);
+    }
+
+    private String normalizedEmail(String emailInput) {
+        if (emailInput == null || emailInput.isBlank()) {
             return null;
         }
-        return request.email().trim().toLowerCase(Locale.ROOT);
+        return emailInput.trim().toLowerCase(Locale.ROOT);
     }
 
     private AuthResponse toResponseWithToken(Client client) {

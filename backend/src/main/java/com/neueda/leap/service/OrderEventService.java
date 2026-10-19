@@ -4,6 +4,7 @@ import com.neueda.leap.entities.Order;
 import com.neueda.leap.entities.OrderEvent;
 import com.neueda.leap.enums.OrderStatus;
 import com.neueda.leap.models.OrderEventResponse;
+import com.neueda.leap.models.TradeAuditEvent;
 import com.neueda.leap.repository.OrderEventRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
@@ -23,15 +24,18 @@ public class OrderEventService {
     private final OrderEventRepository repository;
     private final EntityManager entityManager;
     private final Clock clock;
+        private final AuditOutboxService auditOutbox;
 
     public OrderEventService(
             OrderEventRepository repository,
             EntityManager entityManager,
-            Clock clock
+                        Clock clock,
+                        AuditOutboxService auditOutbox
     ) {
         this.repository = repository;
         this.entityManager = entityManager;
         this.clock = clock;
+                this.auditOutbox = auditOutbox;
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -75,7 +79,9 @@ public class OrderEventService {
                 OffsetDateTime.now(clock)
         );
 
-        return repository.save(event);
+        OrderEvent saved = repository.save(event);
+        auditOutbox.enqueue(TradeAuditEvent.from(order, saved));
+        return saved;
     }
 
     @Transactional(readOnly = true)

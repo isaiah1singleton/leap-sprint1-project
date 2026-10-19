@@ -1,7 +1,8 @@
 package com.neueda.leap.controller;
 
 import com.neueda.leap.ApiRoutes;
-import com.neueda.leap.models.AuthRequest;
+import com.neueda.leap.models.RegisterRequest;
+import com.neueda.leap.models.SignInRequest;
 import com.neueda.leap.service.ClientService;
 import com.neueda.leap.service.TokenService;
 import java.util.NoSuchElementException;
@@ -29,13 +30,18 @@ public class AuthController {
     }
 
     @PostMapping(ApiRoutes.REGISTER)
-    public ResponseEntity<?> register(@RequestBody AuthRequest request) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(clientService.register(request));
     }
 
     @PostMapping(ApiRoutes.SIGN_IN)
-    public ResponseEntity<?> signIn(@RequestBody AuthRequest request) {
+    public ResponseEntity<?> signIn(@RequestBody SignInRequest request) {
         return ResponseEntity.ok(clientService.signIn(request));
+    }
+
+    @PostMapping(ApiRoutes.ADMIN_SIGN_IN)
+    public ResponseEntity<?> signInAdmin(@RequestBody SignInRequest request) {
+        return ResponseEntity.ok(clientService.signInAdmin(request));
     }
 
     @PostMapping(ApiRoutes.SIGN_OUT)
@@ -62,3 +68,4 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
     }
 }
+

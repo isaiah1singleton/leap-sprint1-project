@@ -35,8 +35,8 @@ public class FillController {
     }
     @GetMapping("{orderId}/fill")
     public FillResponse getFill(
-        @PathVariable("orderId") Integer orderId,
-        Principal principal
+            @PathVariable("orderId") Integer orderId,
+            Principal principal
     ) {
         Integer clientId = authenticatedClientId(principal);
         return fillService.getFillFromOrder(orderId, clientId);
@@ -44,16 +44,16 @@ public class FillController {
 
     @ExceptionHandler(NoSuchElementException.class)
     public ProblemDetail handleNotFound(
-        NoSuchElementException exception
+            NoSuchElementException exception
     ) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleBadRequest(
-        IllegalArgumentException exception
+            IllegalArgumentException exception
     ) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
-    }   
+    }
 }
 

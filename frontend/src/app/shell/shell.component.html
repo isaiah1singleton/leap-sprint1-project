@@ -1,18 +1,34 @@
-<div class="shell">
-  <nav class="sidebar">
-    <div class="brand"><span class="brand-mark"></span> Inside Tr8ders</div>
-    @for (item of navItems; track item.path) {
-      <a class="nav-link" [routerLink]="item.path" routerLinkActive="active">{{ item.label }}</a>
-    }
-    <p class="sidebar-note">REGULAR USER — NO ADMIN TOOLS</p>
+<div class="shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+  <nav class="sidebar" aria-label="Main navigation">
+    <div class="sidebar-header">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">↗</span><span class="brand-name">Inside Tr8ders<small>YOUR TRADING SPACE</small></span></div>
+      <button class="sidebar-toggle" type="button" (click)="toggleSidebar()" [attr.aria-expanded]="!sidebarCollapsed()" aria-controls="sidebar-links" [attr.aria-label]="sidebarCollapsed() ? 'Expand navigation' : 'Collapse navigation'" [title]="sidebarCollapsed() ? 'Expand navigation' : 'Collapse navigation'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/><path [attr.d]="sidebarCollapsed() ? 'm13 9 3 3-3 3' : 'm16 9-3 3 3 3'"/></svg>
+      </button>
+    </div>
+    <div id="sidebar-links" class="sidebar-links">
+      <p class="nav-caption">Workspace</p>
+      @for (item of navItems; track item.path) {
+        <a class="nav-link" [class.nav-account]="item.path === '/app/account'" [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page" [attr.aria-label]="item.label" [title]="sidebarCollapsed() ? item.label : ''" (click)="closeMobileNavigation()">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+      @if (auth.isAdmin()) {
+        @for (item of adminNavItems; track item.path) {
+          <a class="nav-link" [routerLink]="item.path" routerLinkActive="active" [attr.aria-label]="item.label" [title]="sidebarCollapsed() ? item.label : ''" (click)="closeMobileNavigation()">{{ item.label }}</a>
+        }
+      }
+    </div>
+    <p class="sidebar-note"><strong>TRADING WORKSPACE</strong>Explore markets. Follow your orders.<br />Keep your portfolio in view.</p>
   </nav>
 
   <div class="main">
     <header class="topbar">
-      <h1>{{ pageTitle() }}</h1>
+      <div><p class="topbar-context">Your workspace / {{ accountSelection.selectedAccount()?.accountName || 'Select an account' }}</p><h1>{{ pageTitle() }}</h1></div>
       <div class="topbar-right">
-        <span>{{ auth.currentUser() }}</span>
-        <span class="avatar"></span>
+        <span class="topbar-user">{{ auth.currentUser() }}</span>
+        <span class="avatar" aria-hidden="true">{{ auth.currentUser()?.charAt(0)?.toUpperCase() || 'U' }}</span>
         <button class="btn-chip" (click)="signOut()">Sign out</button>
       </div>
     </header>

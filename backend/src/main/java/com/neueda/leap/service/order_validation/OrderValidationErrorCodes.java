@@ -18,7 +18,7 @@ public final class OrderValidationErrorCodes {
 
     public static final String QUOTE_MISSING = "QUOTE_MISSING";
     public static final String QUOTE_CURRENCY_MISMATCH = "QUOTE_CURRENCY_MISMATCH";
-    public static final String QUOTE_STALE = "QUOTE_STALE";
+    public static final String QUOTE_TIME_INVALID = "QUOTE_TIME_INVALID";
 
     public static final String INSUFFICIENT_CASH = "INSUFFICIENT_CASH";
     public static final String INSUFFICIENT_UNITS = "INSUFFICIENT_UNITS";

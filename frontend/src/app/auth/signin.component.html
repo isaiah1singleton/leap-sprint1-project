@@ -1,22 +1,35 @@
 <div class="auth-page">
+  <aside class="auth-story">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">↗</span><span>Inside Tr8ders<small>YOUR TRADING SPACE</small></span></div>
+    <div><h2>Your markets.<br />Your portfolio.<br /><em>Your next move.</em></h2><p>Explore instruments, place orders and follow your holdings from one focused workspace.</p><div class="auth-features"><span>Explore markets</span><span>Track orders</span><span>Manage holdings</span></div></div>
+    <p class="auth-story-foot"></p>
+  </aside>
   <div class="auth-card">
+
     <h1 class="auth-title">Sign in</h1>
-    <p class="auth-sub">Access your investor dashboard.</p>
+    <p class="auth-sub">Access your investor dashboard or admin audit console.</p>
+
+    <div class="seg" style="margin-top:18px">
+      <button class="seg-opt" [class.active]="mode === 'client'" (click)="setMode('client')">Client sign-in</button>
+      <button class="seg-opt" [class.active]="mode === 'admin'" (click)="setMode('admin')">Sign in as admin</button>
+    </div>
 
     @if (error) {
       <p class="error-banner">{{ error }}</p>
     }
 
     <label class="label" for="email">Email</label>
-    <input id="email" class="input" type="email" [class.invalid]="invalid('email')"
+    <input id="email" class="input" type="email" autocomplete="username" [class.invalid]="invalid('email')"
            [(ngModel)]="email" (keyup.enter)="submit()" placeholder="you@example.com" />
 
     <label class="label" for="password">Password</label>
-    <input id="password" type="password" class="input" [class.invalid]="invalid('password')"
+    <input id="password" type="password" autocomplete="current-password" class="input" [class.invalid]="invalid('password')"
            [(ngModel)]="password" (keyup.enter)="submit()" placeholder="Your password" />
 
-    <button class="btn btn-primary" (click)="submit()">Sign in</button>
+    <button class="btn btn-primary" (click)="submit()">{{ mode === 'admin' ? 'Sign in as admin' : 'Sign in' }}</button>
 
-    <p class="auth-foot">No account yet? <a routerLink="/register">Create one</a></p>
+    @if (mode === 'client') {
+      <p class="auth-foot">No account yet? <a routerLink="/register">Create one</a></p>
+    }
   </div>
 </div>
