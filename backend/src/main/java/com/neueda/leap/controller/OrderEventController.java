@@ -34,7 +34,7 @@ public class OrderEventController {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to access order history.");
         }
-        
+
         Integer clientId = clientService.findActiveClientIdByEmail(principal.getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "An active client login is required."));
 
         return orderEventService.getEvents(orderId, clientId);
