@@ -2,7 +2,7 @@
   <header class="admin-header">
     <div>
       <p class="admin-eyebrow">ADMIN / OPERATIONS</p>
-      <h2>Trade audit</h2>
+      <h2>Trade Audit</h2>
       <p class="sub">Monitor order activity and review the latest backend records.</p>
     </div>
     <div class="admin-actions">
@@ -29,54 +29,54 @@
       <span class="filter-count">{{ filteredRecords().length }} records</span>
     </div>
     <div class="audit-filters">
-    <div>
-      <label class="label" for="audit-client">Client</label>
-      <input id="audit-client" class="input" [ngModel]="clientFilter()" (ngModelChange)="setClientFilter($event)" placeholder="Name or email" />
-    </div>
-    <div>
-      <label class="label" for="audit-instrument">Instrument</label>
-      <select id="audit-instrument" class="input" [ngModel]="instrumentFilter()" (ngModelChange)="setInstrumentFilter($event)">
-        <option value="ALL">All instruments</option>
-        @for (item of instrumentOptions(); track item) {
-          <option [value]="item">{{ item }}</option>
-        }
-      </select>
-    </div>
-    <div>
-      <label class="label" for="audit-account">Account</label>
-      <select id="audit-account" class="input" [ngModel]="accountFilter()" (ngModelChange)="setAccountFilter($event)">
-        <option value="ALL">All accounts</option>
-        @for (item of accountOptions(); track item) {
-          <option [value]="item">{{ item }}</option>
-        }
-      </select>
-    </div>
-    <div>
-      <label class="label" for="audit-status">Status</label>
-      <select id="audit-status" class="input" [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
-        <option value="ALL">All statuses</option>
-        @for (item of statusOptions(); track item) {
-          <option [value]="item">{{ item }}</option>
-        }
-      </select>
-    </div>
-    <div>
-      <label class="label" for="audit-side">Side</label>
-      <select id="audit-side" class="input" [ngModel]="sideFilter()" (ngModelChange)="setSideFilter($event)">
-        <option value="ALL">All sides</option>
-        @for (item of sideOptions(); track item) {
-          <option [value]="item">{{ item }}</option>
-        }
-      </select>
-    </div>
-    <div>
-      <label class="label" for="audit-from">From date</label>
-      <input id="audit-from" class="input" type="date" [ngModel]="dateFrom()" (ngModelChange)="setDateFrom($event)" />
-    </div>
-    <div>
-      <label class="label" for="audit-to">To date</label>
-      <input id="audit-to" class="input" type="date" [ngModel]="dateTo()" (ngModelChange)="setDateTo($event)" />
-    </div>
+      <div class="filter-field filter-client">
+        <label class="label" for="audit-client">Client</label>
+        <input id="audit-client" class="input" [ngModel]="clientFilter()" (ngModelChange)="setClientFilter($event)" placeholder="Name or email" />
+      </div>
+      <div class="filter-field">
+        <label class="label" for="audit-account">Account</label>
+        <select id="audit-account" class="input" [ngModel]="accountFilter()" (ngModelChange)="setAccountFilter($event)">
+          <option value="ALL">All accounts</option>
+          @for (item of accountOptions(); track item) {
+            <option [value]="item">{{ item }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="label" for="audit-instrument">Instrument</label>
+        <select id="audit-instrument" class="input" [ngModel]="instrumentFilter()" (ngModelChange)="setInstrumentFilter($event)">
+          <option value="ALL">All instruments</option>
+          @for (item of instrumentOptions(); track item) {
+            <option [value]="item">{{ item }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="label" for="audit-status">Status</label>
+        <select id="audit-status" class="input" [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
+          <option value="ALL">All statuses</option>
+          @for (item of statusOptions(); track item) {
+            <option [value]="item">{{ item }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="label" for="audit-side">Side</label>
+        <select id="audit-side" class="input" [ngModel]="sideFilter()" (ngModelChange)="setSideFilter($event)">
+          <option value="ALL">All sides</option>
+          @for (item of sideOptions(); track item) {
+            <option [value]="item">{{ item }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="label" for="audit-from">From date</label>
+        <input id="audit-from" class="input" type="date" [ngModel]="dateFrom()" (ngModelChange)="setDateFrom($event)" />
+      </div>
+      <div class="filter-field">
+        <label class="label" for="audit-to">To date</label>
+        <input id="audit-to" class="input" type="date" [ngModel]="dateTo()" (ngModelChange)="setDateTo($event)" />
+      </div>
     </div>
   </section>
 
