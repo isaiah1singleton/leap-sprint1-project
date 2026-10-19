@@ -1,4 +1,5 @@
 @if (showSearch()) {
+<<<<<<< HEAD
   <section class="card market-panel" aria-label="Stock and crypto search">
     <div class="market-heading">
       <div><h2 class="card-title">Explore instruments</h2><p class="sub">Find a company or ticker to view its quote and place an order.</p></div>
@@ -33,6 +34,7 @@
         @for (item of common(); track item.instrumentId) { <button class="btn-chip" (click)="selectSymbol(item.symbol)">{{ item.symbol }}</button> }
       </div>
     }
+
 
     @if (selected(); as instrument) {
       <div class="ticker-detail" aria-label="Ticker details">
@@ -82,9 +84,51 @@
           <p class="note">Submission validates against the displayed indicative quote. Accepted orders await execution. The status window updates automatically.</p>
         }
       </div>
+<<<<<<< HEAD
     }
     <p class="note">Fauxnance provides delayed, best-effort quotes and may return synthetic data. Educational data. Not for investment use.</p>
   </section>
+=======
+      @if (pinError()) { <p class="error-text" role="alert">{{ pinError() }}</p> }
+      @if (market.pins().length >= market.maxPins) { <p class="sub">25 stock limit reached. Unpin a stock to add another.</p> }
+      <button class="btn-chip" [disabled]="loadingQuote()" (click)="loadQuote(instrument)">Refresh selected quote</button>
+      @if (loadingQuote()) { <p class="sub" role="status">Loading quote for {{ instrument.symbol }}…</p> }
+      @if (quoteError()) {
+        <p class="error-text" role="alert">{{ quoteError() }}</p>
+      }
+      @if (quote(); as current) {
+        <div class="quote-price">{{ money(current.price, current.currency || instrument.currency) }}
+          <span class="quote-change" [class.gain]="(current.changePercent ?? 0) > 0" [class.loss]="(current.changePercent ?? 0) < 0">{{ change(result()) }}</span>
+        </div>
+        <dl class="quote-facts">
+          <div><dt>Previous close</dt><dd>{{ current.previousClose == null ? 'Unavailable' : money(current.previousClose, current.currency || instrument.currency) }}</dd></div>
+          <div><dt>Buy at ask</dt><dd>{{ money(current.ask, current.currency || instrument.currency) }}</dd></div>
+          <div><dt>Sell at bid</dt><dd>{{ money(current.bid, current.currency || instrument.currency) }}</dd></div>
+          <div><dt>Market</dt><dd>{{ current.marketState | titlecase }}</dd></div>
+        </dl>
+        <p class="sub">Quote as of {{ current.asOf | date:'MMM d, y, HH:mm:ss':'UTC' }} UTC · {{ result()?.source }}
+          @if (result()?.stale) { <strong class="loss"> · Provider-delayed quote</strong> }
+          @if (result()?.source === 'synthetic') { <strong> · Synthetic data</strong> }
+        </p>
+        <div class="trade-controls">
+          <div><label class="label" for="ticker-quantity">Quantity</label>
+            <input id="ticker-quantity" class="input" type="number" min="0.000001" step="any" [ngModel]="quantity()" (ngModelChange)="quantity.set('' + $event)" /></div>
+          <div class="trade-account"><p class="sub">{{ account()?.accountName || 'No account selected' }}</p>
+            <p class="sub">Cash {{ trading.money(trading.cash()) }} · {{ held() }} held</p>
+            <p class="sub">Indicative buy value {{ validQuantity() ? money(qty() * current.ask, current.currency || instrument.currency) : '—' }}</p></div>
+          <button class="btn btn-primary btn-sm" [disabled]="buyDisabled()" [title]="disabledReason('buy')" (click)="trade('buy')">Submit buy</button>
+          <button class="btn btn-secondary btn-sm" [disabled]="sellDisabled()" [title]="disabledReason('sell')" (click)="trade('sell')">Submit sell</button>
+        </div>
+        @if (buyDisabled()) { <p class="sub">Buy: {{ disabledReason('buy') }}</p> }
+        @if (sellDisabled()) { <p class="sub">Sell: {{ disabledReason('sell') }}</p> }
+        @if (tradeError()) { <p class="error-text" role="alert">{{ tradeError() }}</p> }
+        <p class="note">Submission validates against the displayed indicative quote. Accepted orders await execution. The status window updates automatically.</p>
+      }
+    </div>
+  }
+  <p class="note">Fauxnance provides delayed, best-effort quotes and may return synthetic data. Educational data. Not for investment use.</p>
+</section>
+>>>>>>> feature/admin-kafka
 }
 
 @if (showWatchlist()) {
@@ -105,6 +149,10 @@
             <strong class="tile-price" [class.gain]="(current.changePercent ?? 0) > 0" [class.loss]="(current.changePercent ?? 0) < 0">{{ money(current.price, current.currency || instrument.currency) }}</strong>
             <p [class.gain]="(current.changePercent ?? 0) > 0" [class.loss]="(current.changePercent ?? 0) < 0">{{ (current.changePercent ?? 0) > 0 ? '↑ ' : (current.changePercent ?? 0) < 0 ? '↓ ' : '' }}{{ change(item) }}</p>
             <p class="sub">{{ current.asOf | date:'MMM d, HH:mm:ss':'UTC' }} UTC</p>
+<<<<<<< HEAD
+=======
+            @if (item.stale) { <p class="loss sub">Provider-delayed quote</p> }
+>>>>>>> feature/admin-kafka
             @if (item.source === 'synthetic') { <p class="sub">Synthetic data</p> }
           } @else { <p class="sub">{{ item?.error?.message || 'Select this ticker to request a price.' }}</p> }
         </article>
@@ -114,8 +162,14 @@
 }
 
 @if (orderPopupOpen()) {
+<<<<<<< HEAD
   <app-order-progress [review]="review()" [submitting]="submitting()"
                       [order]="submittedOrder()" [submissionError]="tradeError()"
                       (confirmed)="confirmTrade()" (closed)="closeOrderPopup()" />
 }
 
+=======
+  <app-order-progress [order]="submittedOrder()" [submissionError]="tradeError()"
+    (closed)="orderPopupOpen.set(false)" />
+}
+>>>>>>> feature/admin-kafka

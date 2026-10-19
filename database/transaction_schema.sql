@@ -113,6 +113,54 @@ CREATE TABLE order_events
 
 );
 
+CREATE TABLE audit_outbox
+(
+    outbox_id BIGSERIAL PRIMARY KEY,
+    event_id UUID NOT NULL UNIQUE,
+    order_id INTEGER NOT NULL REFERENCES orders(order_id),
+    event_type TEXT NOT NULL,
+    status TEXT NOT NULL,
+    reason TEXT,
+    account_id INTEGER NOT NULL,
+    client_id INTEGER NOT NULL,
+    client_email TEXT NOT NULL,
+    client_name TEXT NOT NULL,
+    instrument TEXT NOT NULL,
+    side TEXT NOT NULL,
+    quantity NUMERIC(24, 8) NOT NULL,
+    price NUMERIC(24, 8),
+    occurred_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    published_at TIMESTAMP WITH TIME ZONE,
+    attempt_count INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT
+);
+
+CREATE INDEX ix_audit_outbox_unpublished
+    ON audit_outbox (outbox_id);
+
+CREATE TABLE audit_records
+(
+    audit_record_id BIGSERIAL PRIMARY KEY,
+    event_id UUID NOT NULL UNIQUE,
+    order_id INTEGER NOT NULL,
+    event_type TEXT NOT NULL,
+    status TEXT NOT NULL,
+    reason TEXT,
+    account_id INTEGER NOT NULL,
+    client_id INTEGER NOT NULL,
+    client_email TEXT NOT NULL,
+    client_name TEXT NOT NULL,
+    instrument TEXT NOT NULL,
+    side TEXT NOT NULL,
+    quantity NUMERIC(24, 8) NOT NULL,
+    price NUMERIC(24, 8),
+    occurred_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    received_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX ix_audit_records_occurred_at
+    ON audit_records (occurred_at DESC);
+
 CREATE TABLE account_balances
 (
     account_id INTEGER NOT NULL REFERENCES accounts(account_id),
@@ -160,12 +208,21 @@ CREATE TABLE cash_movements
     movement_type TEXT NOT NULL
         CHECK (
             movement_type IN (
+<<<<<<< HEAD
                               'DEPOSIT',
                               'WITHDRAW',
                               'TRADE',
                               'ADJUSTMENT'
                 )
             ),
+=======
+                'DEPOSIT',
+                'WITHDRAW',
+                'TRADE',
+                'ADJUSTMENT'
+            )
+        ),
+>>>>>>> feature/admin-kafka
 
     currency TEXT NOT NULL
         CHECK (currency IN ('EUR', 'USD', 'GBP', 'INR')),
@@ -188,9 +245,15 @@ CREATE TABLE cash_movements
     CONSTRAINT ck_cash_movements_direction
         CHECK (
             (movement_type = 'DEPOSIT' AND amount > 0)
+<<<<<<< HEAD
                 OR
             (movement_type = 'WITHDRAW' AND amount < 0)
                 OR
+=======
+            OR
+            (movement_type = 'WITHDRAW' AND amount < 0)
+            OR
+>>>>>>> feature/admin-kafka
             movement_type IN ('TRADE', 'ADJUSTMENT')
             ),
 
@@ -213,4 +276,7 @@ CREATE TABLE fifo_allocations
     allocated_quantity INTEGER NOT NULL CHECK(allocated_quantity > 0)
 );
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> feature/admin-kafka

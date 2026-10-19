@@ -1,16 +1,34 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+<<<<<<< HEAD
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountResponse } from './account.service';
 import { AccountSelectionService } from './account-selection.service';
+=======
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import {
+  AccountResponse,
+} from './account.service';
+import {
+  AccountSelectionService,
+} from './account-selection.service';
+>>>>>>> feature/admin-kafka
 import { TradingService } from './trading.service';
 import { vi } from 'vitest';
 
 describe('TradingService account data', () => {
   let service: TradingService;
   let http: HttpTestingController;
+<<<<<<< HEAD
   const selected = signal<AccountResponse | null>(null);
+=======
+  const selected = signal<AccountResponse | null>(
+    null);
+>>>>>>> feature/admin-kafka
   const account: AccountResponse = {
     accountId: 42,
     accountName: 'Test account',
@@ -37,6 +55,7 @@ describe('TradingService account data', () => {
 
   afterEach(() => http.verify());
 
+<<<<<<< HEAD
   function flushAccount(id: number, cash: number): void {
     http.expectOne(`/api/accounts/${id}/balance`).flush({
       totalBalance: cash,
@@ -50,11 +69,35 @@ describe('TradingService account data', () => {
       )
       .flush([]);
     http.expectOne(`/api/accounts/${id}/cash-movements`).flush([]);
+=======
+  function flushAccount(
+    id: number,
+    cash: number,
+  ): void {
+    http.expectOne(
+      `/api/accounts/${id}/balance`)
+      .flush({
+        totalBalance: cash,
+        currency: 'USD',
+      });
+    http.expectOne(
+      `/api/accounts/${id}/holdings`)
+      .flush([]);
+    http.expectOne(request =>
+      request.url === '/api/orders'
+      && request.params.get('accountId')
+      === String(id))
+      .flush([]);
+    http.expectOne(
+      `/api/accounts/${id}/cash-movements`)
+      .flush([]);
+>>>>>>> feature/admin-kafka
   }
 
   it('loads the selected account from the backend and clears data on account change', async () => {
     expect(service.cash()).toBe(0);
     flushAccount(42, 125);
+<<<<<<< HEAD
     await vi.waitFor(() => expect(service.cash()).toBe(125));
 
     selected.set({
@@ -159,6 +202,36 @@ describe('TradingService account data', () => {
     const result = service.trade('buy', 7, '2', 101.25, '2026-10-07T12:00:00Z', 'USD');
 
     const request = http.expectOne('/api/orders');
+=======
+    await vi.waitFor(() =>
+      expect(service.cash()).toBe(125));
+
+    selected.set({
+      ...account,
+      accountId: 43,
+    });
+    TestBed.tick();
+    expect(service.cash()).toBe(0);
+    flushAccount(43, 0);
+    await vi.waitFor(() =>
+      expect(service.loading()).toBe(false));
+  });
+
+  it('submits the displayed side price and quote metadata', async () => {
+    flushAccount(42, 100);
+    await Promise.resolve();
+
+    const result = service.trade(
+      'buy',
+      7,
+      '2',
+      101.25,
+      '2026-10-07T12:00:00Z',
+      'USD');
+
+    const request =
+      http.expectOne('/api/orders');
+>>>>>>> feature/admin-kafka
     expect(request.request.body).toEqual({
       accountId: 42,
       instrumentId: 7,
@@ -184,6 +257,7 @@ describe('TradingService account data', () => {
     flushAccount(42, 100);
 
     const receipt = await result;
+<<<<<<< HEAD
     expect('head' in receipt && receipt.head === 'Order rejected').toBe(true);
     expect(service.cash()).toBe(100);
   });
@@ -211,5 +285,11 @@ describe('TradingService account data', () => {
     expect(service.fillExecutionPrices()).toEqual({});
     flushAccount(43, 0);
     await vi.waitFor(() => expect(service.loading()).toBe(false));
+=======
+    expect('head' in receipt
+      && receipt.head === 'Order rejected')
+      .toBe(true);
+    expect(service.cash()).toBe(100);
+>>>>>>> feature/admin-kafka
   });
 });

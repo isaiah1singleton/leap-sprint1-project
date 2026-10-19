@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
+
 import { OrderProgressComponent, OrderReview } from './order-progress.component';
+
 import {
   Component,
   computed,
@@ -23,11 +25,14 @@ import { OrderDto, TradeMode, TradingService } from '../core/trading.service';
   templateUrl: './market-explorer.component.html',
   styleUrl: './market-explorer.component.css',
 })
-export class MarketExplorerComponent implements OnInit, OnDestroy {
+export class MarketExplorerComponent
+  implements OnInit, OnDestroy {
   readonly market = inject(MarketService);
   readonly trading = inject(TradingService);
-  readonly account = inject(AccountSelectionService).selectedAccount;
-  private readonly element = inject(ElementRef<HTMLElement>);
+  readonly account =
+    inject(AccountSelectionService).selectedAccount;
+  private readonly element =
+    inject(ElementRef<HTMLElement>);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -138,7 +143,8 @@ export class MarketExplorerComponent implements OnInit, OnDestroy {
       );
     } else if (event.key === 'Enter' && this.expanded()) {
       event.preventDefault();
-      this.select(items[Math.max(0, this.activeIndex())]);
+      this.select(items[Math.max(
+        0, this.activeIndex())]);
     }
   }
 
@@ -151,7 +157,9 @@ export class MarketExplorerComponent implements OnInit, OnDestroy {
 
   select(item: MarketSymbol): void {
     if (!this.showSearch()) {
-      void this.router.navigate(['/app/markets'], { queryParams: { symbol: item.symbol } });
+      void this.router.navigate(
+        ['/app/markets'],
+        { queryParams: { symbol: item.symbol } });
       return;
     }
 
@@ -169,7 +177,10 @@ export class MarketExplorerComponent implements OnInit, OnDestroy {
     if (item) this.select(item);
   }
 
-  async loadQuote(item: MarketSymbol, background = false): Promise<void> {
+  async loadQuote(
+    item: MarketSymbol,
+    background = false,
+  ): Promise<void> {
     if (background && this.loadingQuote()) return;
 
     const version = ++this.selectionVersion;
@@ -189,9 +200,11 @@ export class MarketExplorerComponent implements OnInit, OnDestroy {
         this.quoteError.set(result.error.message);
       }
     } catch (error) {
-      if (!this.destroyed && version === this.selectionVersion) {
+      if (!this.destroyed
+        && version === this.selectionVersion) {
         this.result.set(null);
-        this.quoteError.set(this.market.errorMessage(error));
+        this.quoteError.set(
+          this.market.errorMessage(error));
       }
     } finally {
       if (!this.destroyed && version === this.selectionVersion) {
@@ -353,11 +366,6 @@ export class MarketExplorerComponent implements OnInit, OnDestroy {
       minimumFractionDigits: 2,
       maximumFractionDigits: 8,
     }).format(value);
-  }
-
-  change(result: QuoteResult | undefined | null): string {
-    const value = result?.quote?.changePercent;
-    return value == null ? 'Change unavailable' : `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
   }
 
   private rank(symbol: string, term: string): number {

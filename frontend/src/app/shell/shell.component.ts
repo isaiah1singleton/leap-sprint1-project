@@ -49,6 +49,10 @@ export class ShellComponent {
     { path: '/app/account', label: 'Account details', icon: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M4 21v-2a8 8 0 0 1 16 0v2' },
   ];
 
+  readonly adminNavItems = [
+    { path: '/app/admin-audit', label: 'Admin audit' },
+  ];
+
   pageTitle(): string {
     return this.title.getTitle() || 'Dashboard';
   }

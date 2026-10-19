@@ -12,12 +12,17 @@ export interface Position {
   available: number;
 }
 
+<<<<<<< HEAD
 export interface OrderActivity {
+=======
+export interface Activity {
+>>>>>>> feature/admin-kafka
   id: string;
   date: string;
   type: 'Buy' | 'Sell';
   sym: string;
   qty: string;
+<<<<<<< HEAD
   indicativePrice: string;
   executionPrice: string | null;
   status: string;
@@ -71,10 +76,35 @@ export interface OrderDto {
   executionPrice?: number | null;
   currency?: string;
   submittedAt: string;
+=======
+  price: string;
+  status: string;
+  reason: string | null;
+  orderId: number | null;
+  timestamp: string;
+}
+
+export interface Receipt { head: string; lines: string[]; }
+export interface TradeReceipt extends Receipt { order: OrderDto; }
+export interface TxFailure { message: string; fields: string[]; }
+export type TradeMode = 'buy' | 'sell';
+export type TransferMode = 'withdraw' | 'deposit';
+
+interface BalanceDto { totalBalance: number; currency: string; }
+interface HoldingDto {
+  instrumentId: number; symbol: string; name: string;
+  totalQuantity: number; reservedQuantity: number; availableQuantity: number;
+}
+export interface OrderDto {
+  accountId: number;
+  orderId: number; symbol: string; side: 'BUY' | 'SELL'; quantity: number;
+  indicativePrice: number; submittedAt: string;
+>>>>>>> feature/admin-kafka
   status: 'SUBMITTED' | 'ACCEPTED' | 'REJECTED' | 'FILLED' | 'EXPIRED';
   reason: string | null;
 }
 interface MovementDto {
+<<<<<<< HEAD
   cashMovementId: number;
   amount: { amount: number; currency: string };
   movementType: 'DEPOSIT' | 'WITHDRAW' | 'TRADE' | 'ADJUSTMENT';
@@ -88,12 +118,19 @@ interface TransferDto {
 interface FillDto {
   executionPrice: { amount: number; currency: string };
 }
+=======
+  cashMovementId: number; amount: { amount: number; currency: string };
+  movementType: string; occurredAt: string; reason: string | null;
+}
+interface TransferDto { movement: MovementDto; balance: BalanceDto; }
+>>>>>>> feature/admin-kafka
 
 @Injectable({ providedIn: 'root' })
 export class TradingService {
   private readonly http = inject(HttpClient);
   private readonly account = inject(AccountSelectionService);
   private loadVersion = 0;
+<<<<<<< HEAD
   private fillPriceAccountId: number | null = null;
   private readonly fillRequests = new Map<number, Promise<string>>();
   readonly refreshRevision = signal(0);
@@ -106,6 +143,15 @@ export class TradingService {
   readonly error = signal('');
   readonly pendingOrderCount = computed(
     () => this.orders().filter((item) => item.status === 'ACCEPTED').length,
+=======
+  readonly cash = signal(0);
+  readonly positions = signal<Position[]>([]);
+  readonly orders = signal<Activity[]>([]);
+  readonly loading = signal(false);
+  readonly error = signal('');
+  readonly pendingOrderCount = computed(
+    () => this.orders().filter(item => item.status === 'ACCEPTED').length,
+>>>>>>> feature/admin-kafka
   );
 
   constructor() {
@@ -115,6 +161,7 @@ export class TradingService {
     });
   }
 
+<<<<<<< HEAD
   async refresh(accountId = this.account.selectedAccount()?.accountId ?? null): Promise<void> {
     if (accountId !== (this.account.selectedAccount()?.accountId ?? null)) {
       return;
@@ -129,6 +176,19 @@ export class TradingService {
     this.positions.set([]);
     this.orders.set([]);
     this.cashActivity.set([]);
+=======
+  async refresh(
+    accountId = this.account.selectedAccount()?.accountId ?? null,
+  ): Promise<void> {
+    if (accountId !==
+      (this.account.selectedAccount()?.accountId ?? null)) {
+      return;
+    }
+    const version = ++this.loadVersion;
+    this.cash.set(0);
+    this.positions.set([]);
+    this.orders.set([]);
+>>>>>>> feature/admin-kafka
     this.error.set('');
     if (accountId == null) {
       this.loading.set(false);
@@ -139,15 +199,27 @@ export class TradingService {
     try {
       const base = `/api/accounts/${accountId}`;
       const [balance, holdings, orders, movements] = await Promise.all([
+<<<<<<< HEAD
         firstValueFrom(this.http.get<BalanceDto>(`${base}/balance`)),
         firstValueFrom(this.http.get<HoldingDto[]>(`${base}/holdings`)),
         firstValueFrom(this.http.get<OrderDto[]>('/api/orders', { params: { accountId } })),
         firstValueFrom(this.http.get<MovementDto[]>(`${base}/cash-movements`)),
+=======
+        firstValueFrom(this.http.get<BalanceDto>(
+          `${base}/balance`)),
+        firstValueFrom(this.http.get<HoldingDto[]>(
+          `${base}/holdings`)),
+        firstValueFrom(this.http.get<OrderDto[]>(
+          '/api/orders', { params: { accountId } })),
+        firstValueFrom(this.http.get<MovementDto[]>(
+          `${base}/cash-movements`)),
+>>>>>>> feature/admin-kafka
       ]);
 
       if (version !== this.loadVersion) return;
 
       this.cash.set(Number(balance.totalBalance));
+<<<<<<< HEAD
       this.positions.set(
         holdings
           .filter((item) => Number(item.totalQuantity) > 0)
@@ -190,6 +262,48 @@ export class TradingService {
           .filter((item): item is CashActivity => item !== null)
           .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)),
       );
+=======
+      this.positions.set(holdings.map(item => ({
+        instrumentId: item.instrumentId,
+        sym: item.symbol,
+        name: item.name,
+        qty: Number(item.totalQuantity),
+        reserved: Number(item.reservedQuantity),
+        available: Number(item.availableQuantity),
+      })));
+
+      const activity: Activity[] = [
+        ...orders.map(item => ({
+          id: `ORD-${item.orderId}`,
+          orderId: item.orderId,
+          timestamp: item.submittedAt,
+          date: this.date(item.submittedAt),
+          type: item.side === 'BUY'
+            ? 'Buy' as const : 'Sell' as const,
+          sym: item.symbol,
+          qty: String(item.quantity),
+          price: this.money(Number(item.indicativePrice)),
+          status: item.status,
+          reason: item.reason,
+        })),
+        ...movements.map(item => ({
+          id: `CASH-${item.cashMovementId}`,
+          orderId: null,
+          timestamp: item.occurredAt,
+          date: this.date(item.occurredAt),
+          type: item.movementType === 'DEPOSIT'
+            ? 'Deposit' as const : 'Withdraw' as const,
+          sym: '—',
+          qty: '—',
+          price: this.money(Number(item.amount.amount)),
+          status: 'COMPLETED',
+          reason: item.reason,
+        })),
+      ];
+      this.orders.set(activity.sort(
+        (a, b) =>
+          Date.parse(b.timestamp) - Date.parse(a.timestamp)));
+>>>>>>> feature/admin-kafka
     } catch (error) {
       if (version === this.loadVersion) {
         this.error.set(this.errorMessage(error));
@@ -214,6 +328,7 @@ export class TradingService {
     }).format(value);
   }
 
+<<<<<<< HEAD
   private toCashActivity(item: MovementDto): CashActivity | null {
     if (item.movementType === 'TRADE') return null;
     const type =
@@ -233,6 +348,8 @@ export class TradingService {
     };
   }
 
+=======
+>>>>>>> feature/admin-kafka
   async trade(
     mode: TradeMode,
     instrumentId: number,
@@ -241,7 +358,12 @@ export class TradingService {
     quoteAsOf: string,
     quoteCurrency: string,
   ): Promise<TxFailure | TradeReceipt> {
+<<<<<<< HEAD
     const accountId = this.account.selectedAccount()?.accountId;
+=======
+    const accountId =
+      this.account.selectedAccount()?.accountId;
+>>>>>>> feature/admin-kafka
     const qty = Number(qtyInput);
 
     if (!accountId) {
@@ -250,7 +372,12 @@ export class TradingService {
         fields: ['account'],
       };
     }
+<<<<<<< HEAD
     if (!Number.isInteger(instrumentId) || instrumentId <= 0) {
+=======
+    if (!Number.isInteger(instrumentId)
+      || instrumentId <= 0) {
+>>>>>>> feature/admin-kafka
       return {
         message: 'Select an instrument.',
         fields: ['symbol'],
@@ -262,7 +389,14 @@ export class TradingService {
         fields: ['qty'],
       };
     }
+<<<<<<< HEAD
     if (!Number.isFinite(indicativePrice) || indicativePrice <= 0 || !quoteAsOf || !quoteCurrency) {
+=======
+    if (!Number.isFinite(indicativePrice)
+      || indicativePrice <= 0
+      || !quoteAsOf
+      || !quoteCurrency) {
+>>>>>>> feature/admin-kafka
       return {
         message: 'Refresh the displayed quote and try again.',
         fields: ['quote'],
@@ -279,8 +413,12 @@ export class TradingService {
           indicativePrice,
           quoteAsOf,
           quoteCurrency,
+<<<<<<< HEAD
         }),
       );
+=======
+        }));
+>>>>>>> feature/admin-kafka
       await this.refresh(accountId);
 
       return {
@@ -288,7 +426,12 @@ export class TradingService {
         head: `Order ${order.status.toLowerCase()}`,
         lines: [
           `${order.side} ${order.quantity} ${order.symbol}`,
+<<<<<<< HEAD
           `Indicative price ${this.money(Number(order.indicativePrice))}; no execution yet`,
+=======
+          `Indicative price ${this.money(
+            Number(order.indicativePrice))}; no execution yet`,
+>>>>>>> feature/admin-kafka
           ...(order.reason ? [order.reason] : []),
           `Reference ORD-${order.orderId}`,
         ],
@@ -305,6 +448,7 @@ export class TradingService {
     return this.http.get<OrderDto>(`/api/orders/${orderId}`);
   }
 
+<<<<<<< HEAD
   async getFillExecutionPrice(orderId: number): Promise<string> {
     const fill = await firstValueFrom(this.http.get<FillDto>(`/api/orders/${orderId}/fill`));
     return this.formatMoney(Number(fill.executionPrice.amount), fill.executionPrice.currency, true);
@@ -387,6 +531,77 @@ export class TradingService {
       }
       return error.error?.detail || error.error?.message || 'The request failed. Please try again.';
     }
+=======
+  async transfer(
+    mode: TransferMode,
+    amountInput: string,
+  ): Promise<TxFailure | Receipt> {
+    const accountId =
+      this.account.selectedAccount()?.accountId;
+    const amount = Number(amountInput);
+
+    if (!accountId) {
+      return {
+        message: 'Select a trading account first.',
+        fields: ['account'],
+      };
+    }
+    if (!Number.isFinite(amount)
+      || amount <= 0
+      || !/^\d+(\.\d{1,2})?$/.test(
+        amountInput.trim())) {
+      return {
+        message:
+          'Enter a positive amount with at most two decimal places.',
+        fields: ['amount'],
+      };
+    }
+
+    try {
+      const result = await firstValueFrom(
+        this.http.post<TransferDto>(
+          `/api/accounts/${accountId}/transfers`,
+          { type: mode.toUpperCase(), amount },
+        ));
+      await this.refresh(accountId);
+
+      return {
+        head: `${mode === 'deposit'
+          ? 'Deposit' : 'Withdrawal'} completed`,
+        lines: [
+          `Amount ${this.money(Math.abs(
+            Number(result.movement.amount.amount)))}`,
+          `Cash balance ${this.money(
+            Number(result.balance.totalBalance))}`,
+          `Reference CASH-${result.movement.cashMovementId}`,
+        ],
+      };
+    } catch (error) {
+      return {
+        message: this.errorMessage(error),
+        fields: ['amount'],
+      };
+    }
+  }
+
+  private date(timestamp: string): string {
+    return new Date(timestamp).toLocaleString(
+      'en-GB', { timeZone: 'UTC' }) + ' UTC';
+  }
+
+  private errorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 401) {
+        return 'Your session has expired. Please sign out and sign in again.';
+      }
+      if (error.status === 0) {
+        return 'Cannot reach the backend. Check its address and CORS configuration.';
+      }
+      return error.error?.detail
+        || error.error?.message
+        || 'The request failed. Please try again.';
+    }
+>>>>>>> feature/admin-kafka
     return 'The request failed. Please try again.';
   }
 }

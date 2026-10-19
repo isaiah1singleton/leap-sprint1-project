@@ -5,6 +5,7 @@ public final class ApiRoutes {
     public static final String AUTH = "/api/auth";
     public static final String REGISTER = "/register";
     public static final String SIGN_IN = "/sign-in";
+    public static final String ADMIN_SIGN_IN = "/admin-sign-in";
     public static final String SIGN_OUT = "/sign-out";
     public static final String AUTH_REGISTER = AUTH + REGISTER;
     public static final String AUTH_SIGN_IN = AUTH + SIGN_IN;
@@ -21,6 +22,7 @@ public final class ApiRoutes {
     public static final String MARKET_QUOTES = "/quotes";
     public static final String MARKET_QUOTE = MARKET_QUOTES + "/{symbol}";
     public static final String MARKET_ALL = MARKET + "/**";
+    public static final String ADMIN_AUDIT = "/api/admin/audit";
 
     private ApiRoutes() {
     }

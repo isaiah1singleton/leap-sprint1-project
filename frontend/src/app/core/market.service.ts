@@ -97,10 +97,14 @@ export class MarketService {
 
   pin(item: MarketSymbol): string | null {
     if (this.pins().includes(item.symbol)) return null;
+<<<<<<< HEAD
     if (
       item.type !== 'equity' ||
       !this.catalogue().some((entry) => entry.symbol === item.symbol && entry.type === 'equity')
     ) {
+=======
+    if (item.type !== 'equity' || !this.catalogue().some(entry => entry.symbol === item.symbol && entry.type === 'equity')) {
+>>>>>>> feature/admin-kafka
       return 'Only stocks in the instrument database can be pinned.';
     }
     if (this.pins().length >= this.maxPins)
@@ -120,6 +124,7 @@ export class MarketService {
     if (pending) return pending;
 
     const request = firstValueFrom(
+<<<<<<< HEAD
       this.http.get<QuoteResult>(`/api/market/quotes/${encodeURIComponent(symbol)}`),
     )
       .then((result) => {
@@ -127,6 +132,13 @@ export class MarketService {
         return result;
       })
       .finally(() => this.quoteRequests.delete(symbol));
+=======
+      this.http.get<QuoteResult>(`/api/market/quotes/${encodeURIComponent(symbol)}`)
+    ).then(result => {
+      this.cachedQuotes.update(quotes => ({ ...quotes, [symbol]: result }));
+      return result;
+    }).finally(() => this.quoteRequests.delete(symbol));
+>>>>>>> feature/admin-kafka
 
     this.quoteRequests.set(symbol, request);
     return request;
