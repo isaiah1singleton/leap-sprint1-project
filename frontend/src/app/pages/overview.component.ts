@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, computed, effect, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { TradingService } from '../core/trading.service';
@@ -27,6 +27,16 @@ export class OverviewComponent implements OnInit {
   readonly accountsError = this.accountsCache.error;
   
   readonly recent = computed(() => this.trading.orders().slice(0, 4));
+
+  constructor() {
+    effect(() => {
+      for (const order of this.recent()) {
+        if (order.status === 'FILLED' && !order.executionPrice) {
+          this.trading.ensureFillExecutionPrice(order.orderId);
+        }
+      }
+    });
+  }
 
   ngOnInit(): void {
     void this.loadAccounts();

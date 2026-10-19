@@ -12,16 +12,26 @@ export interface Position {
   available: number;
 }
 
-export interface Activity {
+export interface OrderActivity {
   id: string;
   date: string;
-  type: 'Buy' | 'Sell' | 'Deposit' | 'Withdraw';
+  type: 'Buy' | 'Sell';
   sym: string;
   qty: string;
-  price: string;
+  indicativePrice: string;
+  executionPrice: string | null;
   status: string;
   reason: string | null;
-  orderId: number | null;
+  orderId: number;
+  timestamp: string;
+}
+
+export interface CashActivity {
+  id: string;
+  date: string;
+  type: 'Deposit' | 'Withdraw' | 'Adjustment';
+  amount: string;
+  reason: string | null;
   timestamp: string;
 }
 
@@ -39,25 +49,32 @@ interface HoldingDto {
 export interface OrderDto {
   accountId: number;
   orderId: number; symbol: string; side: 'BUY' | 'SELL'; quantity: number;
-  indicativePrice: number; submittedAt: string;
+  indicativePrice: number; executionPrice?: number | null; currency?: string;
+  submittedAt: string;
   status: 'SUBMITTED' | 'ACCEPTED' | 'REJECTED' | 'FILLED' | 'EXPIRED';
   reason: string | null;
 }
 interface MovementDto {
   cashMovementId: number; amount: { amount: number; currency: string };
-  movementType: string; occurredAt: string; reason: string | null;
+  movementType: 'DEPOSIT' | 'WITHDRAW' | 'TRADE' | 'ADJUSTMENT';
+  occurredAt: string; reason: string | null;
 }
 interface TransferDto { movement: MovementDto; balance: BalanceDto; }
+interface FillDto { executionPrice: { amount: number; currency: string }; }
 
 @Injectable({ providedIn: 'root' })
 export class TradingService {
   private readonly http = inject(HttpClient);
   private readonly account = inject(AccountSelectionService);
   private loadVersion = 0;
+  private fillPriceAccountId: number | null = null;
+  private readonly fillRequests = new Map<number, Promise<string>>();
   readonly refreshRevision = signal(0);
   readonly cash = signal(0);
   readonly positions = signal<Position[]>([]);
-  readonly orders = signal<Activity[]>([]);
+  readonly orders = signal<OrderActivity[]>([]);
+  readonly fillExecutionPrices = signal<Record<number, string>>({});
+  readonly cashActivity = signal<CashActivity[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');
   readonly pendingOrderCount = computed(
@@ -79,10 +96,15 @@ export class TradingService {
       return;
     }
     const version = ++this.loadVersion;
+    if (this.fillPriceAccountId !== accountId) {
+      this.fillPriceAccountId = accountId;
+      this.fillExecutionPrices.set({});
+    }
     this.refreshRevision.update(value => value + 1);
     this.cash.set(0);
     this.positions.set([]);
     this.orders.set([]);
+    this.cashActivity.set([]);
     this.error.set('');
     if (accountId == null) {
       this.loading.set(false);
@@ -115,8 +137,7 @@ export class TradingService {
         available: Number(item.availableQuantity),
       })));
 
-      const activity: Activity[] = [
-        ...orders.map(item => ({
+      const orderActivity: OrderActivity[] = orders.map(item => ({
           id: `ORD-${item.orderId}`,
           orderId: item.orderId,
           timestamp: item.submittedAt,
@@ -125,27 +146,19 @@ export class TradingService {
             ? 'Buy' as const : 'Sell' as const,
           sym: item.symbol,
           qty: String(item.quantity),
-          price: this.money(Number(item.indicativePrice)),
+          indicativePrice: this.formatMoney(Number(item.indicativePrice), item.currency ?? 'USD', true),
+          executionPrice: item.executionPrice == null
+            ? null : this.formatMoney(Number(item.executionPrice), item.currency ?? 'USD', true),
           status: item.status,
           reason: item.reason,
-        })),
-        ...movements.map(item => ({
-          id: `CASH-${item.cashMovementId}`,
-          orderId: null,
-          timestamp: item.occurredAt,
-          date: this.date(item.occurredAt),
-          type: item.movementType === 'DEPOSIT'
-            ? 'Deposit' as const : 'Withdraw' as const,
-          sym: '—',
-          qty: '—',
-          price: this.money(Number(item.amount.amount)),
-          status: 'COMPLETED',
-          reason: item.reason,
-        })),
-      ];
-      this.orders.set(activity.sort(
+        }));
+      this.orders.set(orderActivity.sort(
         (a, b) =>
           Date.parse(b.timestamp) - Date.parse(a.timestamp)));
+      this.cashActivity.set(movements
+        .map(item => this.toCashActivity(item))
+        .filter((item): item is CashActivity => item !== null)
+        .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)));
     } catch (error) {
       if (version === this.loadVersion) {
         this.error.set(this.errorMessage(error));
@@ -158,10 +171,30 @@ export class TradingService {
   }
 
   money(value: number): string {
-    return '$' + value.toLocaleString('en-US', {
+    return this.formatMoney(value, 'USD');
+  }
+
+  private formatMoney(value: number, currency: string, price = false): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency', currency,
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+      maximumFractionDigits: price ? 8 : 2,
+    }).format(value);
+  }
+
+  private toCashActivity(item: MovementDto): CashActivity | null {
+    if (item.movementType === 'TRADE') return null;
+    const type = item.movementType === 'DEPOSIT' ? 'Deposit'
+      : item.movementType === 'WITHDRAW' ? 'Withdraw' : 'Adjustment';
+    const amount = Number(item.amount.amount);
+    return {
+      id: `CASH-${item.cashMovementId}`,
+      timestamp: item.occurredAt,
+      date: this.date(item.occurredAt),
+      type,
+      amount: `${amount < 0 ? '−' : '+'}${this.formatMoney(Math.abs(amount), item.amount.currency)}`,
+      reason: item.reason,
+    };
   }
 
   async trade(
@@ -239,6 +272,28 @@ export class TradingService {
 
   getOrder(orderId: number): Observable<OrderDto> {
     return this.http.get<OrderDto>(`/api/orders/${orderId}`);
+  }
+
+  async getFillExecutionPrice(orderId: number): Promise<string> {
+    const fill = await firstValueFrom(this.http.get<FillDto>(`/api/orders/${orderId}/fill`));
+    return this.formatMoney(Number(fill.executionPrice.amount), fill.executionPrice.currency, true);
+  }
+
+  ensureFillExecutionPrice(orderId: number): void {
+    const accountId = this.account.selectedAccount()?.accountId;
+    if (accountId == null || this.fillExecutionPrices()[orderId] || this.fillRequests.has(orderId)) return;
+
+    const request = this.getFillExecutionPrice(orderId);
+    this.fillRequests.set(orderId, request);
+    void request.then(price => {
+      if (this.account.selectedAccount()?.accountId === accountId) {
+        this.fillExecutionPrices.update(prices => ({ ...prices, [orderId]: price }));
+      }
+    }).catch(() => {
+      // A failed fill lookup leaves the price unavailable until the next refresh.
+    }).finally(() => {
+      if (this.fillRequests.get(orderId) === request) this.fillRequests.delete(orderId);
+    });
   }
 
   async transfer(

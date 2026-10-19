@@ -13,6 +13,28 @@ export class PortfolioComponent {
   readonly trading = inject(TradingService);
   readonly selectedAccount = inject(AccountSelectionService).selectedAccount;
   readonly snapshot = signal<PortfolioSummary | null>(null);
+  readonly activeAllocation = signal<{ label: string; amount: number } | null>(null);
+
+  setSnapshot(summary: PortfolioSummary | null): void {
+    this.snapshot.set(summary);
+    this.activeAllocation.set(null);
+  }
+
+  showAllocation(label: string, amount: number): void {
+    this.activeAllocation.set({ label, amount });
+  }
+
+  clearAllocation(): void {
+    this.activeAllocation.set(null);
+  }
+
+  holdingColor(index: number): string {
+    return `hsl(${(220 + index * 137.5) % 360} 58% 47%)`;
+  }
+
+  allocationLabel(label: string, amount: number): string {
+    return `${label}: ${this.money(amount)}, ${this.allocation(amount)} of portfolio`;
+  }
 
   holdingValue(instrumentId: number) {
     return this.snapshot()?.holdings?.find(holding => holding.instrumentId === instrumentId);

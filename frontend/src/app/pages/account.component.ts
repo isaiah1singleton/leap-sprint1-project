@@ -1,11 +1,12 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
-import { AccountService, AccountResponse, AccountFailure } from '../core/account.service';
+import { AccountService, AccountResponse } from '../core/account.service';
 import { AccountSelectionService } from '../core/account-selection.service';
 import { AccountsCacheService } from '../core/accounts-cache.service';
+import { Receipt, TradingService, TransferMode } from '../core/trading.service';
 
 @Component({
   selector: 'app-account',
@@ -15,10 +16,11 @@ import { AccountsCacheService } from '../core/accounts-cache.service';
 })
 export class AccountComponent implements OnInit {
   readonly auth = inject(AuthService);
+  readonly trading = inject(TradingService);
   readonly selectedAccount = inject(AccountSelectionService).selectedAccount;
   private readonly accountService = inject(AccountService);
   private readonly accountSelection = inject(AccountSelectionService);
-  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly accountsCache = inject(AccountsCacheService);
 
   accounts: AccountResponse[] = [];
@@ -27,6 +29,17 @@ export class AccountComponent implements OnInit {
   error = '';
   success = '';
   private errorFields: string[] = [];
+  transferMode: TransferMode = 'deposit';
+  transferAmount = '';
+  transferError = '';
+  transferReceipt: Receipt | null = null;
+  transferSubmitting = false;
+
+  constructor() {
+    if (this.route.snapshot.queryParamMap.get('mode') === 'withdraw') {
+      this.transferMode = 'withdraw';
+    }
+  }
 
   ngOnInit(): void {
     this.loadAccounts();
@@ -40,9 +53,40 @@ export class AccountComponent implements OnInit {
     return this.errorFields.includes(field);
   }
 
-  async selectAccount(account: AccountResponse): Promise<void> {
+  selectAccount(account: AccountResponse, mode?: TransferMode): void {
     this.accountSelection.selectAccount(account);
-    await this.router.navigate(['/app/overview']);
+    this.transferMode = mode ?? this.transferMode;
+    this.clearTransfer();
+  }
+
+  setTransferMode(mode: TransferMode): void {
+    this.transferMode = mode;
+    this.clearTransfer();
+  }
+
+  async submitTransfer(): Promise<void> {
+    const account = this.selectedAccount();
+    if (!account || account.accountStatus !== 'ACTIVE' || this.transferSubmitting) return;
+    this.transferSubmitting = true;
+    this.transferError = '';
+    try {
+      const result = await this.trading.transfer(this.transferMode, this.transferAmount);
+      if (this.selectedAccount()?.accountId !== account.accountId) return;
+      if ('message' in result) {
+        this.transferError = result.message;
+        return;
+      }
+      this.transferReceipt = result;
+      this.transferAmount = '';
+    } finally {
+      this.transferSubmitting = false;
+    }
+  }
+
+  clearTransfer(): void {
+    this.transferAmount = '';
+    this.transferError = '';
+    this.transferReceipt = null;
   }
 
   async submit(): Promise<void> {
@@ -72,8 +116,8 @@ export class AccountComponent implements OnInit {
     // Also reload from backend to stay in sync
     await this.loadAccounts();
 
-    // Select the newly created account and navigate to overview
+    // Show the new account's details and cash controls.
     this.accountSelection.selectAccount(result);
-    await this.router.navigate(['/app/overview']);
+    this.clearTransfer();
   }
 }

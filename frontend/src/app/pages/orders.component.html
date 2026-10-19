@@ -1,16 +1,33 @@
-<div class="page-intro"><div><p class="eyebrow">Your trading record</p><h2>Every order. In view.</h2><p class="sub">Review your orders, outcomes and cash movements in one place.</p></div></div>
+<div class="page-intro"><div><h2>All Orders</h2><p class="sub">Review your buy and sell orders and their execution prices.</p></div><a class="toolbar-link" routerLink="/app/cash-activity">View cash activity →</a></div>
 <div class="card">
-  <h2 class="card-title">Orders and cash movements</h2>
+  <h2 class="card-title">Order History</h2>
   @if (trading.error()) { <p class="error-text" role="alert">{{ trading.error() }}</p><button class="btn-chip" (click)="trading.refresh()">Retry</button> }
-  @if (trading.loading()) { <p class="sub" role="status">Loading activity…</p> }
-  <div class="table-scroll" tabindex="0" role="region" aria-label="Order and cash movement history">
+  @if (trading.loading()) { <p class="sub" role="status">Loading orders…</p> }
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Order history">
     <table class="table">
-      <thead><tr><th scope="col">Reference</th><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Symbol</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Indicative price / amount</th><th scope="col">Status</th></tr></thead>
+      <thead><tr><th scope="col">Reference</th><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Symbol</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Indicative price</th><th scope="col" class="num">Execution price</th><th scope="col">Status</th></tr></thead>
       <tbody>
-        @for (order of trading.orders(); track order.id) {
-          <tr><td class="sym">{{ order.id }}</td><td class="dim">{{ order.date }}</td><td>{{ order.type }}</td><td class="sym">{{ order.sym }}</td><td class="num">{{ order.qty }}</td><td class="num">{{ order.price }}</td><td><span class="status-badge" [attr.data-status]="order.status">{{ order.status }}</span>@if (order.reason) { <p class="sub">{{ order.reason }}</p> }</td></tr>
-        } @empty { <tr><td colspan="7"><div class="empty-state"><strong>Your activity will appear here</strong>Orders and cash movements are shown for your selected account.</div></td></tr> }
+        @for (order of visibleOrders(); track order.id) {
+          <tr><td class="sym">{{ order.id }}</td><td class="dim">{{ order.date }}</td><td>{{ order.type }}</td><td class="sym">{{ order.sym }}</td><td class="num">{{ order.qty }}</td><td class="num">{{ order.indicativePrice }}</td><td class="num">{{ order.executionPrice ?? trading.fillExecutionPrices()[order.orderId] ?? '—' }}</td><td><span class="status-badge" [attr.data-status]="order.status">{{ order.status }}</span>@if (order.reason) { <p class="sub">{{ order.reason }}</p> }</td></tr>
+        } @empty {
+          @if (!trading.loading() && !trading.error()) {
+            <tr><td colspan="8"><div class="empty-state"><strong>Your orders will appear here</strong>Buy and sell orders are shown for your selected account.</div></td></tr>
+          }
+        }
       </tbody>
     </table>
   </div>
+  <p class="note">Prices are per unit. An execution price appears only after an order is filled.</p>
+  @if (trading.orders().length > 0 && !trading.loading()) {
+    <nav class="history-pagination" aria-label="Order history pages">
+      <p class="sub" aria-live="polite">Showing {{ firstItem() }}–{{ lastItem() }} of {{ trading.orders().length }} orders</p>
+      @if (pageCount() > 1) {
+        <div class="page-controls">
+          <button type="button" class="btn-chip" [disabled]="currentPage() === 1" (click)="previousPage()">Previous</button>
+          <span aria-live="polite">Page {{ currentPage() }} of {{ pageCount() }}</span>
+          <button type="button" class="btn-chip" [disabled]="currentPage() === pageCount()" (click)="nextPage()">Next</button>
+        </div>
+      }
+    </nav>
+  }
 </div>

@@ -60,6 +60,16 @@ describe('Portfolio summary', () => {
     expect(fixture.nativeElement.textContent).not.toContain('$0.00');
   });
 
+  it('hides the delayed quote notice while retaining actionable valuation warnings', () => {
+    const fixture = create();
+    http.expectOne('/api/accounts/1/portfolio-summary').flush({ ...summary,
+      valuationWarnings: ['Valuation includes delayed provider quotes.', 'Price unavailable for AAPL'],
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Valuation includes delayed provider quotes.');
+    expect(fixture.nativeElement.textContent).toContain('Price unavailable for AAPL');
+  });
+
   it('clears previous figures and cancels obsolete requests on account switch', () => {
     const fixture = create();
     const old = http.expectOne('/api/accounts/1/portfolio-summary');

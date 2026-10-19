@@ -1,24 +1,49 @@
 <div class="page-intro">
-  <div><p class="eyebrow">Your positions and allocation</p><h2>Your portfolio, in focus.</h2>
+  <div><h2>Your Portfolio</h2>
     <p class="sub">See what you hold, how it is valued, and how much is available to trade.</p></div>
 </div>
 
 @if (!selectedAccount()) {
   <div class="empty-state"><strong>Select a trading account</strong>Choose an account from the dashboard to view its portfolio.</div>
 } @else {
-  <app-portfolio-summary (summaryChange)="snapshot.set($event)" />
+  <app-portfolio-summary (summaryChange)="setSnapshot($event)" />
 
   <div class="portfolio-insights">
     <section class="card" aria-label="Portfolio allocation">
       <div class="section-heading"><h2 class="card-title">Portfolio allocation</h2><span class="sub">Based on estimated value</span></div>
       @if (snapshot()?.estimatedPortfolioValue != null && (snapshot()?.estimatedPortfolioValue ?? 0) > 0) {
-        <div class="allocation-track" role="img" [attr.aria-label]="'Cash ' + allocation(snapshot()?.cashBalance) + ', invested assets ' + allocation(snapshot()?.investedAssetsValue)">
-          <span class="allocation-cash" [style.width.%]="share(snapshot()?.cashBalance)"></span>
-          <span class="allocation-assets" [style.width.%]="share(snapshot()?.investedAssetsValue)"></span>
+        <div class="allocation-track" role="group" aria-label="Portfolio allocation by cash and ticker">
+          @if ((snapshot()?.cashBalance ?? 0) > 0) {
+            <button type="button" class="allocation-segment allocation-cash"
+              [style.width.%]="share(snapshot()?.cashBalance)"
+              [attr.aria-label]="allocationLabel('Cash', snapshot()?.cashBalance ?? 0)"
+              [attr.title]="allocationLabel('Cash', snapshot()?.cashBalance ?? 0)"
+              (mouseenter)="showAllocation('Cash', snapshot()?.cashBalance ?? 0)" (mouseleave)="clearAllocation()"
+              (focus)="showAllocation('Cash', snapshot()?.cashBalance ?? 0)" (blur)="clearAllocation()"></button>
+          }
+          @for (holding of snapshot()?.holdings ?? []; track holding.instrumentId; let index = $index) {
+            @if ((holding.estimatedValue ?? 0) > 0) {
+              <button type="button" class="allocation-segment"
+                [style.width.%]="share(holding.estimatedValue)" [style.backgroundColor]="holdingColor(index)"
+                [attr.aria-label]="allocationLabel(holding.symbol, holding.estimatedValue ?? 0)"
+                [attr.title]="allocationLabel(holding.symbol, holding.estimatedValue ?? 0)"
+                (mouseenter)="showAllocation(holding.symbol, holding.estimatedValue ?? 0)" (mouseleave)="clearAllocation()"
+                (focus)="showAllocation(holding.symbol, holding.estimatedValue ?? 0)" (blur)="clearAllocation()"></button>
+            }
+          }
+        </div>
+        <div class="allocation-detail" aria-live="polite">
+          @if (activeAllocation(); as detail) {
+            <strong>{{ detail.label }}</strong><span>{{ money(detail.amount) }} · {{ allocation(detail.amount) }} of portfolio</span>
+          } @else {
+            <span class="sub">Hover or focus a segment to see its value.</span>
+          }
         </div>
         <div class="allocation-legend">
           <div><span class="allocation-dot cash"></span><span>Cash</span><strong>{{ money(snapshot()?.cashBalance) }}</strong><span class="sub">{{ allocation(snapshot()?.cashBalance) }}</span></div>
-          <div><span class="allocation-dot assets"></span><span>Invested assets</span><strong>{{ money(snapshot()?.investedAssetsValue) }}</strong><span class="sub">{{ allocation(snapshot()?.investedAssetsValue) }}</span></div>
+          @for (holding of snapshot()?.holdings ?? []; track holding.instrumentId; let index = $index) {
+            <div><span class="allocation-dot" [style.backgroundColor]="holdingColor(index)"></span><span>{{ holding.symbol }}</span><strong>{{ money(holding.estimatedValue) }}</strong><span class="sub">{{ allocation(holding.estimatedValue) }}</span></div>
+          }
         </div>
       } @else {
         <p class="sub">Allocation will appear when a complete portfolio valuation is available.</p>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { OrderProgressComponent } from './order-progress.component';
+import { OrderProgressComponent, OrderReview } from './order-progress.component';
 import {
   Component,
   computed,
@@ -64,6 +64,7 @@ export class MarketExplorerComponent
   readonly quantity = signal('1');
   readonly tradeError = signal('');
   readonly orderPopupOpen = signal(false);
+  readonly review = signal<OrderReview | null>(null);
   readonly submittedOrder = signal<OrderDto | null>(null);
   readonly common = computed(() =>
     this.market.catalogue()
@@ -293,43 +294,86 @@ export class MarketExplorerComponent
     return '';
   }
 
-  async trade(mode: TradeMode): Promise<void> {
+  reviewTrade(mode: TradeMode): void {
+    if (this.orderPopupOpen() || this.submitting()) return;
     const reason = this.disabledReason(mode);
     if (reason) {
       this.tradeError.set(reason);
       return;
     }
 
-    // Capture one displayed quote before the request starts.
-    const instrumentId =
-      this.selected()!.instrumentId;
+    // Freeze the displayed details so confirmation submits exactly what was reviewed.
+    const instrument = this.selected()!;
+    const account = this.account()!;
+    const snapshot = this.result()!;
     const quote = this.result()!.quote!;
     const price =
       mode === 'buy' ? quote.ask : quote.bid;
-    const quantity = this.quantity();
+    const quantityInput = this.quantity();
 
-    this.submitting.set(true);
+    this.review.set({
+      mode,
+      accountId: account.accountId,
+      accountName: account.accountName,
+      instrumentId: instrument.instrumentId,
+      symbol: instrument.symbol,
+      name: instrument.name,
+      type: instrument.type,
+      exchange: instrument.exchange,
+      currency: quote.currency!,
+      quantity: Number(quantityInput),
+      quantityInput,
+      price,
+      estimatedTotal: price * Number(quantityInput),
+      quoteAsOf: quote.asOf,
+      source: snapshot.source,
+      stale: snapshot.stale,
+      cashBalance: this.trading.cash(),
+      availableShares: this.trading.positions().find(
+        position => position.instrumentId === instrument.instrumentId)?.available ?? 0,
+    });
     this.submittedOrder.set(null);
     this.tradeError.set('');
     this.orderPopupOpen.set(true);
+  }
+
+  async confirmTrade(): Promise<void> {
+    const review = this.review();
+    if (!review || !this.orderPopupOpen() || this.submitting()) return;
+    if (this.account()?.accountId !== review.accountId) {
+      this.tradeError.set('The selected account changed. Close this window and review the order again.');
+      return;
+    }
+
+    this.submitting.set(true);
+    this.tradeError.set('');
     try {
       const result = await this.trading.trade(
-        mode,
-        instrumentId,
-        quantity,
-        price,
-        quote.asOf,
-        quote.currency!);
+        review.mode,
+        review.instrumentId,
+        review.quantityInput,
+        review.price,
+        review.quoteAsOf,
+        review.currency);
 
       if ('message' in result) {
         this.tradeError.set(result.message);
       } else {
-        this.tradeError.set('');
         this.submittedOrder.set(result.order);
       }
+    } catch {
+      this.tradeError.set('The order could not be submitted. Check order history before trying again.');
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  closeOrderPopup(): void {
+    if (this.submitting()) return;
+    this.orderPopupOpen.set(false);
+    this.review.set(null);
+    this.submittedOrder.set(null);
+    this.tradeError.set('');
   }
 
   money(

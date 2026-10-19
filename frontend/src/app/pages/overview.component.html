@@ -1,5 +1,5 @@
 <div class="page-intro dashboard-intro">
-  <div><p class="eyebrow">Your account at a glance</p><h2>Welcome back, {{ auth.currentUser() }}.</h2><p class="sub">Your portfolio, market watchlist and latest activity.</p></div>
+  <div><h2>Welcome, {{ auth.currentUser() }}.</h2><p class="sub">Your portfolio, market watchlist and latest activity.</p></div>
   <a class="btn btn-primary" routerLink="/app/transact">Place an order ↗</a>
 </div>
 <section class="card account-toolbar" aria-label="Trading account selection">
@@ -31,13 +31,17 @@
   <div class="dashboard-main">
     <app-market-explorer [showSearch]="false" />
     @if (selectedAccount()) {
-      <section class="card" aria-label="Recent activity">
-        <div class="section-heading"><h2 class="card-title">Recent activity</h2><a routerLink="/app/orders">View all →</a></div>
-        @if (trading.loading()) { <p class="sub" role="status">Loading activity…</p> }
+      <section class="card" aria-label="Recent orders">
+        <div class="section-heading"><h2 class="card-title">Recent orders</h2><a routerLink="/app/orders">View all →</a></div>
+        @if (trading.loading()) { <p class="sub" role="status">Loading orders…</p> }
         @else if (!trading.error()) {
           @for (order of recent(); track order.id) {
-            <div class="list-row"><div><strong>{{ order.type }} {{ order.sym }}</strong><div class="sub">{{ order.date }}</div></div><div class="activity-value"><strong>{{ order.price }}</strong><div><span class="status-badge" [attr.data-status]="order.status">{{ order.status }}</span></div></div></div>
-          } @empty { <div class="empty-state"><strong>No activity yet</strong>Your orders and cash movements will appear here.</div> }
+            <div class="list-row"><div><strong>{{ order.type }} {{ order.sym }}</strong><div class="sub">{{ order.date }}</div></div><div class="activity-value">
+              <strong>{{ order.status === 'FILLED' ? (order.executionPrice ?? trading.fillExecutionPrices()[order.orderId] ?? '—') : '—' }}</strong>
+              <div class="sub">{{ order.status === 'FILLED' ? 'Execution price' : order.status === 'ACCEPTED' || order.status === 'SUBMITTED' ? 'Awaiting execution' : 'Not executed' }}</div>
+              <div><span class="status-badge" [attr.data-status]="order.status">{{ order.status }}</span></div>
+            </div></div>
+          } @empty { <div class="empty-state"><strong>No orders yet</strong>Your buy and sell orders will appear here.</div> }
         }
       </section>
     }
@@ -46,8 +50,8 @@
     <section class="card">
       <h2 class="card-title">Quick actions</h2>
       <a class="action-link" routerLink="/app/markets"><span><strong>Explore markets</strong><small>Find an instrument to trade</small></span><span aria-hidden="true">↗</span></a>
-      <a class="action-link" routerLink="/app/transact" [queryParams]="{ mode: 'deposit' }"><span><strong>Deposit funds</strong><small>Add cash to your account</small></span><span aria-hidden="true">↗</span></a>
-      <a class="action-link" routerLink="/app/transact" [queryParams]="{ mode: 'withdraw' }"><span><strong>Withdraw funds</strong><small>Manage your cash balance</small></span><span aria-hidden="true">↗</span></a>
+      <a class="action-link" routerLink="/app/account" [queryParams]="{ mode: 'deposit' }"><span><strong>Deposit funds</strong><small>Add cash to your account</small></span><span aria-hidden="true">↗</span></a>
+      <a class="action-link" routerLink="/app/account" [queryParams]="{ mode: 'withdraw' }"><span><strong>Withdraw funds</strong><small>Manage your cash balance</small></span><span aria-hidden="true">↗</span></a>
     </section>
     @if (selectedAccount()) {
       <section class="card">

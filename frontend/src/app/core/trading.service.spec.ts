@@ -95,11 +95,24 @@ describe('TradingService account data', () => {
     ]);
     http.expectOne(request => request.url === '/api/orders' && request.params.get('accountId') === '42')
       .flush([{ accountId: 42, orderId: 8, symbol: 'SOLD', side: 'SELL', quantity: 1,
-        indicativePrice: 50, submittedAt: '2026-10-07T12:00:00Z', status: 'FILLED', reason: null }]);
-    http.expectOne('/api/accounts/42/cash-movements').flush([]);
+        indicativePrice: 50, executionPrice: 52, currency: 'USD',
+        submittedAt: '2026-10-07T12:00:00Z', status: 'FILLED', reason: null }]);
+    http.expectOne('/api/accounts/42/cash-movements').flush([
+      { cashMovementId: 10, movementType: 'TRADE', amount: { amount: 52, currency: 'USD' },
+        occurredAt: '2026-10-07T12:01:00Z', reason: null },
+      { cashMovementId: 11, movementType: 'DEPOSIT', amount: { amount: 100, currency: 'USD' },
+        occurredAt: '2026-10-07T11:00:00Z', reason: null },
+      { cashMovementId: 12, movementType: 'WITHDRAW', amount: { amount: -25, currency: 'USD' },
+        occurredAt: '2026-10-07T10:00:00Z', reason: null },
+      { cashMovementId: 13, movementType: 'ADJUSTMENT', amount: { amount: 5, currency: 'USD' },
+        occurredAt: '2026-10-07T09:00:00Z', reason: 'Correction' },
+    ]);
     await vi.waitFor(() => expect(service.loading()).toBe(false));
     expect(service.positions().map(position => position.sym)).toEqual(['HELD']);
-    expect(service.orders().map(order => order.sym)).toContain('SOLD');
+    expect(service.orders().map(order => order.sym)).toEqual(['SOLD']);
+    expect(service.orders()[0].executionPrice).toBe('$52.00');
+    expect(service.cashActivity().map(item => item.type)).toEqual(['Deposit', 'Withdraw', 'Adjustment']);
+    expect(service.cashActivity().map(item => item.amount)).toEqual(['+$100.00', '−$25.00', '+$5.00']);
   });
 
   it('submits the displayed side price and quote metadata', async () => {
@@ -145,5 +158,30 @@ describe('TradingService account data', () => {
       && receipt.head === 'Order rejected')
       .toBe(true);
     expect(service.cash()).toBe(100);
+  });
+
+  it('reads the authoritative execution price from a fill', async () => {
+    flushAccount(42, 100);
+    const price = service.getFillExecutionPrice(17);
+    http.expectOne('/api/orders/17/fill').flush({
+      executionPrice: { amount: 102.25, currency: 'USD' },
+    });
+    expect(await price).toBe('$102.25');
+  });
+
+  it('loads a missing fill price once and clears it when the account changes', async () => {
+    flushAccount(42, 100);
+    service.ensureFillExecutionPrice(17);
+    service.ensureFillExecutionPrice(17);
+    http.expectOne('/api/orders/17/fill').flush({
+      executionPrice: { amount: 102.25, currency: 'USD' },
+    });
+    await vi.waitFor(() => expect(service.fillExecutionPrices()[17]).toBe('$102.25'));
+
+    selected.set({ ...account, accountId: 43 });
+    TestBed.tick();
+    expect(service.fillExecutionPrices()).toEqual({});
+    flushAccount(43, 0);
+    await vi.waitFor(() => expect(service.loading()).toBe(false));
   });
 });

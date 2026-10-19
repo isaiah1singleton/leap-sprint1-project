@@ -71,8 +71,7 @@ public class PortfolioSummaryService {
             }
             assets = assets.add(value);
             if (oldestQuote == null || quoteTime.isBefore(oldestQuote)) oldestQuote = quoteTime;
-            if (result.stale()) warnings.add("Valuation includes delayed provider quotes.");
-            if ("synthetic".equals(result.source())) warnings.add("Valuation includes synthetic provider prices.");
+
         }
 
         BigDecimal portfolioValue = complete ? account.usdCash().add(assets) : null;

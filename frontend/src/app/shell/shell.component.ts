@@ -45,6 +45,7 @@ export class ShellComponent {
     { path: '/app/markets', label: 'Markets', icon: 'M3 3v18h18 M7 15l4-5 4 3 6-8' },
     { path: '/app/transact', label: 'Transact', icon: 'M4 7h16 M16 3l4 4-4 4 M20 17H4 M8 13l-4 4 4 4' },
     { path: '/app/orders', label: 'Order history', icon: 'M6 3h12v18H6z M9 7h6 M9 11h6 M9 15h4' },
+    { path: '/app/cash-activity', label: 'Cash activity', icon: 'M3 6h18v12H3z M3 10h18 M7 15h4' },
     { path: '/app/account', label: 'Account details', icon: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M4 21v-2a8 8 0 0 1 16 0v2' },
   ];
 

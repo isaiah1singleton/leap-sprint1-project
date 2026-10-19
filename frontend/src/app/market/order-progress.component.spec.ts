@@ -36,7 +36,7 @@ describe('Order progress', () => {
     const fixture = TestBed.createComponent(OrderProgressComponent);
     const component = fixture.componentInstance;
     component.order = accepted;
-    component.ngOnChanges();
+    component.ngOnChanges({});
     return { fixture, component };
   }
 
@@ -80,9 +80,47 @@ describe('Order progress', () => {
     const fixture = TestBed.createComponent(OrderProgressComponent);
     const component = fixture.componentInstance;
     component.order = { ...accepted, status: 'REJECTED', reason: 'Insufficient cash' };
-    component.ngOnChanges();
+    component.ngOnChanges({});
     expect(component.current()?.reason).toBe('Insufficient cash');
     expect(component.title()).toBe('Order rejected');
+    expect(service.getOrder).not.toHaveBeenCalled();
+  });
+
+  it('moves toward completion while accepted and fills only after a FILLED update', async () => {
+    service.getOrder.mockReturnValueOnce(of(accepted))
+      .mockReturnValue(of({ ...accepted, status: 'FILLED' }));
+    const { fixture, component } = start();
+    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(50);
+    fixture.detectChanges();
+    const fill = fixture.nativeElement.querySelector('.progress-fill') as HTMLElement;
+    expect(component.progress()).toBe(88);
+    expect(fill.style.transform).toBe('scaleX(0.88)');
+    expect(fill.style.transitionDuration).toBe('30s');
+    expect(fill.classList.contains('pending')).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(2000);
+    await vi.advanceTimersByTimeAsync(50);
+    fixture.detectChanges();
+    expect(component.current()?.status).toBe('FILLED');
+    expect(fill.style.transform).toBe('scaleX(1)');
+    expect(fill.classList.contains('pending')).toBe(false);
+  });
+
+  it('stops a rejected order at the midpoint and shows its reason beside the bar', async () => {
+    const fixture = TestBed.createComponent(OrderProgressComponent);
+    const component = fixture.componentInstance;
+    component.order = { ...accepted, status: 'REJECTED', reason: 'Insufficient cash' };
+    component.ngOnChanges({});
+    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(50);
+    fixture.detectChanges();
+    const dialog = fixture.nativeElement.querySelector('dialog') as HTMLDialogElement;
+    const fill = dialog.querySelector('.progress-fill') as HTMLElement;
+    expect(fill.style.transform).toBe('scaleX(0.5)');
+    expect(fill.classList.contains('rejected')).toBe(true);
+    expect(fill.classList.contains('pending')).toBe(false);
+    expect(dialog.querySelector('.decision-message')?.textContent).toContain('Insufficient cash');
     expect(service.getOrder).not.toHaveBeenCalled();
   });
 

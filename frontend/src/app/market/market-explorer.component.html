@@ -1,7 +1,7 @@
 @if (showSearch()) {
 <section class="card market-panel" aria-label="Stock and crypto search">
   <div class="market-heading">
-    <div><p class="eyebrow">Find your next opportunity</p><h2 class="card-title">Explore instruments</h2><p class="sub">Find a company or ticker to view its quote and place an order.</p></div>
+    <div><h2 class="card-title">Explore instruments</h2><p class="sub">Find a company or ticker to view its quote and place an order.</p></div>
     <span class="data-badge">Quotes update on selection</span>
   </div>
   <div class="symbol-search">
@@ -65,7 +65,6 @@
           <div><dt>Market</dt><dd>{{ current.marketState | titlecase }}</dd></div>
         </dl>
         <p class="sub">Quote as of {{ current.asOf | date:'MMM d, y, HH:mm:ss':'UTC' }} UTC · {{ result()?.source }}
-          @if (result()?.stale) { <strong class="loss"> · Provider-delayed quote</strong> }
           @if (result()?.source === 'synthetic') { <strong> · Synthetic data</strong> }
         </p>
         <div class="trade-controls">
@@ -74,8 +73,8 @@
           <div class="trade-account"><p class="sub">{{ account()?.accountName || 'No account selected' }}</p>
             <p class="sub">Cash {{ trading.money(trading.cash()) }} · {{ held() }} held</p>
             <p class="sub">Indicative buy value {{ validQuantity() ? money(qty() * current.ask, current.currency || instrument.currency) : '—' }}</p></div>
-          <button class="btn btn-primary btn-sm" [disabled]="buyDisabled()" [title]="disabledReason('buy')" (click)="trade('buy')">Submit buy</button>
-          <button class="btn btn-secondary btn-sm" [disabled]="sellDisabled()" [title]="disabledReason('sell')" (click)="trade('sell')">Submit sell</button>
+          <button class="btn btn-primary btn-sm" [disabled]="buyDisabled()" [title]="disabledReason('buy')" (click)="reviewTrade('buy')">Review buy</button>
+          <button class="btn btn-secondary btn-sm" [disabled]="sellDisabled()" [title]="disabledReason('sell')" (click)="reviewTrade('sell')">Review sell</button>
         </div>
         @if (buyDisabled()) { <p class="sub">Buy: {{ disabledReason('buy') }}</p> }
         @if (sellDisabled()) { <p class="sub">Sell: {{ disabledReason('sell') }}</p> }
@@ -106,7 +105,6 @@
             <strong class="tile-price" [class.gain]="(current.changePercent ?? 0) > 0" [class.loss]="(current.changePercent ?? 0) < 0">{{ money(current.price, current.currency || instrument.currency) }}</strong>
             <p [class.gain]="(current.changePercent ?? 0) > 0" [class.loss]="(current.changePercent ?? 0) < 0">{{ (current.changePercent ?? 0) > 0 ? '↑ ' : (current.changePercent ?? 0) < 0 ? '↓ ' : '' }}{{ change(item) }}</p>
             <p class="sub">{{ current.asOf | date:'MMM d, HH:mm:ss':'UTC' }} UTC</p>
-            @if (item.stale) { <p class="loss sub">Provider-delayed quote</p> }
             @if (item.source === 'synthetic') { <p class="sub">Synthetic data</p> }
           } @else { <p class="sub">{{ item?.error?.message || 'Select this ticker to request a price.' }}</p> }
         </article>
@@ -116,6 +114,7 @@
 }
 
 @if (orderPopupOpen()) {
-  <app-order-progress [order]="submittedOrder()" [submissionError]="tradeError()"
-    (closed)="orderPopupOpen.set(false)" />
+  <app-order-progress [review]="review()" [submitting]="submitting()"
+    [order]="submittedOrder()" [submissionError]="tradeError()"
+    (confirmed)="confirmTrade()" (closed)="closeOrderPopup()" />
 }

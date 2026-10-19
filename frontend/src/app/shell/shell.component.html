@@ -15,14 +15,13 @@
       </a>
     }
     </div>
-    <p class="sidebar-note"><strong>TRADING WORKSPACE / SIMULATION</strong>Explore markets. Follow your orders.<br />Keep your portfolio in view.</p>
+    <p class="sidebar-note"><strong>TRADING WORKSPACE</strong>Explore markets. Follow your orders.<br />Keep your portfolio in view.</p>
   </nav>
 
   <div class="main">
     <header class="topbar">
       <div><p class="topbar-context">Your workspace / {{ accountSelection.selectedAccount()?.accountName || 'Select an account' }}</p><h1>{{ pageTitle() }}</h1></div>
       <div class="topbar-right">
-        <span class="workspace-tag">SIMULATED TRADING</span>
         <span class="topbar-user">{{ auth.currentUser() }}</span>
         <span class="avatar" aria-hidden="true">{{ auth.currentUser()?.charAt(0)?.toUpperCase() || 'U' }}</span>
         <button class="btn-chip" (click)="signOut()">Sign out</button>
