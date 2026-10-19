@@ -34,4 +34,7 @@ public class QuoteProviderException extends RuntimeException {
         return retryAt;
     }
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> refactors

@@ -1,0 +1,40 @@
+:host { display:block; margin-bottom:22px; }
+.market-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.market-heading .card-title { margin-bottom:4px; }
+.sub { color:var(--muted); font-size:12px; margin:4px 0; }
+.data-badge { font-size:11px; color:var(--ink-soft); background:var(--ground); border:1px solid var(--line-soft); border-radius:6px; padding:6px 10px; }
+.symbol-search { position:relative; margin-top:20px; }
+.symbol-search .label { margin-top:14px; }
+.symbol-search .input { height:54px; background:#f8fafb; font-size:15px; }
+.search-results { position:absolute; z-index:5; top:calc(100% + 6px); width:100%; max-height:330px; overflow-y:auto; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 12px 32px #18364720; }
+.search-result { display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px; text-align:left; background:transparent; border:0; border-bottom:1px solid var(--line-soft); padding:14px 16px; cursor:pointer; color:var(--ink); }
+.search-result .sub { display:block; }
+.search-result:hover,.highlighted { background:var(--accent-soft); }
+.empty-search { padding:14px; }
+.common-symbols { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.ticker-detail { border-top:1px solid var(--line); margin-top:26px; padding-top:24px; }
+h3 { margin:0; font-size:23px; letter-spacing:-.5px; }
+h3 .sub { display:inline-block; margin-left:8px; font-weight:400; letter-spacing:0; }
+.quote-price { font-size:42px; line-height:1.2; letter-spacing:-1.5px; font-weight:650; margin:24px 0; font-variant-numeric:tabular-nums; }
+.quote-change { font-size:14px; font-weight:600; letter-spacing:0; margin-left:12px; padding:5px 9px; background:var(--ground); border-radius:6px; vertical-align:middle; }
+.quote-facts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:20px 0; }
+.quote-facts > div { padding:15px; background:#f5f8fa; border:1px solid var(--line-soft); border-radius:10px; }
+dt { color:var(--muted); font-size:11px; }
+dd { margin:7px 0 0; font-size:14px; font-weight:600; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.trade-controls { display:grid; grid-template-columns:120px 1fr 130px 130px; align-items:end; gap:12px; margin:22px 0 12px; padding:20px; background:var(--accent-soft); border-radius:12px; border:1px solid #d0e8e0; }
+.trade-controls .label { margin:0 0 7px; }
+.trade-controls .btn { margin:0; min-height:48px; }
+.trade-account { padding-bottom:4px; }
+.watchlist { margin-top:22px; }
+.watchlist-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:14px; margin:20px 0 0; }
+.watchlist-tile { border:1px solid var(--line); border-radius:12px; padding:18px; background:linear-gradient(145deg,#fff,#f8fafb); transition:border-color .18s,box-shadow .18s; }
+.watchlist-tile:hover { border-color:#91bfb7; box-shadow:0 5px 15px #163d4c08; }
+.watchlist-tile .market-heading { flex-wrap:nowrap; }
+.ticker-link { background:transparent; border:0; padding:0; color:var(--ink); font:inherit; font-weight:750; cursor:pointer; text-decoration:none; }
+.ticker-link:hover { color:var(--accent); }
+.unpin { background:transparent; border:0; font-size:23px; color:var(--muted); cursor:pointer; padding:0 6px; border-radius:5px; }
+.unpin:hover { background:var(--danger-tint); color:var(--danger); }
+.tile-price { display:block; font-size:25px; letter-spacing:-.6px; margin-top:18px; font-variant-numeric:tabular-nums; }
+.empty-watchlist { color:var(--muted); padding:30px 20px; margin:20px 0 0; text-align:center; border:1px dashed #cbd9de; background:#f8fafb; border-radius:12px; line-height:1.8; }
+@media (max-width:1200px) { .trade-controls { grid-template-columns:120px 1fr; } }
+@media (max-width:600px) { .quote-facts { grid-template-columns:repeat(2,minmax(0,1fr)); } .trade-controls { grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:14px; } .quote-price { font-size:34px; } .quote-change { display:inline-block; margin:8px 0 0; } .trade-account { overflow-wrap:anywhere; } }

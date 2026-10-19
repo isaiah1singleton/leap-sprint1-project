@@ -1,25 +1,18 @@
+<div class="page-intro"><div><h2>Account details.</h2><p class="sub">View your profile and organise your trading accounts.</p></div></div>
 <div class="row">
   <div class="card card-pad-lg" style="flex:1">
     <h2 class="card-title">Profile</h2>
     <dl style="margin:0">
-      <div class="definition"><dt>Email</dt><dd><strong>{{ auth.currentUser() }}</strong></dd></div>
-      <div class="definition"><dt>Account type</dt><dd>Individual investor</dd></div>
-      <div class="definition"><dt>Base currency</dt><dd>USD</dd></div>
-      <div class="definition"><dt>Verification</dt><dd class="gain">Verified</dd></div>
+      <div class="definition"><dt>Name</dt><dd><strong>{{ auth.currentUser() }}</strong></dd></div>
+      <div class="definition"><dt>Email</dt><dd>{{ auth.currentUserEmail() }}</dd></div>
     </dl>
-  </div>
-  <div class="card card-pad-lg" style="width:250px;flex:none;display:flex;flex-direction:column">
-    <h2 class="card-title">Security</h2>
-    <button class="btn btn-secondary btn-sm">Change password</button>
-    <button class="btn btn-secondary btn-sm">Set up two-factor</button>
-    <p style="border-top:1px solid var(--line-soft);padding-top:12px;margin-top:12px;font-size:12px;color:var(--muted);line-height:1.5">Trading limits and permissions are set by your administrator.</p>
   </div>
 </div>
 
 <!-- Trading Accounts Section -->
 <div class="card card-pad-lg" style="margin-top:20px">
   <h2 class="card-title">Trading Accounts</h2>
-  
+
   @if (success) {
     <p style="color:var(--gain);font-weight:500;margin-bottom:12px">{{ success }}</p>
   }
@@ -30,33 +23,70 @@
 
   <!-- Currently Selected Account -->
   @if (selectedAccount()) {
-    <div style="margin-bottom:20px;padding:12px;background:rgba(0,200,0,0.1);border:1px solid var(--gain);border-radius:4px;display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <p style="font-weight:600;margin:0">Active Account: {{ selectedAccount()!.accountName }}</p>
+    <div class="account-banner">
+      <div class="account-summary">
+        <p style="font-weight:600;margin:0">Selected account: {{ selectedAccount()!.accountName }}</p>
         <p style="font-size:12px;color:var(--muted);margin:4px 0 0 0">Status: {{ selectedAccount()!.accountStatus }}</p>
       </div>
-      <a routerLink="/app/overview" class="btn btn-primary btn-sm">Go to overview</a>
+      <a routerLink="/app/overview" class="btn btn-primary btn-sm account-action">Go to overview</a>
     </div>
+  }
+
+  @if (selectedAccount(); as account) {
+    <section class="account-transfer" aria-label="Manage cash for selected account">
+      <div class="account-transfer-heading">
+        <div><h3>Manage cash · {{ account.accountName }}</h3><p class="sub">Deposits and withdrawals apply only to this account.</p></div>
+        <a routerLink="/app/cash-activity" class="toolbar-link">View cash activity →</a>
+      </div>
+      <p class="stat-note">Cash balance: {{ trading.loading() || trading.error() ? '—' : trading.money(trading.cash()) }}</p>
+      @if (account.accountStatus !== 'ACTIVE') {
+        <p class="error-text" role="status">Cash transfers are unavailable for an inactive account.</p>
+      } @else {
+        <div class="seg" aria-label="Cash transfer type">
+          <button type="button" class="seg-opt" [class.active]="transferMode === 'deposit'" [disabled]="transferSubmitting" (click)="setTransferMode('deposit')">Deposit</button>
+          <button type="button" class="seg-opt" [class.active]="transferMode === 'withdraw'" [disabled]="transferSubmitting" (click)="setTransferMode('withdraw')">Withdraw</button>
+        </div>
+        @if (transferReceipt; as receipt) {
+          <div class="transfer-receipt" role="status">
+            <div class="receipt-mark">✓</div><h3 class="receipt-head">{{ receipt.head }}</h3>
+            <p class="receipt-body">@for (line of receipt.lines; track line) { {{ line }}<br /> }</p>
+            <button type="button" class="btn btn-primary btn-sm" (click)="clearTransfer()">Make another transfer</button>
+          </div>
+        } @else {
+          <div class="account-transfer-form">
+            <div class="account-transfer-field">
+              <label class="label" for="transferAmount">Amount (USD)</label>
+              <input id="transferAmount" class="input" inputmode="decimal" autocomplete="off" [(ngModel)]="transferAmount" (keyup.enter)="submitTransfer()" placeholder="0.00" />
+            </div>
+            <button type="button" class="btn btn-primary" [disabled]="transferSubmitting" (click)="submitTransfer()">{{ transferSubmitting ? 'Processing…' : 'Confirm ' + (transferMode === 'deposit' ? 'deposit' : 'withdrawal') }}</button>
+          </div>
+          @if (transferError) { <p class="error-text" role="alert">{{ transferError }}</p> }
+          <p class="note">Transfers update your cash balance immediately. An accepted order must finish before cash can be moved.</p>
+        }
+      }
+    </section>
+  } @else {
+    <p class="sub">Select an account below to deposit or withdraw cash.</p>
   }
 
   <!-- Create New Account Form -->
   <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--line-soft)">
     <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Create New Account</h3>
-    <div style="display:flex;gap:8px;align-items:flex-end">
-      <div style="flex:1">
+    <div class="account-create-form">
+      <div class="account-name-field">
         <label class="label" for="accountName">Account Name</label>
-        <input 
-          id="accountName" 
-          class="input" 
-          type="text" 
+        <input
+          id="accountName"
+          class="input"
+          type="text"
           [class.invalid]="invalid('accountName')"
-          [(ngModel)]="newAccountName" 
+          [(ngModel)]="newAccountName"
           (keyup.enter)="submit()"
           placeholder="e.g., Primary Trading, Retirement, etc." />
       </div>
-      <button 
-        class="btn btn-primary" 
-        (click)="submit()" 
+      <button
+        class="btn btn-primary create-account-button"
+        (click)="submit()"
         [disabled]="isCreating">
         {{ isCreating ? 'Creating...' : 'Create Account' }}
       </button>
@@ -68,29 +98,33 @@
   @if (accounts.length === 0) {
     <p style="color:var(--muted)">No trading accounts yet. Create one to get started!</p>
   } @else {
-    <div style="display:grid;gap:12px">
+    <div class="account-list">
       @for (account of accounts; track account.accountId) {
-        <div 
-          style="padding:12px;border:1px solid var(--line-soft);border-radius:4px;cursor:pointer;transition:all 0.2s"
+        <div
+          class="account-row"
           [style.background]="selectedAccount()?.accountId === account.accountId ? 'rgba(0,200,0,0.05)' : 'transparent'"
-          [style.border]="selectedAccount()?.accountId === account.accountId ? '1px solid var(--gain)' : '1px solid var(--line-soft)'"
-          (click)="selectAccount(account)"
-          (keyup.enter)="selectAccount(account)"
-          role="button"
-          tabindex="0">
-          <div style="display:flex;justify-content:space-between;align-items:start">
-            <div>
+          [style.border]="selectedAccount()?.accountId === account.accountId ? '1px solid var(--gain)' : '1px solid var(--line-soft)'">
+          <div class="account-row-heading">
+            <div class="account-summary">
               <strong style="font-size:14px">{{ account.accountName }}</strong>
               <div style="font-size:12px;color:var(--muted);margin-top:4px">
                 Opened {{ account.openedAt | date:'short' }}
               </div>
             </div>
-            <span [style.color]="account.accountStatus === 'ACTIVE' ? 'var(--gain)' : 'var(--loss)'">
+            <span class="account-status" [style.color]="account.accountStatus === 'ACTIVE' ? 'var(--gain)' : 'var(--danger)'">
               {{ account.accountStatus }}
             </span>
+          </div>
+          <div class="account-row-actions">
+            <button type="button" class="btn-chip" (click)="selectAccount(account)" [disabled]="transferSubmitting || selectedAccount()?.accountId === account.accountId">{{ selectedAccount()?.accountId === account.accountId ? 'Selected' : 'Select account' }}</button>
+            @if (account.accountStatus === 'ACTIVE') {
+              <button type="button" class="btn-chip" [disabled]="transferSubmitting" (click)="selectAccount(account, 'deposit')">Deposit</button>
+              <button type="button" class="btn-chip" [disabled]="transferSubmitting" (click)="selectAccount(account, 'withdraw')">Withdraw</button>
+            }
           </div>
         </div>
       }
     </div>
   }
 </div>
+

@@ -1,22 +1,27 @@
 <div class="auth-page">
+  <aside class="auth-story">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">↗</span><span>Inside Tr8ders<small>YOUR TRADING SPACE</small></span></div>
+    <div><h2>A fresh start.<br /><em>A clearer perspective.</em></h2><p>Create your workspace to explore markets, build a portfolio and see every order through.</p><div class="auth-features"><span>Your own accounts</span><span>Your watchlist</span><span>Your trading history</span></div></div>
+    <p class="auth-story-foot"></p>
+  </aside>
   <div class="auth-card">
     <h1 class="auth-title">Create your account</h1>
     <p class="auth-sub">Start trading with a personal investor account.</p>
 
     <label class="label" for="name">Full Name</label>
-    <input id="name" class="input" type="text" [class.invalid]="invalid('name')"
+    <input id="name" class="input" type="text" autocomplete="name" [class.invalid]="invalid('name')"
        [(ngModel)]="name" placeholder="Your full name" />
 
     <label class="label" for="email">Email</label>
-    <input id="email" class="input" type="email" [class.invalid]="invalid('email')"
+    <input id="email" class="input" type="email" autocomplete="username" [class.invalid]="invalid('email')"
            [(ngModel)]="email" (keyup.enter)="submit()" placeholder="you@example.com" />
 
     <label class="label" for="password">Password</label>
-    <input id="password" type="password" class="input" [class.invalid]="invalid('password')"
+    <input id="password" type="password" autocomplete="new-password" class="input" [class.invalid]="invalid('password')"
            [(ngModel)]="password" (keyup.enter)="submit()" placeholder="Create a password" />
 
     <label class="label" for="confirm">Confirm password</label>
-    <input id="confirm" type="password" class="input" [class.invalid]="invalid('confirm')"
+    <input id="confirm" type="password" autocomplete="new-password" class="input" [class.invalid]="invalid('confirm')"
            [(ngModel)]="confirm" (keyup.enter)="submit()" placeholder="Repeat your password" />
 
     @if (error) {

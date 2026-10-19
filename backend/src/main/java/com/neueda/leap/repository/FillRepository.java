@@ -6,8 +6,15 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.List;
 
 public interface FillRepository extends Repository<Fill, Integer> {
+    @Query("""
+            select f from Fill f join fetch f.order o join fetch o.instrument
+            where o.account.accountId = :accountId and o.account.client.clientId = :clientId
+            """)
+    List<Fill> findOwnedFills(@Param("accountId") Integer accountId, @Param("clientId") Integer clientId);
+
     Fill save(Fill fill);
 
     @Query(

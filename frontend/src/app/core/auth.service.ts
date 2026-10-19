@@ -1,7 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { API_CONFIG } from './api.config';
 
 export interface AuthFailure {
   message: string;
@@ -51,7 +50,12 @@ export class AuthService {
     }
   }
 
-  async register(name: string, email: string, password: string, confirm: string): Promise<AuthFailure | null> {
+  async register(
+    name: string,
+    email: string,
+    password: string,
+    confirm: string,
+  ): Promise<AuthFailure | null> {
     const userName = name.trim();
     if (!userName) return { message: 'Enter your full name.', fields: ['name'] };
     const userEmail = email.trim();
@@ -64,7 +68,11 @@ export class AuthService {
     }
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiUrl}/register`, { name: userName, email: userEmail, password }),
+        this.http.post<AuthResponse>(`${this.apiUrl}/register`, {
+          name: userName,
+          email: userEmail,
+          password,
+        }),
       );
       this.setCurrentUser(response.clientName, response.email, response.accessToken);
       return null;
@@ -73,12 +81,16 @@ export class AuthService {
     }
   }
 
-  signOut(): void {
+  async signOut(): Promise<void> {
+    const revoke = this.getAccessToken()
+      ? firstValueFrom(this.http.post<void>(`${this.apiUrl}/sign-out`, {})).catch(() => undefined)
+      : Promise.resolve();
     sessionStorage.removeItem('currentUserName');
     sessionStorage.removeItem('currentUserEmail');
     sessionStorage.removeItem('accessToken');
     this.currentUser.set(null);
     this.currentUserEmail.set(null);
+    await revoke;
   }
 
   private setCurrentUser(name: string, email: string, accessToken: string): void {
@@ -90,8 +102,25 @@ export class AuthService {
   }
 
   private apiFailure(error: unknown, fields: string[]): AuthFailure {
+    if (error instanceof HttpErrorResponse && error.status === 0) {
+      return {
+        message:
+          'Cannot reach the backend. Check that the backend container is running and port 8082 is reachable.',
+        fields: [],
+      };
+    }
     if (error instanceof HttpErrorResponse && error.error?.detail) {
       return { message: error.error.detail, fields };
+    }
+    if (error instanceof HttpErrorResponse && typeof error.error === 'string') {
+      return { message: error.error, fields };
+    }
+    if (error instanceof HttpErrorResponse && error.status >= 500) {
+      return {
+        message:
+          'The backend failed to process this request. Check its container logs and try again.',
+        fields: [],
+      };
     }
     return { message: 'An error occurred. Please try again.', fields };
   }
