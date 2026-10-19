@@ -390,3 +390,4 @@ export class TradingService {
     return 'The request failed. Please try again.';
   }
 }
+
