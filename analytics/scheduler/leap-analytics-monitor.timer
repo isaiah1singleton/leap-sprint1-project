@@ -1,0 +1,10 @@
+[Unit]
+Description=Check LEAP analytics every 15 minutes
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+Unit=leap-analytics-monitor.service
+
+[Install]
+WantedBy=timers.target
