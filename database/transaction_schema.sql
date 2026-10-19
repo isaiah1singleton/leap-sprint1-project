@@ -208,21 +208,12 @@ CREATE TABLE cash_movements
     movement_type TEXT NOT NULL
         CHECK (
             movement_type IN (
-<<<<<<< HEAD
                               'DEPOSIT',
                               'WITHDRAW',
                               'TRADE',
                               'ADJUSTMENT'
                 )
             ),
-=======
-                'DEPOSIT',
-                'WITHDRAW',
-                'TRADE',
-                'ADJUSTMENT'
-            )
-        ),
->>>>>>> feature/admin-kafka
 
     currency TEXT NOT NULL
         CHECK (currency IN ('EUR', 'USD', 'GBP', 'INR')),
@@ -245,15 +236,9 @@ CREATE TABLE cash_movements
     CONSTRAINT ck_cash_movements_direction
         CHECK (
             (movement_type = 'DEPOSIT' AND amount > 0)
-<<<<<<< HEAD
                 OR
             (movement_type = 'WITHDRAW' AND amount < 0)
                 OR
-=======
-            OR
-            (movement_type = 'WITHDRAW' AND amount < 0)
-            OR
->>>>>>> feature/admin-kafka
             movement_type IN ('TRADE', 'ADJUSTMENT')
             ),
 
@@ -275,8 +260,3 @@ CREATE TABLE fifo_allocations
 
     allocated_quantity INTEGER NOT NULL CHECK(allocated_quantity > 0)
 );
-
-<<<<<<< HEAD
-
-=======
->>>>>>> feature/admin-kafka
