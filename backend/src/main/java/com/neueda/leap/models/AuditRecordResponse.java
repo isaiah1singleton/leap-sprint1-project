@@ -21,7 +21,8 @@ public record AuditRecordResponse(
         BigDecimal price,
         String status,
         String reason,
-        OffsetDateTime occurredAt
+        OffsetDateTime occurredAt,
+        boolean suspicious
 ) {
     public static AuditRecordResponse from(AuditRecord record) {
         return new AuditRecordResponse(record.getAuditRecordId(), record.getEventId(),
@@ -29,6 +30,6 @@ public record AuditRecordResponse(
                 record.getAccountId(), record.getClientId(), record.getClientName(),
                 record.getClientEmail(), record.getInstrument(), record.getSide(),
                 record.getQuantity(), record.getPrice(), record.getStatus(), record.getReason(),
-                record.getOccurredAt());
+                record.getOccurredAt(), false);
     }
 }

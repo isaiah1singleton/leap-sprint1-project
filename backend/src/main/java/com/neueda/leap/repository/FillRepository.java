@@ -31,4 +31,7 @@ public interface FillRepository extends Repository<Fill, Integer> {
         @Param("orderId") Integer orderId,
         @Param("clientId") Integer clientId
     );
+
+    @Query("select f from Fill f join fetch f.order o join fetch o.instrument where o.orderId = :orderId")
+    Optional<Fill> findByOrderId(@Param("orderId") Integer orderId);
 }

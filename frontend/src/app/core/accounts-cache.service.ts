@@ -1,11 +1,13 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AccountService, AccountResponse } from './account.service';
 import { AuthService } from './auth.service';
+import { AccountSelectionService } from './account-selection.service';
 
 @Injectable({ providedIn: 'root' })
 export class AccountsCacheService {
   private readonly accountService = inject(AccountService);
   private readonly auth = inject(AuthService);
+  private readonly accountSelection = inject(AccountSelectionService);
   
   readonly accounts = signal<AccountResponse[]>([]);
   readonly activeAccounts = signal<AccountResponse[]>([]);
@@ -38,9 +40,15 @@ export class AccountsCacheService {
       console.log(`✅ Accounts cached for ${currentUser}:`, fetchedAccounts);
       
       this.accounts.set(fetchedAccounts);
-      this.activeAccounts.set(fetchedAccounts.filter(acc => acc.accountStatus === 'ACTIVE'));
-      console.log(`🟢 Active accounts for ${currentUser}:`, this.activeAccounts());
-      console.log(`📊 Total: ${this.accounts().length} | Active: ${this.activeAccounts().length}`);
+      this.activeAccounts.set(fetchedAccounts);
+      const selected = this.accountSelection.selectedAccount();
+      const refreshedSelected = selected
+        ? fetchedAccounts.find(account => account.accountId === selected.accountId)
+        : null;
+      if (refreshedSelected) {
+        this.accountSelection.selectAccount(refreshedSelected);
+      }
+      console.log(`📊 Accounts available: ${this.accounts().length}`);
       
       return fetchedAccounts;
     } catch (err) {

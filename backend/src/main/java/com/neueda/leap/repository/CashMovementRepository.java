@@ -10,6 +10,9 @@ import java.util.Optional;
 
 
 public interface CashMovementRepository extends JpaRepository<CashMovement, Integer>{
+    @Query("select movement from CashMovement movement join fetch movement.fill fill where fill.order.orderId = :orderId order by movement.occurredAt asc")
+    List<CashMovement> findByOrderId(@Param("orderId") Integer orderId);
+
     @Query("""
             select movement
             from CashMovement movement
