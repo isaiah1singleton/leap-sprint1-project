@@ -63,6 +63,10 @@ services:
       context: ../auth
       dockerfile: Dockerfile
     restart: unless-stopped
+    environment:
+      POSTGRES_AUTH_DB: ${POSTGRES_AUTH_DB}
+      POSTGRES_AUTH_USER: ${POSTGRES_AUTH_USER}
+      POSTGRES_AUTH_PASSWORD: ${POSTGRES_AUTH_PASSWORD}
     depends_on:
       postgres-auth: 
         condition: service_healthy
