@@ -67,7 +67,7 @@ services:
       auth-postgres: 
         condition: service_healthy
     ports:
-      "0.0.0.0:${AUTH_PORT:-3000}:3000"
+      - "0.0.0.0:${AUTH_PORT:-3000}:3000"
 
   backend:
     build:
