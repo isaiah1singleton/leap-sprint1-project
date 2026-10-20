@@ -64,7 +64,8 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      auth-postgres: service_healthy
+      auth-postgres: 
+        condition: service_healthy
     ports:
       "0.0.0.0:${AUTH_PORT:-3000}:3000"
 
