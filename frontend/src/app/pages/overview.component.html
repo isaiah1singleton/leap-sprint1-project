@@ -25,24 +25,6 @@
 } @else {
   @if (trading.error()) { <div class="error-banner dashboard-notice" role="alert">{{ trading.error() }} <button class="btn-chip" (click)="trading.refresh()">Retry</button></div> }
   <app-portfolio-summary />
-  <div class="dashboard-charts" aria-label="Portfolio graphs">
-    <section class="card dashboard-chart" aria-labelledby="holdings-chart-title">
-      <div class="section-heading"><div><h2 id="holdings-chart-title" class="card-title">Holdings mix</h2><p class="sub">Share quantity by instrument</p></div><a routerLink="/app/portfolio">Details →</a></div>
-      @if (trading.loading()) { <p class="sub" role="status">Loading holdings…</p> }
-      @else if (trading.error()) { <p class="sub">Holdings unavailable.</p> }
-      @else {
-        <div class="bar-chart" role="list" aria-label="Holdings share by instrument">
-          @for (position of holdingMix(); track position.instrumentId; let index = $index) {
-            <div class="bar-row" role="listitem">
-              <div class="bar-label"><strong>{{ position.sym }}</strong><span>{{ position.qty | number:'1.0-4' }} units</span></div>
-              <div class="bar-track"><span class="bar-fill" [style.width.%]="position.share" [style.backgroundColor]="chartColor(index)"></span></div>
-              <strong class="bar-value">{{ position.share | number:'1.0-1' }}%</strong>
-            </div>
-          } @empty { <p class="sub">Your holdings will appear after a filled buy order.</p> }
-        </div>
-      }
-    </section>
-  </div>
   <div class="portfolio-context"><a routerLink="/app/portfolio">{{ trading.loading() || trading.error() ? '—' : trading.positions().length }} open positions →</a><a routerLink="/app/orders">{{ trading.loading() || trading.error() ? '—' : trading.pendingOrderCount() }} orders awaiting execution →</a></div>
 }
 <div class="dashboard-grid">

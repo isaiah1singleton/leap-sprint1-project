@@ -241,11 +241,6 @@ button:disabled { opacity:.48; cursor:not-allowed; }
 .portfolio-context { display:flex; flex-wrap:wrap; gap:12px 24px; padding:14px 0 24px; font:600 11px var(--ui-font); }
 .portfolio-context a { text-decoration:none; }
 .portfolio-context a:hover { text-decoration:underline; }
-.dashboard-charts { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(320px,1fr); gap:16px; margin-top:24px; }
-.dashboard-chart { min-height:260px; padding:22px; }
-.dashboard-chart .section-heading { margin-bottom:18px; }
-.dashboard-chart .section-heading .sub { margin:4px 0 0; font-size:11px; }
-.dashboard-chart .section-heading a { font-size:12px; flex:none; }
 .bar-chart { display:flex; flex-direction:column; gap:15px; }
 .bar-row { display:grid; grid-template-columns:92px minmax(80px,1fr) 46px; align-items:center; gap:10px; font-size:11px; }
 .bar-label { display:flex; flex-direction:column; min-width:0; }

@@ -27,14 +27,6 @@ export class OverviewComponent implements OnInit {
   readonly accountsError = this.accountsCache.error;
 
   readonly recent = computed(() => this.trading.orders().slice(0, 4));
-  readonly holdingMix = computed(() => {
-    const positions = this.trading.positions();
-    const total = positions.reduce((sum, position) => sum + position.qty, 0);
-    return positions.map(position => ({
-      ...position,
-      share: total > 0 ? position.qty / total * 100 : 0,
-    }));
-  });
   constructor() {
     effect(() => {
       for (const order of this.recent()) {
@@ -60,9 +52,5 @@ export class OverviewComponent implements OnInit {
 
   createAccount(): void {
     this.router.navigate(['/app/account']);
-  }
-
-  chartColor(index: number): string {
-    return `hsl(${(220 + index * 137.5) % 360} 58% 47%)`;
   }
 }
