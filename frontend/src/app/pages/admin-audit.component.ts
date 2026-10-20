@@ -1,10 +1,11 @@
 import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminAuditService, AuditRecord } from '../core/admin-audit.service';
 
 @Component({
   selector: 'app-admin-audit',
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './admin-audit.component.html',
   styleUrl: './admin-audit.component.css',
 })
@@ -126,6 +127,10 @@ export class AdminAuditComponent implements OnDestroy {
     } finally {
       this.updatingOrder.set(null);
     }
+  }
+
+  openLifecycle(record: AuditRecord): void {
+    void this.audit.loadLifecycle(record.orderId);
   }
 
   exportSpreadsheet(): void {

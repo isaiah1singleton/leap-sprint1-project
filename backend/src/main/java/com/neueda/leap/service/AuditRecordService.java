@@ -5,6 +5,11 @@ import com.neueda.leap.models.AuditRecordResponse;
 import com.neueda.leap.models.TradeAuditEvent;
 import com.neueda.leap.repository.AuditRecordRepository;
 import com.neueda.leap.repository.SuspiciousTradeFlagRepository;
+import com.neueda.leap.repository.FillRepository;
+import com.neueda.leap.repository.CashMovementRepository;
+import com.neueda.leap.models.TradeLifecycleResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,12 +24,16 @@ public class AuditRecordService {
     private final AuditRecordRepository repository;
     private final SuspiciousTradeFlagRepository suspiciousFlags;
     private final Clock clock;
+    private final FillRepository fills;
+    private final CashMovementRepository cashMovements;
 
     public AuditRecordService(AuditRecordRepository repository, SuspiciousTradeFlagRepository suspiciousFlags,
-                              Clock clock) {
+                              FillRepository fills, CashMovementRepository cashMovements, Clock clock) {
         this.repository = repository;
         this.suspiciousFlags = suspiciousFlags;
         this.clock = clock;
+        this.fills = fills;
+        this.cashMovements = cashMovements;
     }
 
     @Transactional
@@ -50,4 +59,28 @@ public class AuditRecordService {
                 response.occurredAt(), flagged.getOrDefault(record.getOrderId(), false));
         }).toList();
     }
+
+        @Transactional(readOnly = true)
+        public TradeLifecycleResponse lifecycle(Integer orderId) {
+        var records = repository.findAllByOrderIdOrderByOccurredAtAsc(orderId);
+        if (records.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trade audit record not found.");
+        }
+        AuditRecord first = records.get(0);
+        var events = records.stream().map(record -> new TradeLifecycleResponse.LifecycleEvent(
+            record.getEventId(), record.getEventType(), record.getStatus(), record.getReason(),
+            record.getPrice(), record.getOccurredAt())).toList();
+        var fill = fills.findByOrderId(orderId);
+        var execution = fill.map(value -> new TradeLifecycleResponse.Execution(
+            value.getExecutionPrice(), value.getFillQuantity(), value.getExecutionTime())).orElse(null);
+        var settlements = cashMovements.findByOrderId(orderId).stream()
+            .map(movement -> new TradeLifecycleResponse.Settlement(
+                movement.getCashMovementId(), movement.getAmount(), movement.getCashMovementType().name(),
+                movement.getCurrency().name(), movement.getReason(), movement.getOccurredAt())).toList();
+        boolean complete = events.stream().anyMatch(event -> "FILLED".equals(event.status()))
+            && execution != null && !settlements.isEmpty();
+        return new TradeLifecycleResponse(orderId, "ORD-" + orderId, first.getAccountId(), first.getClientId(),
+            first.getClientName(), first.getClientEmail(), first.getInstrument(), first.getSide(),
+            first.getQuantity(), events, execution, settlements, complete);
+        }
 }

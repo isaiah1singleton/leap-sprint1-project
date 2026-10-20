@@ -103,6 +103,58 @@
     </div>
   </section>
 
+  @if (audit.lifecycleLoading()) {
+    <section class="admin-detail-panel" aria-live="polite"><p class="sub">Loading complete trade lifecycle...</p></section>
+  }
+
+  @if (audit.lifecycle(); as lifecycle) {
+    <section class="admin-detail-panel" aria-label="Trade lifecycle">
+      <div class="table-heading">
+        <div>
+          <p class="admin-eyebrow">DISPUTE / REGULATORY VIEW</p>
+          <h3>{{ lifecycle.orderRef }} lifecycle</h3>
+          <p>{{ lifecycle.clientName }} &lt;{{ lifecycle.clientEmail }}&gt; · Account {{ lifecycle.accountId }} · {{ lifecycle.instrument }} {{ lifecycle.side }} {{ lifecycle.quantity }}</p>
+        </div>
+        <div class="detail-actions">
+          <span class="integrity-badge" [class.incomplete]="!lifecycle.complete">{{ lifecycle.complete ? 'Complete evidence' : 'Incomplete evidence' }}</span>
+          <button class="btn-chip" type="button" (click)="audit.closeLifecycle()">Close detail</button>
+        </div>
+      </div>
+      <div class="lifecycle-grid">
+        <div>
+          <h4>Order and pricing events</h4>
+          <ol class="lifecycle-list">
+            @for (event of lifecycle.events; track event.eventId) {
+              <li>
+                <div><strong>{{ event.status }}</strong><span>{{ event.eventType }}</span></div>
+                <time>{{ event.occurredAt | date:'medium' }}</time>
+                @if (event.price !== null) { <p>Price {{ event.price | number:'1.2-8' }}</p> }
+                @if (event.reason) { <p>{{ event.reason }}</p> }
+              </li>
+            }
+          </ol>
+        </div>
+        <div>
+          <h4>Execution and settlement</h4>
+          @if (lifecycle.execution; as execution) {
+            <dl class="detail-list">
+              <div><dt>Execution price</dt><dd>{{ execution.price | number:'1.2-8' }}</dd></div>
+              <div><dt>Executed quantity</dt><dd>{{ execution.quantity | number:'1.0-8' }}</dd></div>
+              <div><dt>Executed at</dt><dd>{{ execution.executedAt | date:'medium' }}</dd></div>
+            </dl>
+          } @else { <p class="sub">No execution recorded.</p> }
+          @for (settlement of lifecycle.settlements; track settlement.movementId) {
+            <dl class="detail-list settlement-list">
+              <div><dt>{{ settlement.movementType }} · {{ settlement.currency }}</dt><dd>{{ settlement.amount | number:'1.2-8' }}</dd></div>
+              <div><dt>Settled at</dt><dd>{{ settlement.occurredAt | date:'medium' }}</dd></div>
+              @if (settlement.reason) { <div><dt>Reason</dt><dd>{{ settlement.reason }}</dd></div> }
+            </dl>
+          } @empty { <p class="sub">No cash settlement recorded.</p> }
+        </div>
+      </div>
+    </section>
+  }
+
   <section class="admin-insights" aria-label="Audit breakdowns">
     <div class="insight-panel">
       <h3>By status</h3>
@@ -178,7 +230,7 @@
       @for (record of filteredRecords(); track record.auditId) {
         <tr>
           <td class="sym">#{{ record.auditId }}</td>
-          <td>{{ record.orderRef }}</td>
+          <td><button class="order-link" type="button" (click)="openLifecycle(record)">{{ record.orderRef }}</button></td>
           <td>{{ record.actor }}</td>
           <td>{{ record.account }}</td>
           <td>{{ record.instrument }}</td>

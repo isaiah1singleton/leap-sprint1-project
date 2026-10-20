@@ -134,6 +134,122 @@
   border-radius: var(--radius);
 }
 
+.admin-detail-panel {
+  margin-top: 14px;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.admin-detail-panel h3,
+.admin-detail-panel h4 {
+  margin: 0;
+}
+
+.admin-detail-panel h4 {
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.admin-detail-panel .table-heading p:not(.admin-eyebrow) {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.integrity-badge {
+  padding: 6px 9px;
+  border-radius: 5px;
+  color: var(--gain);
+  background: #e5f5ed;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.integrity-badge.incomplete {
+  color: var(--danger);
+  background: var(--danger-tint);
+}
+
+.lifecycle-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr);
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.lifecycle-list {
+  display: grid;
+  gap: 10px;
+  padding: 0 0 0 20px;
+  margin: 0;
+}
+
+.lifecycle-list li {
+  padding-left: 6px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.lifecycle-list li:last-child {
+  border-bottom: 0;
+}
+
+.lifecycle-list li > div {
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+}
+
+.lifecycle-list li span,
+.lifecycle-list time,
+.lifecycle-list p {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.lifecycle-list time,
+.lifecycle-list p {
+  display: block;
+  margin: 4px 0 8px;
+}
+
+.detail-list {
+  margin: 0 0 14px;
+  padding: 0;
+}
+
+.detail-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12px;
+}
+
+.detail-list dt { color: var(--muted); }
+.detail-list dd { margin: 0; text-align: right; }
+.settlement-list { border-left: 3px solid var(--accent-soft); padding-left: 10px; }
+
+.order-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .filter-heading h3,
 .table-heading h3,
 .insight-panel h3 {
@@ -274,6 +390,10 @@
   }
 
   .admin-insights {
+    grid-template-columns: 1fr;
+  }
+
+  .lifecycle-grid {
     grid-template-columns: 1fr;
   }
 

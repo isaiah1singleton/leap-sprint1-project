@@ -2,6 +2,7 @@ package com.neueda.leap.controller;
 
 import com.neueda.leap.ApiRoutes;
 import com.neueda.leap.models.AuditRecordResponse;
+import com.neueda.leap.models.TradeLifecycleResponse;
 import com.neueda.leap.service.AuditRecordService;
 import com.neueda.leap.service.ClientService;
 import com.neueda.leap.service.SuspiciousTradeService;
@@ -37,6 +38,12 @@ public class AdminAuditController {
             @RequestParam(defaultValue = "100") int limit) {
         requireAdmin(principal);
         return auditRecords.latest(limit);
+    }
+
+    @GetMapping(ApiRoutes.ADMIN_AUDIT_LIFECYCLE)
+    public TradeLifecycleResponse lifecycle(Principal principal, @PathVariable Integer orderId) {
+        requireAdmin(principal);
+        return auditRecords.lifecycle(orderId);
     }
 
     @PostMapping(ApiRoutes.ADMIN_AUDIT_SUSPICIOUS)

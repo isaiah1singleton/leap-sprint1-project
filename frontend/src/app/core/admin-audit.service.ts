@@ -27,6 +27,22 @@ export interface AuditRecord {
   recordedAtIso: string;
 }
 
+export interface TradeLifecycle {
+  orderId: number;
+  orderRef: string;
+  accountId: number;
+  clientId: number;
+  clientName: string;
+  clientEmail: string;
+  instrument: string;
+  side: string;
+  quantity: number;
+  events: Array<{ eventId: string; eventType: string; status: string; reason: string | null; price: number | null; occurredAt: string }>;
+  execution: { price: number; quantity: number; executedAt: string } | null;
+  settlements: Array<{ movementId: number; amount: number; movementType: string; currency: string; reason: string | null; occurredAt: string }>;
+  complete: boolean;
+}
+
 interface AuditRecordDto {
   auditId: number;
   eventId: string;
@@ -52,6 +68,8 @@ export class AdminAuditService {
   readonly records = signal<AuditRecord[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly lifecycle = signal<TradeLifecycle | null>(null);
+  readonly lifecycleLoading = signal(false);
 
   async refresh(silent = false): Promise<void> {
     if (!silent) {
@@ -80,6 +98,24 @@ export class AdminAuditService {
       await firstValueFrom(this.http.delete<void>(path));
     }
     await this.refresh(true);
+  }
+
+  async loadLifecycle(orderId: number): Promise<void> {
+    this.lifecycleLoading.set(true);
+    this.error.set('');
+    try {
+      const lifecycle = await firstValueFrom(this.http.get<TradeLifecycle>(`/api/admin/audit/${orderId}`));
+      this.lifecycle.set(lifecycle);
+    } catch {
+      this.error.set('Could not load the complete trade lifecycle.');
+      this.lifecycle.set(null);
+    } finally {
+      this.lifecycleLoading.set(false);
+    }
+  }
+
+  closeLifecycle(): void {
+    this.lifecycle.set(null);
   }
 
   clear(): void {
