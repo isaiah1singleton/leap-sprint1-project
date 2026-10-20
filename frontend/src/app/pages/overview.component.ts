@@ -27,7 +27,6 @@ export class OverviewComponent implements OnInit {
   readonly accountsError = this.accountsCache.error;
 
   readonly recent = computed(() => this.trading.orders().slice(0, 4));
-
   constructor() {
     effect(() => {
       for (const order of this.recent()) {

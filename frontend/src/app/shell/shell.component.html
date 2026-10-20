@@ -7,12 +7,14 @@
       </button>
     </div>
     <div id="sidebar-links" class="sidebar-links">
-      <p class="nav-caption">Workspace</p>
-      @for (item of navItems; track item.path) {
-        <a class="nav-link" [class.nav-account]="item.path === '/app/account'" [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page" [attr.aria-label]="item.label" [title]="sidebarCollapsed() ? item.label : ''" (click)="closeMobileNavigation()">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
-          <span class="nav-label">{{ item.label }}</span>
-        </a>
+      @if (!auth.isAdmin()) {
+        <p class="nav-caption">Workspace</p>
+        @for (item of navItems; track item.path) {
+          <a class="nav-link" [class.nav-account]="item.path === '/app/account'" [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page" [attr.aria-label]="item.label" [title]="sidebarCollapsed() ? item.label : ''" (click)="closeMobileNavigation()">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
+        }
       }
       @if (auth.isAdmin()) {
         @for (item of adminNavItems; track item.path) {
@@ -25,7 +27,7 @@
 
   <div class="main">
     <header class="topbar">
-      <div><p class="topbar-context">Your workspace / {{ accountSelection.selectedAccount()?.accountName || 'Select an account' }}</p><h1>{{ pageTitle() }}</h1></div>
+      <div><p class="topbar-context"></p><h1>{{ pageTitle() }}</h1></div>
       <div class="topbar-right">
         <span class="topbar-user">{{ auth.currentUser() }}</span>
         <span class="avatar" aria-hidden="true">{{ auth.currentUser()?.charAt(0)?.toUpperCase() || 'U' }}</span>
