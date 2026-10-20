@@ -18,7 +18,7 @@ import { RefreshTokenService } from "./refresh-token/refresh-token.service";
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'postgres-auth',
-      port: Number(process.env.POSTGRES_AUTH_PORT),
+      port: 5432,
       password: process.env.POSTGRES_AUTH_PASSWORD,
       username: process.env.POSTGRES_AUTH_USER,
       entities: [User, Session, RefreshToken],
