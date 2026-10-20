@@ -1,0 +1,12 @@
+[Unit]
+Description=Check analytics health and send failure/recovery alerts
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ec2-user
+WorkingDirectory=/home/ec2-user/leap-sprint1-project
+ExecStart=/usr/bin/python3 /home/ec2-user/leap-sprint1-project/analytics/scheduler/monitor.py
+TimeoutStartSec=2min
+UMask=0077

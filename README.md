@@ -3,6 +3,11 @@
 This repository contains a Java backend and an Angular frontend. The frontend is
 the Inside Tr8ders sign-in and investor dashboard prototype.
 
+BR-16 trading analytics uses PostgreSQL source snapshots, a containerized ETL
+pipeline, a DuckDB Gold star schema, and Apache Superset dashboards. See the
+[analytics overview](analytics/README.md), [acceptance record](analytics/BR16_ACCEPTANCE.md),
+and [operations guide](analytics/OPERATIONS.md) for setup, verification and limitations.
+
 ## Prerequisites
 
 - Node.js 22 or newer

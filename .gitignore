@@ -1,6 +1,14 @@
 starter/target
 backend/.env
+analytics/.env
+analytics/monitor.json
+analytics/runtime/
 .idea/
 backend/team-skeleton.iml
 backend/target
+.venv/
+__pycache__/
+*.pyc
+analytics/**/*.duckdb
+analytics/**/*.duckdb.wal
 .vscode/*

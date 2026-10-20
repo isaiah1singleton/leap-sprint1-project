@@ -1,0 +1,10 @@
+[Unit]
+Description=Run LEAP analytics hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+Unit=leap-analytics.service
+
+[Install]
+WantedBy=timers.target
