@@ -84,6 +84,11 @@ export class AdminAuditComponent implements OnDestroy {
     this.filteredRecords().filter((record) => record.status === 'FILLED' || record.status === 'REJECTED'),
   );
 
+  readonly lifecycleRecord = computed(() => {
+    const lifecycle = this.audit.lifecycle();
+    return lifecycle ? this.audit.records().find((record) => record.orderId === lifecycle.orderId) ?? null : null;
+  });
+
   readonly summary = computed(() => {
     const rows = this.ledgerRecords();
     const uniqueClients = new Set(rows.map((row) => row.clientEmail)).size;

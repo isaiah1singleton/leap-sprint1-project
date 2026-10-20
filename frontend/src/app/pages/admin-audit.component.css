@@ -17,7 +17,7 @@
   --danger-tint: #fff1f2;
   --gain: #08775a;
   color: var(--ink);
-  max-width: 1500px;
+  max-width: 1360px;
   margin: 0 auto;
 }
 
@@ -93,7 +93,7 @@
 
 .admin-header h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 22px;
   letter-spacing: -.02em;
 }
 
@@ -104,8 +104,8 @@
 .admin-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-top: 4px;
+  gap: 6px;
+  padding-top: 2px;
 }
 
 .live-status {
@@ -127,16 +127,16 @@
 
 .admin-filter-panel,
 .admin-table-panel {
-  margin-top: 22px;
-  padding: 18px;
+  margin-top: 16px;
+  padding: 15px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
 
 .admin-detail-panel {
-  margin-top: 14px;
-  padding: 18px;
+  margin-top: 12px;
+  padding: 15px;
   background: var(--surface);
   border: 1px solid var(--accent);
   border-radius: var(--radius);
@@ -182,8 +182,8 @@
 .lifecycle-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr);
-  gap: 24px;
-  margin-top: 20px;
+  gap: 18px;
+  margin-top: 16px;
 }
 
 .lifecycle-list {
@@ -274,8 +274,8 @@
 .audit-filters {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  gap: 10px 12px;
+  margin-top: 12px;
 }
 
 .filter-field {
@@ -287,13 +287,13 @@
 }
 
 .filter-field .label {
-  margin: 0 0 7px;
+  margin: 0 0 5px;
 }
 
 .admin-metrics {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  margin-top: 14px;
+  margin-top: 12px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -302,7 +302,7 @@
 
 .metric {
   min-width: 0;
-  padding: 15px 16px;
+  padding: 12px 13px;
   border-right: 1px solid var(--line-soft);
 }
 
@@ -316,26 +316,27 @@
 }
 
 .metric .stat-value {
-  margin-top: 6px;
+  margin-top: 4px;
+  font-size: 22px;
 }
 
 .admin-insights {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 14px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .insight-panel {
   min-width: 0;
-  padding: 16px;
+  padding: 13px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
 
 .insight-panel .table {
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .admin-page .table th {
@@ -347,6 +348,8 @@
 
 .admin-page .table td {
   border-bottom-color: var(--line-soft);
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 
 .admin-page .table tbody tr:hover {
@@ -359,7 +362,7 @@
 
 .table-heading {
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .admin-export-actions {

@@ -1,14 +1,12 @@
 <div class="admin-page">
   <header class="admin-header">
     <div>
-      <p class="admin-eyebrow">ADMIN / OPERATIONS</p>
-      <h2>{{ view === 'ledger' ? 'Audit ledger' : view === 'lifecycle' ? 'Trade lifecycle' : 'Review & insights' }}</h2>
-      <p class="sub">{{ view === 'ledger' ? 'One row per filled or rejected order. Select an order to inspect every recorded event.' : view === 'lifecycle' ? 'Reconstruct one order from submission through settlement.' : 'Spot exceptions and understand the audit population.' }}</p>
+      <h2>{{ view === 'ledger' ? 'Audit Ledger' : view === 'lifecycle' ? 'Trade Lifecycle' : 'Review & Insights' }}</h2>
     </div>
     <div class="admin-actions">
       <span class="live-status"><span class="live-dot"></span>Live</span>
-      <button class="btn-chip" (click)="audit.refresh()">Reload data</button>
-      <button class="btn-chip" (click)="resetFilters()">Reset filters</button>
+      <button class="btn-chip" (click)="audit.refresh()">Reload Data</button>
+      <button class="btn-chip" (click)="resetFilters()">Reset Filters</button>
     </div>
   </header>
 
@@ -17,17 +15,15 @@
   }
 
   @if (audit.loading()) {
-    <p class="sub">Loading audit records...</p>
+    <p class="sub">Loading Audit Records...</p>
   }
 
   @if (view === 'ledger') {
   <section class="admin-filter-panel" aria-label="Audit filters">
     <div class="filter-heading">
       <div>
-        <h3>Filter records</h3>
-        <p>Refine the activity shown below.</p>
+        <h3 style="font-size: 18px;">Filter Records</h3>
       </div>
-      <span class="filter-count">{{ ledgerRecords().length }} orders</span>
     </div>
     <div class="audit-filters">
       <div class="filter-field filter-client">
@@ -35,13 +31,13 @@
         <input id="audit-client" class="input" [ngModel]="clientFilter()" (ngModelChange)="setClientFilter($event)" placeholder="Name or email" />
       </div>
       <div class="filter-field filter-order">
-        <label class="label" for="audit-order">Order reference</label>
+        <label class="label" for="audit-order">Order Reference</label>
         <input id="audit-order" class="input" [ngModel]="orderFilter()" (ngModelChange)="setOrderFilter($event)" placeholder="ORD-123 or 123" />
       </div>
       <div class="filter-field">
         <label class="label" for="audit-account">Account</label>
         <select id="audit-account" class="input" [ngModel]="accountFilter()" (ngModelChange)="setAccountFilter($event)">
-          <option value="ALL">All accounts</option>
+          <option value="ALL">All Accounts</option>
           @for (item of accountOptions(); track item) {
             <option [value]="item">{{ item }}</option>
           }
@@ -50,7 +46,7 @@
       <div class="filter-field">
         <label class="label" for="audit-instrument">Instrument</label>
         <select id="audit-instrument" class="input" [ngModel]="instrumentFilter()" (ngModelChange)="setInstrumentFilter($event)">
-          <option value="ALL">All instruments</option>
+          <option value="ALL">All Instruments</option>
           @for (item of instrumentOptions(); track item) {
             <option [value]="item">{{ item }}</option>
           }
@@ -59,7 +55,7 @@
       <div class="filter-field">
         <label class="label" for="audit-status">Status</label>
         <select id="audit-status" class="input" [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
-          <option value="ALL">All statuses</option>
+          <option value="ALL">All Statuses</option>
           @for (item of statusOptions(); track item) {
             <option [value]="item">{{ item }}</option>
           }
@@ -68,18 +64,18 @@
       <div class="filter-field">
         <label class="label" for="audit-side">Side</label>
         <select id="audit-side" class="input" [ngModel]="sideFilter()" (ngModelChange)="setSideFilter($event)">
-          <option value="ALL">All sides</option>
+          <option value="ALL">All Sides</option>
           @for (item of sideOptions(); track item) {
             <option [value]="item">{{ item }}</option>
           }
         </select>
       </div>
       <div class="filter-field">
-        <label class="label" for="audit-from">From date</label>
+        <label class="label" for="audit-from">From Date</label>
         <input id="audit-from" class="input" type="date" [ngModel]="dateFrom()" (ngModelChange)="setDateFrom($event)" />
       </div>
       <div class="filter-field">
-        <label class="label" for="audit-to">To date</label>
+        <label class="label" for="audit-to">To Date</label>
         <input id="audit-to" class="input" type="date" [ngModel]="dateTo()" (ngModelChange)="setDateTo($event)" />
       </div>
     </div>
@@ -128,18 +124,27 @@
     <section class="admin-detail-panel" aria-label="Trade lifecycle">
       <div class="table-heading">
         <div>
-          <p class="admin-eyebrow">DISPUTE / REGULATORY VIEW</p>
-          <h3>{{ lifecycle.orderRef }} lifecycle</h3>
-          <p>{{ lifecycle.clientName }} &lt;{{ lifecycle.clientEmail }}&gt; · Account {{ lifecycle.accountId }} · {{ lifecycle.instrument }} {{ lifecycle.side }} {{ lifecycle.quantity }}</p>
+          <h3 style="font-size: 20px;">{{ lifecycle.orderRef }} History</h3>
+          <p>{{ lifecycle.clientName }}</p>
+          <p>{{ lifecycle.clientEmail }}</p>
+          <p>Account {{ lifecycle.accountId }}</p>
+          <p>{{ lifecycle.side }} {{ lifecycle.instrument }} </p>
+          <p>Quantity: {{ lifecycle.quantity }}</p>
         </div>
         <div class="detail-actions">
-          <span class="integrity-badge" [class.incomplete]="!lifecycle.complete">{{ lifecycle.complete ? 'Complete evidence' : 'Incomplete evidence' }}</span>
+            <span class="integrity-badge" [class.incomplete]="!lifecycle.complete">{{ lifecycleRecord()?.status === 'REJECTED' ? 'Rejected' : lifecycleRecord()?.status === 'FILLED' ? 'Filled' : lifecycle.complete ? 'Complete evidence' : 'Incomplete evidence' }}</span>
+          @if (lifecycleRecord(); as record) {
+            <button class="btn-chip" type="button" [disabled]="updatingOrder() === record.orderId" (click)="toggleSuspicious(record)">
+              {{ updatingOrder() === record.orderId ? 'Updating...' : (record.suspicious ? 'Remove flag' : 'Flag suspicious') }}
+            </button>
+            @if (record.suspicious) { <span class="status-badge status-suspicious">Flagged</span> }
+          }
           <button class="btn-chip" type="button" (click)="audit.closeLifecycle()">Close detail</button>
         </div>
       </div>
       <div class="lifecycle-grid">
         <div>
-          <h4>Order and pricing events</h4>
+          <h4>Order and Pricing Events</h4>
           <dl class="detail-list">
             <div><dt>Submitted at</dt><dd>{{ lifecycle.submittedAt | date:'medium' }}</dd></div>
           </dl>
@@ -243,16 +248,14 @@
       <table class="table">
     <thead>
       <tr>
-        <th>Audit</th>
         <th>Order</th>
-        <th>Actor</th>
+        <th>Client Name</th>
         <th>Account</th>
         <th>Instrument</th>
         <th>Side</th>
         <th class="num">Quantity</th>
         <th class="num">Indicative</th>
         <th>Status</th>
-        <th>Review</th>
         <th>Recorded at</th>
         <th>Reason</th>
       </tr>
@@ -260,28 +263,20 @@
     <tbody>
       @for (record of ledgerRecords(); track record.orderId) {
         <tr>
-          <td class="sym">#{{ record.auditId }}</td>
           <td><button class="order-link" type="button" (click)="openLifecycle(record)">{{ record.orderRef }}</button></td>
-          <td>{{ record.actor }}</td>
+          <td>{{ record.clientName }}</td>
           <td>{{ record.account }}</td>
           <td>{{ record.instrument }}</td>
           <td>{{ record.side }}</td>
           <td class="num">{{ record.quantity }}</td>
           <td class="num">{{ record.indicativePrice }}</td>
           <td>{{ record.status }}</td>
-          <td>
-            <button class="btn-chip" type="button" [disabled]="updatingOrder() === record.orderId"
-              (click)="toggleSuspicious(record)">
-              {{ updatingOrder() === record.orderId ? 'Updating...' : (record.suspicious ? 'Remove flag' : 'Flag suspicious') }}
-            </button>
-            @if (record.suspicious) { <span class="status-badge status-suspicious">Flagged</span> }
-          </td>
           <td>{{ record.recordedAt }}</td>
           <td class="dim">{{ record.reason }}</td>
         </tr>
       } @empty {
         <tr>
-          <td colspan="12" class="dim">No filled or rejected orders match these filters.</td>
+          <td colspan="10" class="dim">No filled or rejected orders match these filters.</td>
         </tr>
       }
     </tbody>

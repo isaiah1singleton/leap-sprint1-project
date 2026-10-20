@@ -254,6 +254,9 @@ export class MarketExplorerComponent
     if (!this.account()) {
       return 'Select a trading account on the dashboard to place an order.';
     }
+    if (this.account()!.accountStatus !== 'ACTIVE') {
+      return 'This account is flagged and cannot execute trades at this time.';
+    }
     if (this.submitting()) {
       return 'Submitting order…';
     }
