@@ -169,6 +169,7 @@
         <th class="num">Quantity</th>
         <th class="num">Indicative</th>
         <th>Status</th>
+        <th>Review</th>
         <th>Recorded at</th>
         <th>Reason</th>
       </tr>
@@ -185,12 +186,19 @@
           <td class="num">{{ record.quantity }}</td>
           <td class="num">{{ record.indicativePrice }}</td>
           <td>{{ record.status }}</td>
+          <td>
+            <button class="btn-chip" type="button" [disabled]="updatingOrder() === record.orderId"
+              (click)="toggleSuspicious(record)">
+              {{ updatingOrder() === record.orderId ? 'Updating...' : (record.suspicious ? 'Remove flag' : 'Flag suspicious') }}
+            </button>
+            @if (record.suspicious) { <span class="status-badge status-suspicious">Flagged</span> }
+          </td>
           <td>{{ record.recordedAt }}</td>
           <td class="dim">{{ record.reason }}</td>
         </tr>
       } @empty {
         <tr>
-          <td colspan="11" class="dim">No trade audit records yet.</td>
+          <td colspan="12" class="dim">No trade audit records yet.</td>
         </tr>
       }
     </tbody>

@@ -344,3 +344,4 @@
     min-width: 0;
   }
 }
+.status-suspicious { margin-left: 8px; color: #a73543; background: #fcebef; }

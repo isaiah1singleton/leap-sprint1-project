@@ -18,6 +18,7 @@ export class AdminAuditComponent implements OnDestroy {
   readonly sideFilter = signal('ALL');
   readonly dateFrom = signal('');
   readonly dateTo = signal('');
+  readonly updatingOrder = signal<number | null>(null);
 
   readonly clientOptions = computed(() => this.distinct(this.audit.records().map((record) => record.clientEmail)));
   readonly instrumentOptions = computed(() => this.distinct(this.audit.records().map((record) => record.instrumentKey)));
@@ -113,6 +114,19 @@ export class AdminAuditComponent implements OnDestroy {
   setSideFilter(value: string): void { this.sideFilter.set(value); }
   setDateFrom(value: string): void { this.dateFrom.set(value); }
   setDateTo(value: string): void { this.dateTo.set(value); }
+
+  async toggleSuspicious(record: AuditRecord): Promise<void> {
+    if (this.updatingOrder() !== null) return;
+    this.updatingOrder.set(record.orderId);
+    this.audit.error.set('');
+    try {
+      await this.audit.setSuspicious(record.orderId, !record.suspicious);
+    } catch {
+      this.audit.error.set('Could not update the suspicious-trade flag.');
+    } finally {
+      this.updatingOrder.set(null);
+    }
+  }
 
   exportSpreadsheet(): void {
     const headers = ['Audit', 'Order', 'Actor', 'Account', 'Instrument', 'Side', 'Quantity', 'Indicative', 'Status', 'Recorded at', 'Reason'];

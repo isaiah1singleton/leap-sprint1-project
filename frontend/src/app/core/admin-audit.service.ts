@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 export interface AuditRecord {
   auditId: number;
   eventId: string;
+  orderId: number;
   orderRef: string;
   actor: string;
   clientName: string;
@@ -21,6 +22,7 @@ export interface AuditRecord {
   indicativePriceValue: number;
   status: string;
   reason: string;
+  suspicious: boolean;
   recordedAt: string;
   recordedAtIso: string;
 }
@@ -28,6 +30,7 @@ export interface AuditRecord {
 interface AuditRecordDto {
   auditId: number;
   eventId: string;
+  orderId: number;
   orderRef: string;
   clientName: string;
   clientEmail: string;
@@ -39,6 +42,7 @@ interface AuditRecordDto {
   price: number | null;
   status: string;
   reason: string | null;
+  suspicious: boolean;
   occurredAt: string;
 }
 
@@ -68,6 +72,16 @@ export class AdminAuditService {
     }
   }
 
+  async setSuspicious(orderId: number, suspicious: boolean): Promise<void> {
+    const path = `/api/admin/audit/${orderId}/suspicious`;
+    if (suspicious) {
+      await firstValueFrom(this.http.post<void>(path, {}));
+    } else {
+      await firstValueFrom(this.http.delete<void>(path));
+    }
+    await this.refresh(true);
+  }
+
   clear(): void {
     this.error.set('Audit records are managed by the backend and cannot be cleared here.');
   }
@@ -78,6 +92,7 @@ export class AdminAuditService {
     return {
       auditId: row.auditId,
       eventId: row.eventId,
+      orderId: row.orderId,
       orderRef: row.orderRef,
       actor: `${row.clientName} <${row.clientEmail}>`,
       clientName: row.clientName,
@@ -94,6 +109,7 @@ export class AdminAuditService {
       indicativePrice: price > 0 ? '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 }) : '-',
       status: row.status,
       reason: row.reason?.trim() || '-',
+      suspicious: row.suspicious,
       recordedAt: occurred.toLocaleString('en-GB', { timeZone: 'UTC' }) + ' UTC',
       recordedAtIso: row.occurredAt,
     };
