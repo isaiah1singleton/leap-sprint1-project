@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -66,6 +67,12 @@ public class AccountDataController {
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail badRequest(IllegalArgumentException error) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, error.getMessage());
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ProblemDetail storageUnavailable(DataAccessException error) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
+                "Account data storage is temporarily unavailable. Please try again later.");
     }
 
     @ExceptionHandler(NoSuchElementException.class)

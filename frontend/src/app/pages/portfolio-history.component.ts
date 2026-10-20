@@ -38,7 +38,8 @@ export class PortfolioHistoryComponent {
         filter(() => !document.hidden),
         switchMap(() => this.http.get<PortfolioHistory>(`/api/accounts/${accountId}/portfolio-history`, { params: { range } }).pipe(
           catchError((error: HttpErrorResponse) => {
-            this.error.set(error.status === 401 ? 'Your session expired. Sign in again to view performance history.'
+            this.error.set(error.status === 401 ? 'Your session could not be verified. Sign in again to view performance history.'
+              : error.status === 503 ? 'Performance history storage is temporarily unavailable. Please try again later.'
               : 'Performance history could not be loaded. Please try again.');
             return of(null);
           }),
