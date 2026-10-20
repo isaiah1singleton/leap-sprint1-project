@@ -1,0 +1,55 @@
+<div class="page-intro">
+  <div><h2>Tax Center</h2><p class="sub">Completed sales across all your accounts. Recorded currencies and UTC dates.</p></div>
+</div>
+<p class="tax-warning"><strong>SIMULATED / NOT FOR TAX FILING</strong><br>Educational brokerage reports. These are not compliant IRS information returns.</p>
+<div class="tax-controls">
+  <label>Tax year <input type="number" min="1900" [max]="currentYear" [(ngModel)]="year" (change)="load()" /></label>
+  <label>Transactions <select [(ngModel)]="document" (ngModelChange)="load()">
+    <option value="1099-B">Stocks and ETFs — Simulated 1099-B</option>
+    <option value="1099-DA">Cryptocurrency — Simulated 1099-DA</option>
+  </select></label>
+</div>
+<div class="tax-downloads">
+  <button class="btn-chip" (click)="download('1099-B')" [disabled]="loading() || !report() || downloading() !== null">Download Simulated 1099-B</button>
+  <button class="btn-chip" (click)="download('1099-DA')" [disabled]="loading() || !report() || downloading() !== null">Download Simulated 1099-DA</button>
+</div>
+@if (downloading()) { <p role="status">Preparing Simulated {{ downloading() }}…</p> }
+@if (downloadError()) { <p class="error-text" role="alert">{{ downloadError() }}</p> }
+@if (loading()) { <p role="status">Loading your completed sales…</p> }
+@if (error()) { <p class="error-text" role="alert">{{ error() }}</p><button class="btn-chip" (click)="load()">Retry</button> }
+@if (report(); as report) {
+  <div class="tax-summary">
+    <div class="card">Realized gains ({{ report.currency }})<strong>{{ decimal(report.gains) }}</strong></div>
+    <div class="card">Realized losses ({{ report.currency }})<strong>{{ decimal(report.losses) }}</strong></div>
+    <div class="card">Net gain/loss ({{ report.currency }})<strong>{{ decimal(report.net) }}</strong></div>
+  </div>
+  @if (report.currency === 'Mixed') {
+    <p class="tax-warning">Combined totals are unavailable for multiple currencies. Each transaction shows its recorded currency; no exchange rate is assumed.</p>
+  }
+  @if (report.unavailableBasisCount) {
+    <p class="tax-warning" role="status">Partial totals: {{ report.unavailableBasisCount }} sale(s) have unavailable FIFO basis and are excluded from gains and losses.</p>
+  }
+  <div class="card">
+    <h2 class="card-title">{{ report.document === '1099-B' ? 'Stock and ETF sales' : 'Cryptocurrency sales' }} · {{ report.year }}</h2>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Completed dispositions">
+      <table class="table">
+        <thead><tr><th scope="col">Asset / currency</th><th scope="col">Sale date</th><th scope="col">Quantity</th><th scope="col">Proceeds</th><th scope="col">FIFO basis</th><th scope="col">Gain/loss</th><th scope="col">Acquired / holding period</th></tr></thead>
+        <tbody>
+          @for (sale of report.sales; track sale.fillId) {
+            <tr>
+              <td>{{ sale.symbol }}<small>{{ sale.description }} · {{ sale.assetClass }} · {{ sale.currency }} · Fill {{ sale.fillId }}</small></td>
+              <td>{{ sale.sold }}</td><td>{{ decimal(sale.quantity) }}</td><td>{{ decimal(sale.proceeds) }}</td>
+              <td>{{ decimal(sale.basis) }}</td><td>{{ decimal(sale.gain) }}</td>
+              <td>@for (lot of sale.lots; track $index) {
+                <small>{{ lot.acquired }} · {{ lot.holdingPeriod }} · {{ decimal(lot.quantity) }} units</small>
+              } @empty { Unavailable }</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7"><div class="empty-state"><strong>No completed sales for this year</strong>Your report will include completed sales once they are recorded. Downloads are available as empty statements.</div></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Totals use combined FIFO cost per sale. PDFs show each allocated purchase lot. Cryptocurrency reporting covers USD buy/sell transactions only. No wash-sale adjustments or tax liability estimates.</p>
+  </div>
+}
