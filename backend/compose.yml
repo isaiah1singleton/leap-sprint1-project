@@ -17,7 +17,7 @@ services:
       timeout: 5s
       retries: 10
 
-  auth-postgres:
+  postgres-auth:
     image: postgres:18
     restart: unless-stopped
     environment:
@@ -64,7 +64,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      auth-postgres: 
+      postgres-auth: 
         condition: service_healthy
     ports:
       - "0.0.0.0:${AUTH_PORT:-3000}:3000"
