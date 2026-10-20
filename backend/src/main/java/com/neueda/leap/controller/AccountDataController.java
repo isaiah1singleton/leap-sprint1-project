@@ -5,6 +5,7 @@ import com.neueda.leap.models.*;
 import com.neueda.leap.service.AccountDataService;
 import com.neueda.leap.service.ClientService;
 import com.neueda.leap.service.PortfolioSummaryService;
+import com.neueda.leap.service.PortfolioHistoryService;
 import java.security.Principal;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -19,11 +20,20 @@ public class AccountDataController {
     private final AccountDataService data;
     private final ClientService clients;
     private final PortfolioSummaryService portfolio;
+    private final PortfolioHistoryService history;
 
-    public AccountDataController(AccountDataService data, ClientService clients, PortfolioSummaryService portfolio) {
+    public AccountDataController(AccountDataService data, ClientService clients, PortfolioSummaryService portfolio,
+                                 PortfolioHistoryService history) {
         this.data = data;
         this.clients = clients;
         this.portfolio = portfolio;
+        this.history = history;
+    }
+
+    @GetMapping(ApiRoutes.ACCOUNT_PORTFOLIO_HISTORY)
+    public PortfolioHistoryResponse portfolioHistory(@PathVariable Integer accountId, Principal principal,
+            @RequestParam(defaultValue = "ALL") String range) {
+        return history.history(accountId, clientId(principal), range);
     }
 
     @GetMapping(ApiRoutes.ACCOUNT_PORTFOLIO_SUMMARY)

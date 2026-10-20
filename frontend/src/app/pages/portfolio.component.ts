@@ -3,10 +3,12 @@ import { RouterLink } from '@angular/router';
 import { AccountSelectionService } from '../core/account-selection.service';
 import { TradingService } from '../core/trading.service';
 import { PortfolioSummary, PortfolioSummaryComponent } from './portfolio-summary.component';
+import { CashTransferComponent } from './cash-transfer.component';
+import { PortfolioHistoryComponent } from './portfolio-history.component';
 
 @Component({
   selector: 'app-portfolio',
-  imports: [RouterLink, PortfolioSummaryComponent],
+  imports: [RouterLink, PortfolioSummaryComponent, CashTransferComponent, PortfolioHistoryComponent],
   templateUrl: './portfolio.component.html',
 })
 export class PortfolioComponent {

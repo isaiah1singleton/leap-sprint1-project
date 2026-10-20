@@ -1,0 +1,65 @@
+<section class="carousel" aria-roledescription="carousel" aria-label="Explore Inside Tr8ders">
+  <div class="slide-region" aria-live="polite" aria-atomic="true">
+    @for (slide of slides; track slide.label; let index = $index) {
+      @if (activeSlide() === index) {
+        <div class="slide" role="group" aria-roledescription="slide" [attr.aria-label]="(index + 1) + ' of ' + slides.length + ': ' + slide.label">
+          <div class="eyebrow"><span></span>{{ slide.label }}</div>
+          <h2>{{ slide.title }}</h2>
+          <p class="description">{{ slide.description }}</p>
+
+          <div class="preview">
+            @switch (index) {
+              @case (0) {
+                <div class="preview-heading"><span>Portfolio value</span><span class="badge">6 months</span></div>
+                <div class="value">$48,920<span class="gain">↗ 12.8%</span></div>
+                <svg class="chart" viewBox="0 0 440 160" role="img" aria-label="Illustrative portfolio chart rising from May through October">
+                  <defs>
+                    <linearGradient id="signin-chart-fill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#b5edcf" stop-opacity=".26" />
+                      <stop offset="100%" stop-color="#b5edcf" stop-opacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path class="grid" d="M0 35H440 M0 85H440 M0 135H440" />
+                  <path fill="url(#signin-chart-fill)" d="M0 133 L34 124 L62 130 L94 103 L126 110 L158 77 L190 86 L220 67 L251 76 L283 45 L315 54 L347 29 L378 37 L412 16 L440 21 V160 H0Z" />
+                  <path class="chart-line" d="M0 133 L34 124 L62 130 L94 103 L126 110 L158 77 L190 86 L220 67 L251 76 L283 45 L315 54 L347 29 L378 37 L412 16 L440 21" />
+                  <circle cx="440" cy="21" r="4" fill="#b5edcf" />
+                </svg>
+                <div class="chart-labels"><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span></div>
+                <div class="preview-footer"><span>Holdings <strong>$42,500</strong></span><span>Cash <strong>$6,420</strong></span></div>
+              }
+              @case (1) {
+                <div class="preview-heading"><span>Your watchlist</span><span class="badge">3 stocks</span></div>
+                <div class="stock"><span class="stock-icon">A</span><span class="stock-name"><strong>AAPL</strong><small>Apple Inc.</small></span><svg viewBox="0 0 80 32" aria-hidden="true"><path d="M0 26L12 19L23 23L36 10L47 15L60 6L80 3" /></svg><span class="stock-price">$231.40<small class="gain">+1.24%</small></span></div>
+                <div class="stock"><span class="stock-icon">M</span><span class="stock-name"><strong>MSFT</strong><small>Microsoft</small></span><svg viewBox="0 0 80 32" aria-hidden="true"><path d="M0 24L14 26L26 14L39 20L51 9L64 12L80 4" /></svg><span class="stock-price">$428.75<small class="gain">+0.86%</small></span></div>
+                <div class="stock"><span class="stock-icon">N</span><span class="stock-name"><strong>NVDA</strong><small>NVIDIA</small></span><svg viewBox="0 0 80 32" aria-hidden="true"><path d="M0 28L13 19L25 23L38 13L50 16L63 4L80 7" /></svg><span class="stock-price">$142.60<small class="gain">+2.18%</small></span></div>
+              }
+              @case (2) {
+                <div class="preview-heading"><span>Order activity</span><span class="badge">Filled</span></div>
+                <div class="order-summary"><span class="stock-icon">A</span><div><strong>Buy AAPL</strong><small>10 shares · Market order</small></div><span class="order-check" aria-hidden="true">✓</span></div>
+                <ol class="timeline">
+                  <li><span class="step" aria-hidden="true">✓</span><div><strong>Submitted</strong><small>Your order is received</small></div><time>10:42:01</time></li>
+                  <li><span class="step" aria-hidden="true">✓</span><div><strong>Accepted</strong><small>Checks complete, ready to execute</small></div><time>10:42:02</time></li>
+                  <li><span class="step" aria-hidden="true">✓</span><div><strong>Filled</strong><small>Your holdings are updated</small></div><time>10:42:04</time></li>
+                </ol>
+              }
+            }
+          </div>
+          <span class="sample-note">Illustrative preview · Sample data</span>
+        </div>
+      }
+    }
+  </div>
+  <div class="controls">
+    <div class="pagination" aria-label="Choose a feature">
+      @for (slide of slides; track slide.label; let index = $index) {
+        <button type="button" class="dot-button" [class.selected]="activeSlide() === index"
+          [attr.aria-label]="'Show ' + slide.label" [attr.aria-current]="activeSlide() === index ? 'true' : null"
+          (click)="selectSlide(index)"><span></span></button>
+      }
+    </div>
+    <div class="navigation">
+      <button type="button" class="arrow" aria-label="Previous feature" (click)="selectSlide(activeSlide() - 1)">←</button>
+      <button type="button" class="arrow" aria-label="Next feature" (click)="selectSlide(activeSlide() + 1)">→</button>
+    </div>
+  </div>
+</section>
