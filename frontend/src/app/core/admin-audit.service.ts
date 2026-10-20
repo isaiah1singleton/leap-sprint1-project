@@ -37,6 +37,7 @@ export interface TradeLifecycle {
   instrument: string;
   side: string;
   quantity: number;
+  submittedAt: string;
   events: Array<{ eventId: string; eventType: string; status: string; reason: string | null; price: number | null; occurredAt: string }>;
   execution: { price: number; quantity: number; executedAt: string } | null;
   settlements: Array<{ movementId: number; amount: number; movementType: string; currency: string; reason: string | null; occurredAt: string }>;

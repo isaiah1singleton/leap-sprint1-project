@@ -2,8 +2,8 @@
   <header class="admin-header">
     <div>
       <p class="admin-eyebrow">ADMIN / OPERATIONS</p>
-      <h2>Trade Audit</h2>
-      <p class="sub">Monitor order activity and review the latest backend records.</p>
+      <h2>{{ view === 'ledger' ? 'Audit ledger' : view === 'lifecycle' ? 'Trade lifecycle' : 'Review & insights' }}</h2>
+      <p class="sub">{{ view === 'ledger' ? 'One row per filled or rejected order. Select an order to inspect every recorded event.' : view === 'lifecycle' ? 'Reconstruct one order from submission through settlement.' : 'Spot exceptions and understand the audit population.' }}</p>
     </div>
     <div class="admin-actions">
       <span class="live-status"><span class="live-dot"></span>Live</span>
@@ -20,18 +20,23 @@
     <p class="sub">Loading audit records...</p>
   }
 
+  @if (view === 'ledger') {
   <section class="admin-filter-panel" aria-label="Audit filters">
     <div class="filter-heading">
       <div>
         <h3>Filter records</h3>
         <p>Refine the activity shown below.</p>
       </div>
-      <span class="filter-count">{{ filteredRecords().length }} records</span>
+      <span class="filter-count">{{ ledgerRecords().length }} orders</span>
     </div>
     <div class="audit-filters">
       <div class="filter-field filter-client">
         <label class="label" for="audit-client">Client</label>
         <input id="audit-client" class="input" [ngModel]="clientFilter()" (ngModelChange)="setClientFilter($event)" placeholder="Name or email" />
+      </div>
+      <div class="filter-field filter-order">
+        <label class="label" for="audit-order">Order reference</label>
+        <input id="audit-order" class="input" [ngModel]="orderFilter()" (ngModelChange)="setOrderFilter($event)" placeholder="ORD-123 or 123" />
       </div>
       <div class="filter-field">
         <label class="label" for="audit-account">Account</label>
@@ -79,7 +84,9 @@
       </div>
     </div>
   </section>
+  }
 
+  @if (view === 'insights') {
   <section class="admin-metrics" aria-label="Audit summary">
     <div class="metric">
       <p class="stat-label">Visible records</p>
@@ -101,8 +108,18 @@
       <p class="stat-label">Cancelled</p>
       <p class="stat-value">{{ summary().cancelledCount }}</p>
     </div>
+    <div class="metric">
+      <p class="stat-label">Complete evidence</p>
+      <p class="stat-value">{{ summary().completeEvidenceCount }}</p>
+    </div>
+    <div class="metric">
+      <p class="stat-label">Needs review</p>
+      <p class="stat-value loss">{{ summary().reviewCount }}</p>
+    </div>
   </section>
+  }
 
+  @if (view === 'lifecycle') {
   @if (audit.lifecycleLoading()) {
     <section class="admin-detail-panel" aria-live="polite"><p class="sub">Loading complete trade lifecycle...</p></section>
   }
@@ -123,6 +140,9 @@
       <div class="lifecycle-grid">
         <div>
           <h4>Order and pricing events</h4>
+          <dl class="detail-list">
+            <div><dt>Submitted at</dt><dd>{{ lifecycle.submittedAt | date:'medium' }}</dd></div>
+          </dl>
           <ol class="lifecycle-list">
             @for (event of lifecycle.events; track event.eventId) {
               <li>
@@ -155,6 +175,15 @@
     </section>
   }
 
+  @if (!audit.lifecycle() && !audit.lifecycleLoading()) {
+    <section class="admin-detail-panel empty-state" aria-live="polite">
+      <h3>Select an order from the Audit ledger</h3>
+      <p class="sub">Open an order reference to review its recorded events, execution, and settlement evidence here.</p>
+    </section>
+  }
+  }
+
+  @if (view === 'insights') {
   <section class="admin-insights" aria-label="Audit breakdowns">
     <div class="insight-panel">
       <h3>By status</h3>
@@ -197,6 +226,8 @@
     </div>
   </section>
 
+  }
+  @if (view === 'ledger') {
   <section class="admin-table-panel">
     <div class="table-heading">
       <div>
@@ -227,7 +258,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (record of filteredRecords(); track record.auditId) {
+      @for (record of ledgerRecords(); track record.orderId) {
         <tr>
           <td class="sym">#{{ record.auditId }}</td>
           <td><button class="order-link" type="button" (click)="openLifecycle(record)">{{ record.orderRef }}</button></td>
@@ -250,11 +281,12 @@
         </tr>
       } @empty {
         <tr>
-          <td colspan="12" class="dim">No trade audit records yet.</td>
+          <td colspan="12" class="dim">No filled or rejected orders match these filters.</td>
         </tr>
       }
     </tbody>
       </table>
     </div>
   </section>
+  }
 </div>

@@ -15,6 +15,7 @@ public record TradeLifecycleResponse(
         String instrument,
         String side,
         BigDecimal quantity,
+        OffsetDateTime submittedAt,
         List<LifecycleEvent> events,
         Execution execution,
         List<Settlement> settlements,

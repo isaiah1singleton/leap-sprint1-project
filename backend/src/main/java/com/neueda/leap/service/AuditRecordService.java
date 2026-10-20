@@ -7,6 +7,8 @@ import com.neueda.leap.repository.AuditRecordRepository;
 import com.neueda.leap.repository.SuspiciousTradeFlagRepository;
 import com.neueda.leap.repository.FillRepository;
 import com.neueda.leap.repository.CashMovementRepository;
+import com.neueda.leap.repository.OrderEventRepository;
+import com.neueda.leap.repository.OrderRepository;
 import com.neueda.leap.models.TradeLifecycleResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,6 +17,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,14 +30,19 @@ public class AuditRecordService {
     private final Clock clock;
     private final FillRepository fills;
     private final CashMovementRepository cashMovements;
+    private final OrderRepository orders;
+    private final OrderEventRepository orderEvents;
 
     public AuditRecordService(AuditRecordRepository repository, SuspiciousTradeFlagRepository suspiciousFlags,
-                              FillRepository fills, CashMovementRepository cashMovements, Clock clock) {
+                              FillRepository fills, CashMovementRepository cashMovements,
+                              OrderRepository orders, OrderEventRepository orderEvents, Clock clock) {
         this.repository = repository;
         this.suspiciousFlags = suspiciousFlags;
         this.clock = clock;
         this.fills = fills;
         this.cashMovements = cashMovements;
+        this.orders = orders;
+        this.orderEvents = orderEvents;
     }
 
     @Transactional
@@ -62,14 +71,16 @@ public class AuditRecordService {
 
         @Transactional(readOnly = true)
         public TradeLifecycleResponse lifecycle(Integer orderId) {
-        var records = repository.findAllByOrderIdOrderByOccurredAtAsc(orderId);
-        if (records.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trade audit record not found.");
+        var order = orders.findById(orderId).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found."));
+        var orderEventsForOrder = orderEvents.findByOrder_OrderIdOrderByOrderEventIdAsc(orderId);
+        if (orderEventsForOrder.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order lifecycle not found.");
         }
-        AuditRecord first = records.get(0);
-        var events = records.stream().map(record -> new TradeLifecycleResponse.LifecycleEvent(
-            record.getEventId(), record.getEventType(), record.getStatus(), record.getReason(),
-            record.getPrice(), record.getOccurredAt())).toList();
+        var events = orderEventsForOrder.stream().map(event -> new TradeLifecycleResponse.LifecycleEvent(
+            UUID.nameUUIDFromBytes(("order-event:" + event.getOrderEventId()).getBytes(StandardCharsets.UTF_8)),
+            event.getStatus().name(), event.getStatus().name(), event.getReasonForStatusChange(),
+            event.getDecisionQuotePrice(), event.getOccurredAt())).toList();
         var fill = fills.findByOrderId(orderId);
         var execution = fill.map(value -> new TradeLifecycleResponse.Execution(
             value.getExecutionPrice(), value.getFillQuantity(), value.getExecutionTime())).orElse(null);
@@ -79,8 +90,10 @@ public class AuditRecordService {
                 movement.getCurrency().name(), movement.getReason(), movement.getOccurredAt())).toList();
         boolean complete = events.stream().anyMatch(event -> "FILLED".equals(event.status()))
             && execution != null && !settlements.isEmpty();
-        return new TradeLifecycleResponse(orderId, "ORD-" + orderId, first.getAccountId(), first.getClientId(),
-            first.getClientName(), first.getClientEmail(), first.getInstrument(), first.getSide(),
-            first.getQuantity(), events, execution, settlements, complete);
+        var account = order.getAccount();
+        var client = account.getClient();
+        return new TradeLifecycleResponse(orderId, "ORD-" + orderId, account.getAccountId(), client.getClientId(),
+            client.getClientName(), client.getEmail(), order.getInstrument().getSymbol(), order.getSide().name(),
+            order.getRequestedQuantity(), order.getSubmittedAt(), events, execution, settlements, complete);
         }
 }
