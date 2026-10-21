@@ -17,12 +17,12 @@ import { RefreshTokenService } from "./refresh-token/refresh-token.service";
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
+      host: 'postgres-auth',
       port: 5432,
-      password: 'n3u3d4!',
-      username: 'postgres',
+      password: process.env.POSTGRES_AUTH_PASSWORD,
+      username: process.env.POSTGRES_AUTH_USER,
       entities: [User, Session, RefreshToken],
-      database: 'testing',
+      database: process.env.POSTGRES_AUTH_DB,
       synchronize: true,
       logging: true,
     }),
