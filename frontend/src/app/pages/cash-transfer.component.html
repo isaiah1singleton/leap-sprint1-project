@@ -1,0 +1,54 @@
+<section class="card cash-card" aria-label="Account cash">
+  <div class="cash-heading">
+    <h2 class="card-title">Cash balance</h2>
+    <p class="sub">{{ selectedAccount()?.accountName || 'No account selected' }} · USD</p>
+  </div>
+  <div class="cash-row">
+    <p class="stat-value">{{ !selectedAccount() || trading.loading() || trading.error() ? '—' : trading.money(trading.cash()) }}</p>
+    <div class="cash-actions">
+      <button type="button" class="btn btn-primary" [disabled]="!!unavailableReason() || submitting()" aria-describedby="cash-transfer-status" (click)="open('deposit')">Deposit</button>
+      <button type="button" class="btn btn-secondary" [disabled]="!!unavailableReason() || submitting()" aria-describedby="cash-transfer-status" (click)="open('withdraw')">Withdraw</button>
+    </div>
+    <a class="cash-activity-link" routerLink="/app/cash-activity">View cash activity →</a>
+  </div>
+  <div class="cash-status" id="cash-transfer-status" role="status">
+    @if (unavailableReason()) {
+      <p class="note">{{ unavailableReason() }}</p>
+      @if (selectedAccount() && !trading.loading() && (trading.error() || trading.pendingOrderCount() > 0)) {
+        <button type="button" class="btn-chip" (click)="trading.refresh()">Refresh account data</button>
+      }
+    }
+  </div>
+</section>
+
+<dialog #dialog aria-labelledby="cash-dialog-title" (cancel)="close($event)">
+  <h2 id="cash-dialog-title">{{ mode === 'deposit' ? 'Deposit funds' : 'Withdraw funds' }}</h2>
+  <p class="sub">Account: <strong>{{ transferAccount()?.accountName }}</strong></p>
+  @if (receipt(); as result) {
+    <div role="status">
+      <h3>{{ result.head }}</h3>
+      @for (line of result.lines; track line) { <p>{{ line }}</p> }
+    </div>
+    <div class="dialog-actions">
+      <a routerLink="/app/cash-activity" (click)="close()">View cash activity →</a>
+      <button type="button" class="btn btn-primary" (click)="close()">Done</button>
+    </div>
+  } @else {
+    <p>Available cash: <strong>{{ trading.loading() || trading.error() ? '—' : trading.money(trading.cash()) }}</strong></p>
+    <form (ngSubmit)="submit()" [attr.aria-busy]="submitting()">
+      <label class="label" for="cash-transfer-amount">Amount (USD)</label>
+      <input id="cash-transfer-amount" name="amount" class="input" inputmode="decimal" autocomplete="off"
+        [(ngModel)]="amount" [disabled]="submitting()" [attr.aria-invalid]="error() ? 'true' : null"
+        aria-describedby="cash-dialog-note cash-dialog-error" placeholder="0.00" />
+      <p id="cash-dialog-note" class="note">This {{ mode === 'deposit' ? 'deposit' : 'withdrawal' }} applies only to {{ transferAccount()?.accountName }} and updates its cash balance immediately.</p>
+      <p id="cash-dialog-error" class="error-text" role="alert">{{ error() }}</p>
+      @if (unavailableReason() && !submitting()) { <p class="note" role="status">{{ unavailableReason() }}</p> }
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" [disabled]="submitting()" (click)="close()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting() || !!unavailableReason()">
+          {{ submitting() ? 'Processing…' : mode === 'deposit' ? 'Confirm deposit' : 'Confirm withdrawal' }}
+        </button>
+      </div>
+    </form>
+  }
+</dialog>

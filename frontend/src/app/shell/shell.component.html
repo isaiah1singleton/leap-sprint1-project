@@ -32,6 +32,7 @@
     <header class="topbar">
       <div><p class="topbar-context"></p><h1>{{ pageTitle() }}</h1></div>
       <div class="topbar-right">
+        <app-theme-toggle />
         <span class="topbar-user">{{ auth.currentUser() }}</span>
         <span class="avatar" aria-hidden="true">{{ auth.currentUser()?.charAt(0)?.toUpperCase() || 'U' }}</span>
         <button class="btn-chip" (click)="signOut()">Sign out</button>

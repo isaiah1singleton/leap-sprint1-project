@@ -24,6 +24,7 @@
   <div class="empty-state dashboard-notice"><strong>Choose your trading account</strong>Select an account above to view its cash, holdings and activity.</div>
 } @else {
   @if (trading.error()) { <div class="error-banner dashboard-notice" role="alert">{{ trading.error() }} <button class="btn-chip" (click)="trading.refresh()">Retry</button></div> }
+  <app-cash-transfer />
   <app-portfolio-summary />
   <div class="portfolio-context"><a routerLink="/app/portfolio">{{ trading.loading() || trading.error() ? '—' : trading.positions().length }} open positions →</a><a routerLink="/app/orders">{{ trading.loading() || trading.error() ? '—' : trading.pendingOrderCount() }} orders awaiting execution →</a></div>
 }
@@ -47,12 +48,6 @@
     }
   </div>
   <aside class="dashboard-aside" aria-label="Portfolio shortcuts">
-    <section class="card">
-      <h2 class="card-title">Quick actions</h2>
-      <a class="action-link" routerLink="/app/markets"><span><strong>Explore markets</strong><small>Find an instrument to trade</small></span><span aria-hidden="true">↗</span></a>
-      <a class="action-link" routerLink="/app/account" [queryParams]="{ mode: 'deposit' }"><span><strong>Deposit funds</strong><small>Add cash to your account</small></span><span aria-hidden="true">↗</span></a>
-      <a class="action-link" routerLink="/app/account" [queryParams]="{ mode: 'withdraw' }"><span><strong>Withdraw funds</strong><small>Manage your cash balance</small></span><span aria-hidden="true">↗</span></a>
-    </section>
     @if (selectedAccount()) {
       <section class="card">
         <div class="section-heading"><h2 class="card-title">Your holdings</h2><a routerLink="/app/portfolio" aria-label="View all holdings">View all</a></div>

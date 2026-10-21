@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { ClientThemeService } from './core/client-theme.service';
+import { ThemeService } from './core/theme.service';
 
 @Component({
   imports: [RouterOutlet],
@@ -11,6 +12,7 @@ import { ClientThemeService } from './core/client-theme.service';
 export class App {
   private readonly router = inject(Router);
   private readonly clientTheme = inject(ClientThemeService);
+  private readonly theme = inject(ThemeService);
 
   constructor() {
     this.router.events

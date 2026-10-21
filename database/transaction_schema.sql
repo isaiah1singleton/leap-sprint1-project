@@ -273,3 +273,19 @@ CREATE TABLE fifo_allocations
 
     allocated_quantity INTEGER NOT NULL CHECK(allocated_quantity > 0)
 );
+
+-- Forward-only portfolio observations; apply this block to existing databases too.
+CREATE TABLE IF NOT EXISTS portfolio_observations
+(
+    observation_id BIGSERIAL PRIMARY KEY,
+    account_id INTEGER NOT NULL REFERENCES accounts(account_id),
+    observed_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    cash_balance NUMERIC(32, 8) NOT NULL,
+    invested_value NUMERIC(32, 8),
+    portfolio_value NUMERIC(32, 8),
+    lifetime_profit_loss NUMERIC(32, 8),
+    oldest_quote_at TIMESTAMP WITH TIME ZONE,
+    value_unavailable_reason TEXT,
+    profit_loss_unavailable_reason TEXT,
+    CONSTRAINT uk_portfolio_observation_time UNIQUE (account_id, observed_at)
+);
