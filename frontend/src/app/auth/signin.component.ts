@@ -4,10 +4,11 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ClientThemeService } from '../core/client-theme.service';
 import { SigninCarouselComponent } from './signin-carousel.component';
+import { ThemeToggleComponent } from '../core/theme-toggle.component';
 
 @Component({
   selector: 'app-signin',
-  imports: [FormsModule, RouterLink, SigninCarouselComponent],
+  imports: [FormsModule, RouterLink, SigninCarouselComponent, ThemeToggleComponent],
   templateUrl: './signin.component.html',
 })
 export class SigninComponent {

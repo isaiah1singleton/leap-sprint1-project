@@ -4,10 +4,11 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AuthService } from '../core/auth.service';
 import { AccountsCacheService } from '../core/accounts-cache.service';
 import { AccountSelectionService } from '../core/account-selection.service';
+import { ThemeToggleComponent } from '../core/theme-toggle.component';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggleComponent],
   templateUrl: './shell.component.html',
 })
 export class ShellComponent {

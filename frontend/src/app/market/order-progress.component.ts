@@ -126,7 +126,7 @@ export function isFinalOrder(order: OrderDto): boolean {
     .progress-fill.expired { background: #a86b16; }
     .decision-message { margin: 0 0 16px; padding: 12px 14px; border-radius: 8px; line-height: 1.5; }
     .rejected-message { color: var(--danger); background: var(--danger-tint); border: 1px solid var(--danger-line); }
-    .expired-message { color: #80510b; background: #fff4df; border: 1px solid #e9c788; }
+    .expired-message { color: var(--warning-ink); background: var(--warning-surface); border: 1px solid var(--warning-line); }
     @keyframes progress-sheen { to { transform: translateX(100%); } }
     @media (prefers-reduced-motion: reduce) { .progress-fill.pending::after { animation: none; } }
     .actions { display: flex; gap: 10px; margin-top: 22px; }

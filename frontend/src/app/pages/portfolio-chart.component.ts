@@ -13,8 +13,8 @@ export class PortfolioChartComponent {
   readonly selected = signal(-1);
   readonly valid = computed(() => this.points().filter(point => this.value(point) != null));
   readonly current = computed(() => this.points()[this.selected()] ?? this.points().at(-1));
-  readonly color = computed(() => this.metric() === 'portfolioValue' ? '#087d76'
-    : (this.value(this.points().at(-1)) ?? 0) < 0 ? '#b63c48' : '#4666bd');
+  readonly color = computed(() => this.metric() === 'portfolioValue' ? 'var(--chart-portfolio)'
+    : (this.value(this.points().at(-1)) ?? 0) < 0 ? 'var(--chart-loss)' : 'var(--chart-profit)');
   readonly domain = computed(() => {
     const values = this.valid().map(point => this.value(point)!);
     const low = values.length ? values.reduce((a, b) => Math.min(a, b)) : 0;

@@ -3,19 +3,6 @@
 }
 
 .admin-page {
-  --ink: #102636;
-  --ink-soft: #3d5869;
-  --muted: #587183;
-  --faint: #70828e;
-  --line: #cedee4;
-  --line-soft: #e7eef1;
-  --surface: #ffffff;
-  --accent: #087d76;
-  --accent-soft: #e7f5f1;
-  --danger: #b63c48;
-  --danger-line: #da8790;
-  --danger-tint: #fff1f2;
-  --gain: #08775a;
   color: var(--ink);
   max-width: 1500px;
   margin: 0 auto;
@@ -40,13 +27,13 @@
 }
 
 .admin-page .input {
-  border-color: #cdd9df;
+  border-color: var(--input-border);
   color: var(--ink);
   background: var(--surface);
 }
 
 .admin-page .input::placeholder {
-  color: #7c8b96;
+  color: var(--placeholder);
 }
 
 .admin-page .input:focus-visible {
@@ -226,7 +213,7 @@
   font-family: system-ui, -apple-system, 'Helvetica Neue', sans-serif !important;
   color: var(--muted);
   border-bottom-color: var(--line);
-  background: #f5f9fa;
+  background: var(--surface-muted);
 }
 
 .admin-page .table td {
@@ -234,7 +221,7 @@
 }
 
 .admin-page .table tbody tr:hover {
-  background: #f8fbfa;
+  background: var(--surface-hover);
 }
 
 .admin-page .table .dim {
