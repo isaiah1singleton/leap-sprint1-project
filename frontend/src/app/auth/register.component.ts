@@ -2,12 +2,11 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
-import { SigninCarouselComponent } from './signin-carousel.component';
 import { ThemeToggleComponent } from '../core/theme-toggle.component';
 
 @Component({
   selector: 'app-register',
-  imports: [FormsModule, RouterLink, SigninCarouselComponent, ThemeToggleComponent],
+  imports: [FormsModule, RouterLink, ThemeToggleComponent],
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {
