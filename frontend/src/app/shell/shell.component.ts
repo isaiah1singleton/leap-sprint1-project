@@ -51,7 +51,9 @@ export class ShellComponent {
   ];
 
   readonly adminNavItems = [
-    { path: '/app/admin-audit', label: 'Admin audit' },
+    { path: '/app/admin-audit', label: 'Audit ledger', icon: 'M5 4h14v16H5z M8 8h8 M8 12h8 M8 16h5' },
+    { path: '/app/admin-lifecycle', label: 'Trade lifecycle', icon: 'M4 12h4l2-6 4 12 2-6h4 M4 4v16 M20 4v16' },
+    { path: '/app/admin-insights', label: 'Review & insights', icon: 'M4 19V5 M4 19h16 M8 16v-5 M12 16V8 M16 16v-3' },
   ];
 
   pageTitle(): string {

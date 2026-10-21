@@ -1,23 +1,30 @@
 import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AdminAuditService, AuditRecord } from '../core/admin-audit.service';
 
 @Component({
   selector: 'app-admin-audit',
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './admin-audit.component.html',
   styleUrl: './admin-audit.component.css',
 })
 export class AdminAuditComponent implements OnDestroy {
   readonly audit = inject(AdminAuditService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  readonly view = this.route.snapshot.data['view'] as 'ledger' | 'lifecycle' | 'insights' ?? 'ledger';
 
   readonly clientFilter = signal('');
+  readonly orderFilter = signal('');
   readonly instrumentFilter = signal('ALL');
   readonly accountFilter = signal('ALL');
   readonly statusFilter = signal('ALL');
   readonly sideFilter = signal('ALL');
   readonly dateFrom = signal('');
   readonly dateTo = signal('');
+  readonly updatingOrder = signal<number | null>(null);
 
   readonly clientOptions = computed(() => this.distinct(this.audit.records().map((record) => record.clientEmail)));
   readonly instrumentOptions = computed(() => this.distinct(this.audit.records().map((record) => record.instrumentKey)));
@@ -29,6 +36,7 @@ export class AdminAuditComponent implements OnDestroy {
     const from = this.dateFrom();
     const to = this.dateTo();
     const client = this.clientFilter().toLowerCase().trim();
+    const order = this.orderFilter().toLowerCase().trim();
     const instrument = this.instrumentFilter();
     const account = this.accountFilter();
     const status = this.statusFilter();
@@ -36,6 +44,10 @@ export class AdminAuditComponent implements OnDestroy {
 
     return this.audit.records().filter((record) => {
       if (client && !record.clientEmail.toLowerCase().includes(client) && !record.clientName.toLowerCase().includes(client)) {
+        return false;
+      }
+
+      if (order && record.orderRef.toLowerCase() !== order && String(record.orderId) !== order) {
         return false;
       }
 
@@ -68,18 +80,31 @@ export class AdminAuditComponent implements OnDestroy {
     });
   });
 
+  readonly ledgerRecords = computed(() =>
+    this.filteredRecords().filter((record) => record.status === 'FILLED' || record.status === 'REJECTED'),
+  );
+
+  readonly lifecycleRecord = computed(() => {
+    const lifecycle = this.audit.lifecycle();
+    return lifecycle ? this.audit.records().find((record) => record.orderId === lifecycle.orderId) ?? null : null;
+  });
+
   readonly summary = computed(() => {
-    const rows = this.filteredRecords();
+    const rows = this.ledgerRecords();
     const uniqueClients = new Set(rows.map((row) => row.clientEmail)).size;
     const uniqueInstruments = new Set(rows.map((row) => row.instrumentKey)).size;
     const rejectedCount = rows.filter((row) => row.status.includes('REJECT') || row.status.includes('FAILED')).length;
     const cancelledCount = rows.filter((row) => row.status.includes('CANCEL')).length;
+    const completeEvidenceCount = rows.filter((row) => row.status === 'FILLED' || row.status === 'REJECTED' || row.status === 'EXPIRED').length;
+    const reviewCount = rows.filter((row) => row.suspicious || row.status.includes('FAILED')).length;
     return {
       total: rows.length,
       uniqueClients,
       uniqueInstruments,
       rejectedCount,
       cancelledCount,
+      completeEvidenceCount,
+      reviewCount,
     };
   });
 
@@ -90,6 +115,10 @@ export class AdminAuditComponent implements OnDestroy {
 
   constructor() {
     void this.audit.refresh();
+    const orderId = Number(this.route.snapshot.queryParamMap.get('orderId'));
+    if (this.view === 'lifecycle' && Number.isInteger(orderId) && orderId > 0) {
+      void this.audit.loadLifecycle(orderId);
+    }
   }
 
   ngOnDestroy(): void {
@@ -98,6 +127,7 @@ export class AdminAuditComponent implements OnDestroy {
 
   resetFilters(): void {
     this.clientFilter.set('');
+    this.orderFilter.set('');
     this.instrumentFilter.set('ALL');
     this.accountFilter.set('ALL');
     this.statusFilter.set('ALL');
@@ -107,6 +137,7 @@ export class AdminAuditComponent implements OnDestroy {
   }
 
   setClientFilter(value: string): void { this.clientFilter.set(value); }
+  setOrderFilter(value: string): void { this.orderFilter.set(value); }
   setInstrumentFilter(value: string): void { this.instrumentFilter.set(value); }
   setAccountFilter(value: string): void { this.accountFilter.set(value); }
   setStatusFilter(value: string): void { this.statusFilter.set(value); }
@@ -114,9 +145,26 @@ export class AdminAuditComponent implements OnDestroy {
   setDateFrom(value: string): void { this.dateFrom.set(value); }
   setDateTo(value: string): void { this.dateTo.set(value); }
 
+  async toggleSuspicious(record: AuditRecord): Promise<void> {
+    if (this.updatingOrder() !== null) return;
+    this.updatingOrder.set(record.orderId);
+    this.audit.error.set('');
+    try {
+      await this.audit.setSuspicious(record.orderId, !record.suspicious);
+    } catch {
+      this.audit.error.set('Could not update the suspicious-trade flag.');
+    } finally {
+      this.updatingOrder.set(null);
+    }
+  }
+
+  openLifecycle(record: AuditRecord): void {
+    void this.router.navigate(['/app/admin-lifecycle'], { queryParams: { orderId: record.orderId } });
+  }
+
   exportSpreadsheet(): void {
     const headers = ['Audit', 'Order', 'Actor', 'Account', 'Instrument', 'Side', 'Quantity', 'Indicative', 'Status', 'Recorded at', 'Reason'];
-    const rows = this.filteredRecords().map((record) => [
+    const rows = this.ledgerRecords().map((record) => [
       `#${record.auditId}`,
       record.orderRef,
       record.actor,

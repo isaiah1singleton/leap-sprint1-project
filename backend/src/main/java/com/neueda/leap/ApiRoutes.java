@@ -24,6 +24,8 @@ public final class ApiRoutes {
     public static final String MARKET_QUOTE = MARKET_QUOTES + "/{symbol}";
     public static final String MARKET_ALL = MARKET + "/**";
     public static final String ADMIN_AUDIT = "/api/admin/audit";
+    public static final String ADMIN_AUDIT_LIFECYCLE = "/{orderId}";
+    public static final String ADMIN_AUDIT_SUSPICIOUS = "/{orderId}/suspicious";
 
     private ApiRoutes() {
     }

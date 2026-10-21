@@ -4,7 +4,7 @@
 
 .admin-page {
   color: var(--ink);
-  max-width: 1500px;
+  max-width: 1360px;
   margin: 0 auto;
 }
 
@@ -80,7 +80,7 @@
 
 .admin-header h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 22px;
   letter-spacing: -.02em;
 }
 
@@ -91,8 +91,8 @@
 .admin-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-top: 4px;
+  gap: 6px;
+  padding-top: 2px;
 }
 
 .live-status {
@@ -114,11 +114,127 @@
 
 .admin-filter-panel,
 .admin-table-panel {
-  margin-top: 22px;
-  padding: 18px;
+  margin-top: 16px;
+  padding: 15px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+}
+
+.admin-detail-panel {
+  margin-top: 12px;
+  padding: 15px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.admin-detail-panel h3,
+.admin-detail-panel h4 {
+  margin: 0;
+}
+
+.admin-detail-panel h4 {
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.admin-detail-panel .table-heading p:not(.admin-eyebrow) {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.integrity-badge {
+  padding: 6px 9px;
+  border-radius: 5px;
+  color: var(--gain);
+  background: #e5f5ed;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.integrity-badge.incomplete {
+  color: var(--danger);
+  background: var(--danger-tint);
+}
+
+.lifecycle-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr);
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.lifecycle-list {
+  display: grid;
+  gap: 10px;
+  padding: 0 0 0 20px;
+  margin: 0;
+}
+
+.lifecycle-list li {
+  padding-left: 6px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.lifecycle-list li:last-child {
+  border-bottom: 0;
+}
+
+.lifecycle-list li > div {
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+}
+
+.lifecycle-list li span,
+.lifecycle-list time,
+.lifecycle-list p {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.lifecycle-list time,
+.lifecycle-list p {
+  display: block;
+  margin: 4px 0 8px;
+}
+
+.detail-list {
+  margin: 0 0 14px;
+  padding: 0;
+}
+
+.detail-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12px;
+}
+
+.detail-list dt { color: var(--muted); }
+.detail-list dd { margin: 0; text-align: right; }
+.settlement-list { border-left: 3px solid var(--accent-soft); padding-left: 10px; }
+
+.order-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .filter-heading h3,
@@ -145,8 +261,8 @@
 .audit-filters {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  gap: 10px 12px;
+  margin-top: 12px;
 }
 
 .filter-field {
@@ -158,13 +274,13 @@
 }
 
 .filter-field .label {
-  margin: 0 0 7px;
+  margin: 0 0 5px;
 }
 
 .admin-metrics {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  margin-top: 14px;
+  margin-top: 12px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -173,7 +289,7 @@
 
 .metric {
   min-width: 0;
-  padding: 15px 16px;
+  padding: 12px 13px;
   border-right: 1px solid var(--line-soft);
 }
 
@@ -187,26 +303,27 @@
 }
 
 .metric .stat-value {
-  margin-top: 6px;
+  margin-top: 4px;
+  font-size: 22px;
 }
 
 .admin-insights {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 14px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .insight-panel {
   min-width: 0;
-  padding: 16px;
+  padding: 13px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
 
 .insight-panel .table {
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .admin-page .table th {
@@ -218,6 +335,8 @@
 
 .admin-page .table td {
   border-bottom-color: var(--line-soft);
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 
 .admin-page .table tbody tr:hover {
@@ -230,7 +349,7 @@
 
 .table-heading {
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .admin-export-actions {
@@ -261,6 +380,10 @@
   }
 
   .admin-insights {
+    grid-template-columns: 1fr;
+  }
+
+  .lifecycle-grid {
     grid-template-columns: 1fr;
   }
 
@@ -331,3 +454,4 @@
     min-width: 0;
   }
 }
+.status-suspicious { margin-left: 8px; color: #a73543; background: #fcebef; }

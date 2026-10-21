@@ -1,14 +1,12 @@
 <div class="admin-page">
   <header class="admin-header">
     <div>
-      <p class="admin-eyebrow">ADMIN / OPERATIONS</p>
-      <h2>Trade Audit</h2>
-      <p class="sub">Monitor order activity and review the latest backend records.</p>
+      <h2>{{ view === 'ledger' ? 'Audit Ledger' : view === 'lifecycle' ? 'Trade Lifecycle' : 'Review & Insights' }}</h2>
     </div>
     <div class="admin-actions">
       <span class="live-status"><span class="live-dot"></span>Live</span>
-      <button class="btn-chip" (click)="audit.refresh()">Reload data</button>
-      <button class="btn-chip" (click)="resetFilters()">Reset filters</button>
+      <button class="btn-chip" (click)="audit.refresh()">Reload Data</button>
+      <button class="btn-chip" (click)="resetFilters()">Reset Filters</button>
     </div>
   </header>
 
@@ -17,26 +15,29 @@
   }
 
   @if (audit.loading()) {
-    <p class="sub">Loading audit records...</p>
+    <p class="sub">Loading Audit Records...</p>
   }
 
+  @if (view === 'ledger') {
   <section class="admin-filter-panel" aria-label="Audit filters">
     <div class="filter-heading">
       <div>
-        <h3>Filter records</h3>
-        <p>Refine the activity shown below.</p>
+        <h3 style="font-size: 18px;">Filter Records</h3>
       </div>
-      <span class="filter-count">{{ filteredRecords().length }} records</span>
     </div>
     <div class="audit-filters">
       <div class="filter-field filter-client">
         <label class="label" for="audit-client">Client</label>
         <input id="audit-client" class="input" [ngModel]="clientFilter()" (ngModelChange)="setClientFilter($event)" placeholder="Name or email" />
       </div>
+      <div class="filter-field filter-order">
+        <label class="label" for="audit-order">Order Reference</label>
+        <input id="audit-order" class="input" [ngModel]="orderFilter()" (ngModelChange)="setOrderFilter($event)" placeholder="ORD-123 or 123" />
+      </div>
       <div class="filter-field">
         <label class="label" for="audit-account">Account</label>
         <select id="audit-account" class="input" [ngModel]="accountFilter()" (ngModelChange)="setAccountFilter($event)">
-          <option value="ALL">All accounts</option>
+          <option value="ALL">All Accounts</option>
           @for (item of accountOptions(); track item) {
             <option [value]="item">{{ item }}</option>
           }
@@ -45,7 +46,7 @@
       <div class="filter-field">
         <label class="label" for="audit-instrument">Instrument</label>
         <select id="audit-instrument" class="input" [ngModel]="instrumentFilter()" (ngModelChange)="setInstrumentFilter($event)">
-          <option value="ALL">All instruments</option>
+          <option value="ALL">All Instruments</option>
           @for (item of instrumentOptions(); track item) {
             <option [value]="item">{{ item }}</option>
           }
@@ -54,7 +55,7 @@
       <div class="filter-field">
         <label class="label" for="audit-status">Status</label>
         <select id="audit-status" class="input" [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
-          <option value="ALL">All statuses</option>
+          <option value="ALL">All Statuses</option>
           @for (item of statusOptions(); track item) {
             <option [value]="item">{{ item }}</option>
           }
@@ -63,23 +64,25 @@
       <div class="filter-field">
         <label class="label" for="audit-side">Side</label>
         <select id="audit-side" class="input" [ngModel]="sideFilter()" (ngModelChange)="setSideFilter($event)">
-          <option value="ALL">All sides</option>
+          <option value="ALL">All Sides</option>
           @for (item of sideOptions(); track item) {
             <option [value]="item">{{ item }}</option>
           }
         </select>
       </div>
       <div class="filter-field">
-        <label class="label" for="audit-from">From date</label>
+        <label class="label" for="audit-from">From Date</label>
         <input id="audit-from" class="input" type="date" [ngModel]="dateFrom()" (ngModelChange)="setDateFrom($event)" />
       </div>
       <div class="filter-field">
-        <label class="label" for="audit-to">To date</label>
+        <label class="label" for="audit-to">To Date</label>
         <input id="audit-to" class="input" type="date" [ngModel]="dateTo()" (ngModelChange)="setDateTo($event)" />
       </div>
     </div>
   </section>
+  }
 
+  @if (view === 'insights') {
   <section class="admin-metrics" aria-label="Audit summary">
     <div class="metric">
       <p class="stat-label">Visible records</p>
@@ -101,8 +104,91 @@
       <p class="stat-label">Cancelled</p>
       <p class="stat-value">{{ summary().cancelledCount }}</p>
     </div>
+    <div class="metric">
+      <p class="stat-label">Complete evidence</p>
+      <p class="stat-value">{{ summary().completeEvidenceCount }}</p>
+    </div>
+    <div class="metric">
+      <p class="stat-label">Needs review</p>
+      <p class="stat-value loss">{{ summary().reviewCount }}</p>
+    </div>
   </section>
+  }
 
+  @if (view === 'lifecycle') {
+  @if (audit.lifecycleLoading()) {
+    <section class="admin-detail-panel" aria-live="polite"><p class="sub">Loading complete trade lifecycle...</p></section>
+  }
+
+  @if (audit.lifecycle(); as lifecycle) {
+    <section class="admin-detail-panel" aria-label="Trade lifecycle">
+      <div class="table-heading">
+        <div>
+          <h3 style="font-size: 20px;">{{ lifecycle.orderRef }} History</h3>
+          <p>{{ lifecycle.clientName }}</p>
+          <p>{{ lifecycle.clientEmail }}</p>
+          <p>Account {{ lifecycle.accountId }}</p>
+          <p>{{ lifecycle.side }} {{ lifecycle.instrument }} </p>
+          <p>Quantity: {{ lifecycle.quantity }}</p>
+        </div>
+        <div class="detail-actions">
+            <span class="integrity-badge" [class.incomplete]="!lifecycle.complete">{{ lifecycleRecord()?.status === 'REJECTED' ? 'Rejected' : lifecycleRecord()?.status === 'FILLED' ? 'Filled' : lifecycle.complete ? 'Complete evidence' : 'Incomplete evidence' }}</span>
+          @if (lifecycleRecord(); as record) {
+            <button class="btn-chip" type="button" [disabled]="updatingOrder() === record.orderId" (click)="toggleSuspicious(record)">
+              {{ updatingOrder() === record.orderId ? 'Updating...' : (record.suspicious ? 'Remove flag' : 'Flag suspicious') }}
+            </button>
+            @if (record.suspicious) { <span class="status-badge status-suspicious">Flagged</span> }
+          }
+          <button class="btn-chip" type="button" (click)="audit.closeLifecycle()">Close detail</button>
+        </div>
+      </div>
+      <div class="lifecycle-grid">
+        <div>
+          <h4>Order and Pricing Events</h4>
+          <dl class="detail-list">
+            <div><dt>Submitted at</dt><dd>{{ lifecycle.submittedAt | date:'medium' }}</dd></div>
+          </dl>
+          <ol class="lifecycle-list">
+            @for (event of lifecycle.events; track event.eventId) {
+              <li>
+                <div><strong>{{ event.status }}</strong><span>{{ event.eventType }}</span></div>
+                <time>{{ event.occurredAt | date:'medium' }}</time>
+                @if (event.price !== null) { <p>Price {{ event.price | number:'1.2-8' }}</p> }
+                @if (event.reason) { <p>{{ event.reason }}</p> }
+              </li>
+            }
+          </ol>
+        </div>
+        <div>
+          <h4>Execution and settlement</h4>
+          @if (lifecycle.execution; as execution) {
+            <dl class="detail-list">
+              <div><dt>Execution price</dt><dd>{{ execution.price | number:'1.2-8' }}</dd></div>
+              <div><dt>Executed quantity</dt><dd>{{ execution.quantity | number:'1.0-8' }}</dd></div>
+              <div><dt>Executed at</dt><dd>{{ execution.executedAt | date:'medium' }}</dd></div>
+            </dl>
+          } @else { <p class="sub">No execution recorded.</p> }
+          @for (settlement of lifecycle.settlements; track settlement.movementId) {
+            <dl class="detail-list settlement-list">
+              <div><dt>{{ settlement.movementType }} · {{ settlement.currency }}</dt><dd>{{ settlement.amount | number:'1.2-8' }}</dd></div>
+              <div><dt>Settled at</dt><dd>{{ settlement.occurredAt | date:'medium' }}</dd></div>
+              @if (settlement.reason) { <div><dt>Reason</dt><dd>{{ settlement.reason }}</dd></div> }
+            </dl>
+          } @empty { <p class="sub">No cash settlement recorded.</p> }
+        </div>
+      </div>
+    </section>
+  }
+
+  @if (!audit.lifecycle() && !audit.lifecycleLoading()) {
+    <section class="admin-detail-panel empty-state" aria-live="polite">
+      <h3>Select an order from the Audit ledger</h3>
+      <p class="sub">Open an order reference to review its recorded events, execution, and settlement evidence here.</p>
+    </section>
+  }
+  }
+
+  @if (view === 'insights') {
   <section class="admin-insights" aria-label="Audit breakdowns">
     <div class="insight-panel">
       <h3>By status</h3>
@@ -145,6 +231,8 @@
     </div>
   </section>
 
+  }
+  @if (view === 'ledger') {
   <section class="admin-table-panel">
     <div class="table-heading">
       <div>
@@ -160,9 +248,8 @@
       <table class="table">
     <thead>
       <tr>
-        <th>Audit</th>
         <th>Order</th>
-        <th>Actor</th>
+        <th>Client Name</th>
         <th>Account</th>
         <th>Instrument</th>
         <th>Side</th>
@@ -174,11 +261,10 @@
       </tr>
     </thead>
     <tbody>
-      @for (record of filteredRecords(); track record.auditId) {
+      @for (record of ledgerRecords(); track record.orderId) {
         <tr>
-          <td class="sym">#{{ record.auditId }}</td>
-          <td>{{ record.orderRef }}</td>
-          <td>{{ record.actor }}</td>
+          <td><button class="order-link" type="button" (click)="openLifecycle(record)">{{ record.orderRef }}</button></td>
+          <td>{{ record.clientName }}</td>
           <td>{{ record.account }}</td>
           <td>{{ record.instrument }}</td>
           <td>{{ record.side }}</td>
@@ -190,11 +276,12 @@
         </tr>
       } @empty {
         <tr>
-          <td colspan="11" class="dim">No trade audit records yet.</td>
+          <td colspan="10" class="dim">No filled or rejected orders match these filters.</td>
         </tr>
       }
     </tbody>
       </table>
     </div>
   </section>
+  }
 </div>

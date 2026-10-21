@@ -161,6 +161,19 @@ CREATE TABLE audit_records
 CREATE INDEX ix_audit_records_occurred_at
     ON audit_records (occurred_at DESC);
 
+CREATE TABLE suspicious_trade_flags
+(
+    flag_id BIGSERIAL PRIMARY KEY,
+    order_id INTEGER NOT NULL UNIQUE REFERENCES orders(order_id),
+    account_id INTEGER NOT NULL REFERENCES accounts(account_id),
+    flagged_by TEXT NOT NULL,
+    flagged_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    previous_account_status TEXT NOT NULL
+);
+
+CREATE INDEX ix_suspicious_trade_flags_account_id
+    ON suspicious_trade_flags (account_id);
+
 CREATE TABLE account_balances
 (
     account_id INTEGER NOT NULL REFERENCES accounts(account_id),

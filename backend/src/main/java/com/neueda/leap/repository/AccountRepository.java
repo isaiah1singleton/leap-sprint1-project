@@ -1,7 +1,9 @@
 package com.neueda.leap.repository;
 
 import com.neueda.leap.entities.Account;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,4 +19,7 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
     Optional<Account> findByAccountIdAndClient_ClientId(Integer accountId, Integer clientId);
 
     boolean existsByClient_ClientIdAndAccountNameIgnoreCase(Integer clientId, String accountName);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Account> findByAccountId(Integer accountId);
 }
