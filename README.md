@@ -84,3 +84,11 @@ Portfolio data, trades, transfers, and market data are held in memory in the
 browser, so refreshing resets that state. Authentication credentials and
 sessions are stored by the backend. The frontend account page still uses
 placeholder security controls and does not yet call the account API.
+
+## Stocks MCP
+
+The local [stocks MCP server](mcp/README.md) exposes tools, resources, prompts,
+and server instructions using the existing authenticated portfolio and order APIs.
+Stock views default to the past month and accept filters such as "past week" or
+explicit UTC dates. Buy and sell orders require the MCP client's user confirmation
+before submission. See the MCP guide for setup and client requirements.

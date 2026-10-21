@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "leap-stocks": {
+      "command": "node",
+      "args": [
+        "--env-file=/absolute/path/to/leap-sprint1-project/mcp/.env",
+        "/absolute/path/to/leap-sprint1-project/mcp/src/index.js"
+      ]
+    }
+  }
+}
