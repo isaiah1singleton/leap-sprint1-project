@@ -59,6 +59,13 @@ button:disabled { opacity:.48; cursor:not-allowed; }
 .topbar h1 { font-size:20px; font-weight:650; letter-spacing:-.5px; margin:0; }
 .topbar-context { font-family:var(--ui-font); font-size:10px; color:var(--muted); margin:0 0 3px; }
 .topbar-right { display:flex; align-items:center; gap:12px; font-size:13px; color:var(--ink-soft); }
+.header-account-picker { display:flex; align-items:center; min-width:0; }
+.header-account-label { color:var(--muted); font-family:var(--ui-font); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin-right:8px; }
+.header-account-picker select { width:clamp(150px,18vw,240px); height:38px; padding-right:28px; font-weight:600; }
+.header-account-status { color:var(--muted); font-size:12px; white-space:nowrap; }
+.header-account-action { border:0; background:transparent; color:var(--accent); cursor:pointer; padding:4px 0; }
+.header-account-action:hover { text-decoration:underline; }
+.visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 .avatar { width:36px; height:36px; background:var(--surface-muted); color:var(--ink-soft); border-radius:50%; display:grid; place-items:center; font-weight:700; }
 .page { width:100%; max-width:1560px; margin:0 auto; padding:30px 36px 48px; flex:1; min-width:0; background-image:linear-gradient(#88a9b00b 1px,transparent 1px),linear-gradient(90deg,#88a9b00b 1px,transparent 1px); background-size:32px 32px; }
 .page-intro { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:26px; }
@@ -162,7 +169,7 @@ button:disabled { opacity:.48; cursor:not-allowed; }
   .sidebar .brand { grid-column:1 / -1; padding:0 6px 12px; } .nav-caption,.sidebar-note { display:none; }
   .nav-link { flex-direction:column; gap:6px; padding:10px 4px; text-align:center; font-size:11px; }
   .topbar { padding:16px 20px; min-height:72px; } .topbar h1 { font-size:17px; }
-  .topbar-user { display:none; } .topbar-right { gap:8px; }
+  .topbar-user { display:none; } .topbar-right { gap:8px; } .header-account-picker select { width:150px; }
   .page { padding:22px 16px 32px; } .card,.card-pad-lg { padding:20px; border-radius:14px; }
   .page-intro { align-items:flex-start; flex-direction:column; } .section-heading { flex-wrap:wrap; }
   .table { min-width:560px; } .stat-value { font-size:30px; }

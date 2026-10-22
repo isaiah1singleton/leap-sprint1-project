@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth.service';
@@ -11,13 +11,21 @@ import { ThemeToggleComponent } from '../core/theme-toggle.component';
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggleComponent],
   templateUrl: './shell.component.html',
 })
-export class ShellComponent {
+export class ShellComponent implements OnInit {
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly accountsCache = inject(AccountsCacheService);
   readonly accountSelection = inject(AccountSelectionService);
+  readonly accounts = this.accountsCache.accounts;
+  readonly activeAccounts = this.accountsCache.activeAccounts;
+  readonly isLoadingAccounts = this.accountsCache.isLoading;
+  readonly accountsError = this.accountsCache.error;
   readonly sidebarCollapsed = signal(this.initialSidebarState());
+
+  ngOnInit(): void {
+    void this.accountsCache.loadAccounts();
+  }
 
   toggleSidebar(): void {
     this.sidebarCollapsed.update(collapsed => !collapsed);
@@ -38,6 +46,19 @@ export class ShellComponent {
     if (window.matchMedia('(max-width: 640px)').matches) {
       this.sidebarCollapsed.set(true);
     }
+  }
+
+  async loadAccounts(): Promise<void> {
+    await this.accountsCache.loadAccounts(true);
+  }
+
+  selectAccountById(value: string): void {
+    if (value === '__create__') {
+      void this.router.navigate(['/app/account']);
+      return;
+    }
+    const account = this.activeAccounts().find((item) => item.accountId === Number(value));
+    if (account) this.accountSelection.selectAccount(account);
   }
 
   readonly navItems = [
