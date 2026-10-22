@@ -67,6 +67,7 @@ services:
       POSTGRES_AUTH_DB: ${POSTGRES_AUTH_DB}
       POSTGRES_AUTH_USER: ${POSTGRES_AUTH_USER}
       POSTGRES_AUTH_PASSWORD: ${POSTGRES_AUTH_PASSWORD}
+      SHARED_SECRET: ${SHARED_SECRET}
     depends_on:
       postgres-auth: 
         condition: service_healthy
@@ -84,6 +85,7 @@ services:
       kafka:
         condition: service_healthy
     environment:
+      SHARED_SECRET: ${SHARED_SECRET}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}

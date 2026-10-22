@@ -29,13 +29,13 @@ public class ClientService {
         this.tokenService = tokenService;
     }
 
+    // to-do: remove this function
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         String name = request == null || request.name() == null ? null : request.name().trim();
         String email = normalizedEmail(request.email());
-        String password = request == null ? null : request.password();
 
-        if (name == null || name.isBlank() || email == null || password == null || password.isBlank()) {
+        if (name == null || name.isBlank() || email == null || password == null) {
             throw new IllegalArgumentException("Name, email and password are required.");
         }
 
@@ -44,12 +44,34 @@ public class ClientService {
         }
 
         Client client = clientRepository.save(
-                new Client(name, email, passwordEncoder.encode(password))
+                new Client(name, email)
         );
 
         return toResponseWithToken(client);
     }
 
+
+    @Transactional
+    public Client registerClient(RegisterRequest request) {
+        String name = request == null || request.name() == null ? null : request.name().trim();
+        String email = normalizedEmail(request.email());
+
+        if (name == null || name.isBlank() || email == null || password == null) {
+            throw new IllegalArgumentException("Name, email and password are required.");
+        }
+
+        if (clientRepository.findByEmailIgnoreCase(email).isPresent()) {
+            throw new IllegalStateException("An account with this email already exists.");
+        }
+
+        Client client = clientRepository.save(
+                new Client(name, email)
+        );
+
+        return client;
+    }
+
+    // to-do: remove this function
     @Transactional
     public AuthResponse signIn(SignInRequest request) {
         String email = normalizedEmail(request.email());
@@ -102,6 +124,24 @@ public class ClientService {
         return findActiveClientByEmail(email)
                 .map(client -> "ADMIN".equalsIgnoreCase(client.getClientSegment()))
                 .orElse(false);
+    }
+
+    @Transactional
+    public Client findClientByEmailOrRegister(String email){
+        Optional<Client> clientOpt = findActiveClientByEmail(email);
+
+        Client client;
+        if (clientOpt.isEmpty()){
+            // register new client
+            RegisterRequest request = new RegisterRequest("John Doe", email);
+            client = registerClient(request);
+        }
+        else{
+            // safe to cast Optional<Client> to Client
+            client = clientOpt;
+        }
+
+        return client;
     }
 
     private String normalizedEmail(String emailInput) {

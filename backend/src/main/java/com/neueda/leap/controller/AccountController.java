@@ -5,11 +5,11 @@ import com.neueda.leap.models.OpenAccountRequest;
 import com.neueda.leap.service.AccountService;
 import com.neueda.leap.service.ClientService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties.Jwt;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -33,8 +33,19 @@ public class AccountController {
 
     @PostMapping
     public ResponseEntity<AccountResponse> openAccount(@AuthenticationPrincipal Jwt jwt, @RequestBody OpenAccountRequest request) {
-        System.out.println(jwt);
-        System.out.println(jwt.getPrincipalClaimName());
+        if (jwt == null){
+            System.out.println("jwt token was null");
+            return null;
+        }
+
+        String email = jwt.getClaims().get("sub");
+        Optional<Client> clientOpt = clientService.findActiveClientByEmail(email);
+        if (clientOpt.isEmpty()){
+            // No client yet registered with this email
+            RegisterRequest request = new RegisterRequest("John Doe", email);
+            clientService.register(request);
+        }
+
         return null;
         // Integer clientId = authenticatedClientId(principal);
 
