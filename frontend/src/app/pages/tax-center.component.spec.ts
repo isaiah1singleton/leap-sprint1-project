@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { vi } from 'vitest';
 import { TaxReport, TaxService } from '../core/tax.service';
 import { TaxCenterComponent } from './tax-center.component';
@@ -9,6 +10,19 @@ const emptyReport: TaxReport = {
 };
 
 describe('Tax Center', () => {
+  it('offers sign-in instead of retrying an expired session', async () => {
+    const tax = { report: vi.fn().mockRejectedValue(new HttpErrorResponse({ status: 401 })) };
+    TestBed.configureTestingModule({ providers: [{ provide: TaxService, useValue: tax }] });
+    const fixture = TestBed.createComponent(TaxCenterComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Your login is no longer valid');
+    expect(fixture.nativeElement.querySelector('a[href="/signin"]')?.textContent).toContain('Sign in again');
+    expect(fixture.nativeElement.textContent).not.toContain('Retry');
+    expect(fixture.componentInstance.report()).toBeNull();
+  });
+
   it('shows an empty state and downloads the selected form and year', async () => {
     const tax = { report: vi.fn().mockResolvedValue(emptyReport), download: vi.fn().mockResolvedValue(new Blob(['pdf'])) };
     TestBed.configureTestingModule({ providers: [{ provide: TaxService, useValue: tax }] });
@@ -17,9 +31,9 @@ describe('Tax Center', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('No completed sales for this year');
-    expect(fixture.nativeElement.textContent).toContain('Download Simulated 1099-B');
-    expect(fixture.nativeElement.textContent).toContain('Download Simulated 1099-DA');
-    expect(fixture.nativeElement.textContent).toContain('SIMULATED / NOT FOR TAX FILING');
+    expect(fixture.nativeElement.textContent).toContain('Download 1099-B');
+    expect(fixture.nativeElement.textContent).toContain('Download 1099-DA');
+    expect(fixture.nativeElement.textContent).not.toContain('NOT FOR TAX FILING');
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:tax');
     const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});

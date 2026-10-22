@@ -1,4 +1,7 @@
-CREATE TABLE clients
+-- This is the single schema source for fresh databases.
+-- The PostgreSQL Docker volume is recreated whenever this file changes.
+-- Update CREATE definitions directly instead of adding ALTER TABLE migrations.
+CREATE TABLE IF NOT EXISTS clients
 (
     client_id SERIAL PRIMARY KEY,
     client_name TEXT NOT NULL,
@@ -9,7 +12,7 @@ CREATE TABLE clients
     client_segment TEXT NOT NULL
 );
 
-CREATE TABLE sessions
+CREATE TABLE IF NOT EXISTS sessions
 (
     session_id SERIAL PRIMARY KEY,
     session_token_hash TEXT NOT NULL UNIQUE,
@@ -21,7 +24,7 @@ CREATE TABLE sessions
     revoked_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE accounts
+CREATE TABLE IF NOT EXISTS accounts
 (
     account_id SERIAL PRIMARY KEY,
     client_id INTEGER NOT NULL REFERENCES clients(client_id),
@@ -32,7 +35,7 @@ CREATE TABLE accounts
     opened_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE instruments
+CREATE TABLE IF NOT EXISTS instruments
 (
     instrument_id SERIAL PRIMARY KEY,
     market TEXT NOT NULL,
@@ -44,7 +47,7 @@ CREATE TABLE instruments
     CONSTRAINT uk_instruments_market_symbol UNIQUE (market, symbol)
 );
 
-CREATE TABLE orders
+CREATE TABLE IF NOT EXISTS orders
 (
     order_id SERIAL PRIMARY KEY, 
 
@@ -72,7 +75,7 @@ CREATE TABLE orders
         CHECK (submitted_quote_at <= submitted_at)
 );
 
-CREATE TABLE order_events
+CREATE TABLE IF NOT EXISTS order_events
 (
     event_id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL REFERENCES orders(order_id),
@@ -113,7 +116,7 @@ CREATE TABLE order_events
 
 );
 
-CREATE TABLE audit_outbox
+CREATE TABLE IF NOT EXISTS audit_outbox
 (
     outbox_id BIGSERIAL PRIMARY KEY,
     event_id UUID NOT NULL UNIQUE,
@@ -135,10 +138,10 @@ CREATE TABLE audit_outbox
     last_error TEXT
 );
 
-CREATE INDEX ix_audit_outbox_unpublished
+CREATE INDEX IF NOT EXISTS ix_audit_outbox_unpublished
     ON audit_outbox (outbox_id);
 
-CREATE TABLE audit_records
+CREATE TABLE IF NOT EXISTS audit_records
 (
     audit_record_id BIGSERIAL PRIMARY KEY,
     event_id UUID NOT NULL UNIQUE,
@@ -158,10 +161,10 @@ CREATE TABLE audit_records
     received_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX ix_audit_records_occurred_at
+CREATE INDEX IF NOT EXISTS ix_audit_records_occurred_at
     ON audit_records (occurred_at DESC);
 
-CREATE TABLE account_balances
+CREATE TABLE IF NOT EXISTS account_balances
 (
     account_id INTEGER NOT NULL REFERENCES accounts(account_id),
     currency TEXT NOT NULL,
@@ -172,7 +175,7 @@ CREATE TABLE account_balances
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-CREATE TABLE account_holdings
+CREATE TABLE IF NOT EXISTS account_holdings
 (
     account_id INTEGER NOT NULL REFERENCES accounts(account_id),
     instrument_id INTEGER NOT NULL REFERENCES instruments(instrument_id),
@@ -183,7 +186,7 @@ CREATE TABLE account_holdings
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE fills
+CREATE TABLE IF NOT EXISTS fills
 (
     fill_id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL REFERENCES orders(order_id),
@@ -192,7 +195,7 @@ CREATE TABLE fills
     CONSTRAINT uk_fills_order UNIQUE (order_id)
 );
 
-CREATE TABLE cash_movements
+CREATE TABLE IF NOT EXISTS cash_movements
 (
     cash_movement_id SERIAL PRIMARY KEY,
 
@@ -252,7 +255,7 @@ CREATE TABLE cash_movements
             )
 );
 
-CREATE TABLE fifo_allocations
+CREATE TABLE IF NOT EXISTS fifo_allocations
 (
     fifo_allocation_id BIGSERIAL PRIMARY KEY,
     sell_fill_id INTEGER NOT NULL REFERENCES fills(fill_id),

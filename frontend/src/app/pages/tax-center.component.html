@@ -1,22 +1,26 @@
 <div class="page-intro">
   <div><h2>Tax Center</h2><p class="sub">Completed sales across all your accounts. Recorded currencies and UTC dates.</p></div>
 </div>
-<p class="tax-warning"><strong>SIMULATED / NOT FOR TAX FILING</strong><br>Educational brokerage reports. These are not compliant IRS information returns.</p>
 <div class="tax-controls">
   <label>Tax year <input type="number" min="1900" [max]="currentYear" [(ngModel)]="year" (change)="load()" /></label>
   <label>Transactions <select [(ngModel)]="document" (ngModelChange)="load()">
-    <option value="1099-B">Stocks and ETFs — Simulated 1099-B</option>
-    <option value="1099-DA">Cryptocurrency — Simulated 1099-DA</option>
+    <option value="1099-B">Stocks and ETFs — 1099-B</option>
+    <option value="1099-DA">Cryptocurrency — 1099-DA</option>
   </select></label>
 </div>
 <div class="tax-downloads">
-  <button class="btn-chip" (click)="download('1099-B')" [disabled]="loading() || !report() || downloading() !== null">Download Simulated 1099-B</button>
-  <button class="btn-chip" (click)="download('1099-DA')" [disabled]="loading() || !report() || downloading() !== null">Download Simulated 1099-DA</button>
+  <button class="btn-chip" (click)="download('1099-B')" [disabled]="loading() || !report() || downloading() !== null">Download 1099-B</button>
+  <button class="btn-chip" (click)="download('1099-DA')" [disabled]="loading() || !report() || downloading() !== null">Download 1099-DA</button>
 </div>
-@if (downloading()) { <p role="status">Preparing Simulated {{ downloading() }}…</p> }
+@if (downloading()) { <p role="status">Preparing {{ downloading() }}…</p> }
 @if (downloadError()) { <p class="error-text" role="alert">{{ downloadError() }}</p> }
 @if (loading()) { <p role="status">Loading your completed sales…</p> }
-@if (error()) { <p class="error-text" role="alert">{{ error() }}</p><button class="btn-chip" (click)="load()">Retry</button> }
+@if (error()) { <p class="error-text" role="alert">{{ error() }}</p> }
+@if (signInRequired()) {
+  <a class="btn-chip" href="/signin">Sign in again</a>
+} @else if (error()) {
+  <button class="btn-chip" (click)="load()">Retry</button>
+}
 @if (report(); as report) {
   <div class="tax-summary">
     <div class="card">Realized gains ({{ report.currency }})<strong>{{ decimal(report.gains) }}</strong></div>

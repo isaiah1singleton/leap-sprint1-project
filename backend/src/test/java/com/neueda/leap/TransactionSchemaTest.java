@@ -14,44 +14,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TransactionSchemaTest {
 
     @Test
-    void freshSchemaCanBeReappliedWithoutChangingHoldings() throws Exception {
+    void freshSchemaDefinesReservationDefaultsAndConstraints() throws Exception {
         try (Connection connection = database()) {
             applySchema(connection);
             insertHolding(connection);
+            assertHolding(connection, 0);
             execute(connection, "UPDATE account_holdings SET reserved_quantity = 3");
-
-            applySchema(connection);
-
             assertHolding(connection, 3);
             assertReservationConstraints(connection);
-        }
-    }
-
-    @Test
-    void existingHoldingsGainReservedQuantityWithoutLosingData() throws Exception {
-        try (Connection connection = database()) {
-            applySchema(connection);
-            execute(connection, "DROP TABLE account_holdings");
-            execute(connection, """
-                    CREATE TABLE account_holdings (
-                        account_id INTEGER NOT NULL REFERENCES accounts(account_id),
-                        instrument_id INTEGER NOT NULL REFERENCES instruments(instrument_id),
-                        PRIMARY KEY (account_id, instrument_id),
-                        total_quantity NUMERIC(24, 8) NOT NULL DEFAULT 0 CHECK(total_quantity >= 0),
-                        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-                    )
-                    """);
-            insertHolding(connection);
-
-            applySchema(connection);
-
-            assertHolding(connection, 0);
-            assertReservationConstraints(connection);
-            execute(connection, "UPDATE account_holdings SET reserved_quantity = 4");
-
-            applySchema(connection);
-
-            assertHolding(connection, 4);
         }
     }
 

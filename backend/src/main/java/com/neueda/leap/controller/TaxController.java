@@ -39,7 +39,7 @@ public class TaxController {
         var report = reports.report(clientId(principal), year == null ? reports.currentYear() : year, document);
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
-                        .filename(report.year() + "-Simulated-" + report.document() + ".pdf").build().toString())
+                        .filename(report.year() + "-" + report.document() + ".pdf").build().toString())
                 .contentType(MediaType.APPLICATION_PDF).body(pdf.generate(report));
     }
 

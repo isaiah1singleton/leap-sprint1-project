@@ -1,5 +1,6 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TaxDocument, TaxReport, TaxService } from '../core/tax.service';
 
 @Component({
@@ -27,6 +28,7 @@ export class TaxCenterComponent {
   readonly loading = signal(false);
   readonly error = signal('');
   readonly downloadError = signal('');
+  readonly signInRequired = signal(false);
   readonly downloading = signal<TaxDocument | null>(null);
 
   constructor() { void this.load(); }
@@ -35,6 +37,7 @@ export class TaxCenterComponent {
     const request = ++this.request;
     this.report.set(null);
     this.error.set('');
+    this.signInRequired.set(false);
     if (!Number.isInteger(this.year) || this.year < 1900 || this.year > this.currentYear) {
       this.error.set(`Choose a year from 1900 through ${this.currentYear}.`);
       this.loading.set(false);
@@ -44,8 +47,8 @@ export class TaxCenterComponent {
     try {
       const report = await this.tax.report(this.year, this.document);
       if (request === this.request && !this.destroyRef.destroyed) this.report.set(report);
-    } catch {
-      if (request === this.request) this.error.set('Could not load your tax report. Please retry.');
+    } catch (error) {
+      if (request === this.request) this.error.set(this.failureMessage(error, 'Could not load your tax report. Please retry.'));
     } finally {
       if (request === this.request) this.loading.set(false);
     }
@@ -62,17 +65,29 @@ export class TaxCenterComponent {
       const url = URL.createObjectURL(blob);
       const anchor = window.document.createElement('a');
       anchor.href = url;
-      anchor.download = `${year}-Simulated-${document}.pdf`;
+      anchor.download = `${year}-${document}.pdf`;
       window.document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
       // Allow the browser to start reading the blob before releasing it.
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch {
-      this.downloadError.set('Download failed. Please try again.');
+    } catch (error) {
+      this.downloadError.set(this.failureMessage(error, 'Download failed. Please try again.'));
     } finally {
       this.downloading.set(null);
     }
+  }
+
+  private failureMessage(error: unknown, fallback: string): string {
+    if (error instanceof HttpErrorResponse && error.status === 401) {
+      this.signInRequired.set(true);
+      this.report.set(null);
+      return 'Your login is no longer valid. Sign in again to access your tax reports.';
+    }
+    if (error instanceof HttpErrorResponse && error.status === 0) {
+      return 'Cannot reach the backend. Check that it is running, then retry.';
+    }
+    return fallback;
   }
 
   // Keep decimal strings exact instead of coercing financial values through JS floating point.

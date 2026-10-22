@@ -98,7 +98,7 @@ class TaxReportingIntegrationTest {
         assertThat(report.sales().get(0).lots().get(0).holdingPeriod()).isEqualTo("Short-term");
     }
 
-    @Test void fractionalUsdCryptoUsesSameServiceAndIsSeparatedFromSecurities() {
+    @Test void fractionalUsdCryptoUsesSameServiceAndIsSeparatedFromSecurities() throws Exception {
         int crypto = instrument(AssetClass.CRYPTO, Currency.USD, "Test Bitcoin");
         int buy = fill(account, crypto, "BUY", "0.01234567", "40000.12345678", "2025-12-01T00:00:00Z");
         int sell = fill(account, crypto, "SELL", "0.00000001", "60000.12345678", "2026-02-01T00:00:00Z");
@@ -110,6 +110,9 @@ class TaxReportingIntegrationTest {
         assertThat(report.sales().get(0).quantity()).isEqualByComparingTo("0.00000001");
         assertThat(report.sales().get(0).basis()).isEqualByComparingTo("0.00040000");
         assertThat(report.net()).isEqualByComparingTo("0.00020000");
+        try (var document = Loader.loadPDF(pdf.generate(report))) {
+            assertThat(new PDFTextStripper().getText(document)).contains("0.00000001", "0.0006", "0.0004");
+        }
         assertThat(reports.report(client.getClientId(), 2026, "1099-B").sales()).isEmpty();
     }
 
@@ -198,7 +201,7 @@ class TaxReportingIntegrationTest {
                             .param("clientId", other.getClientId().toString()).header("Authorization", "Bearer " + token))
                     .andExpect(status().isOk()).andExpect(content().contentType("application/pdf"))
                     .andExpect(header().string("Content-Disposition",
-                            "attachment; filename=\"2026-Simulated-" + form + ".pdf\""))
+                            "attachment; filename=\"2026-" + form + ".pdf\""))
                     .andReturn().getResponse().getContentAsByteArray();
             try (var doc = Loader.loadPDF(response)) {
                 assertThat(new PDFTextStripper().getText(doc)).contains("No completed dispositions").doesNotContain("999");
@@ -211,23 +214,30 @@ class TaxReportingIntegrationTest {
     @Test void bothPdfsContainCalculatedDataAndPaginateWithRepeatedLabels() throws Exception {
         for (var asset : List.of(AssetClass.EQUITY, AssetClass.CRYPTO)) {
             String form = asset == AssetClass.EQUITY ? "1099-B" : "1099-DA";
-            int instrument = instrument(asset, Currency.USD, "PDF test asset");
-            int buy = fill(account, instrument, "BUY", "100", "10", "2025-01-01T00:00:00Z");
-            for (int i = 0; i < 16; i++) {
-                allocate(fill(account, instrument, "SELL", "1", "15", "2026-02-01T00:00:00Z"), buy, "1");
+            boolean crypto = asset == AssetClass.CRYPTO;
+            String name = crypto ? "Bitcoin" : "Apple Inc.";
+            int instrument = instruments.save(new Instrument("US", crypto ? "X:BTC-USD" : "AAPL",
+                    name, asset, Currency.USD)).getInstrumentId();
+            String quantity = crypto ? "0.025" : "1";
+            int buy = fill(account, instrument, "BUY", "100", crypto ? "40000" : "180", "2025-01-01T00:00:00Z");
+            for (int i = 0; i < 3; i++) {
+                allocate(fill(account, instrument, "SELL", quantity, crypto ? "60000" : "200", "2026-02-01T00:00:00Z"), buy, quantity);
             }
             var report = reports.report(client.getClientId(), 2026, form);
             byte[] bytes = pdf.generate(report);
             try (var doc = Loader.loadPDF(bytes)) {
-                assertThat(doc.getNumberOfPages()).isGreaterThan(1);
+                assertThat(doc.getNumberOfPages()).isEqualTo(3);
                 String text = new PDFTextStripper().getText(doc);
-                assertThat(text).contains("Simulated Form " + form, "PDF test asset", "2025-01-01",
-                        "Realized gains: 80 USD", "Long-term", "not an IRS information return");
+                assertThat(text).contains("Form " + form, name, "01/01/2025",
+                        "Realized gains: " + (crypto ? "1500" : "60") + " USD", "Long-term", "***-**-****", "Example City, ZZ 00000",
+                        "Demo City, ZZ 00000", "Copy B - For Recipient");
+                assertThat(text).doesNotContain("SIMULATED", "NOT FOR TAX FILING", "being furnished to the IRS");
+                assertThat(text).contains(form.equals("1099-B") ? "1d  Proceeds" : "1f  Proceeds");
                 for (int page = 1; page <= doc.getNumberOfPages(); page++) {
                     var reader = new PDFTextStripper();
                     reader.setStartPage(page);
                     reader.setEndPage(page);
-                    assertThat(reader.getText(doc)).contains(TaxPdfGenerator.DISCLAIMER, "Page " + page);
+                    assertThat(reader.getText(doc)).contains("Form " + form, "Tax year 2026", "Page " + page + " of 3");
                 }
                 // Test-only previews for visual inspection, never used as application data.
                 Path directory = Path.of("target", "tax-preview");
