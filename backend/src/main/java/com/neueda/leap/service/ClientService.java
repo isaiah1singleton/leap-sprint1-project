@@ -11,6 +11,7 @@ import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -35,7 +36,7 @@ public class ClientService {
         String name = request == null || request.name() == null ? null : request.name().trim();
         String email = normalizedEmail(request.email());
 
-        if (name == null || name.isBlank() || email == null || password == null) {
+        if (name == null || name.isBlank() || email == null) {
             throw new IllegalArgumentException("Name, email and password are required.");
         }
 
@@ -44,7 +45,7 @@ public class ClientService {
         }
 
         Client client = clientRepository.save(
-                new Client(name, email)
+                new Client(name, email, "temp")
         );
 
         return toResponseWithToken(client);
@@ -56,7 +57,7 @@ public class ClientService {
         String name = request == null || request.name() == null ? null : request.name().trim();
         String email = normalizedEmail(request.email());
 
-        if (name == null || name.isBlank() || email == null || password == null) {
+        if (name == null || name.isBlank() || email == null) {
             throw new IllegalArgumentException("Name, email and password are required.");
         }
 
@@ -65,7 +66,7 @@ public class ClientService {
         }
 
         Client client = clientRepository.save(
-                new Client(name, email)
+                new Client(name, email, "temp")
         );
 
         return client;
@@ -127,18 +128,24 @@ public class ClientService {
     }
 
     @Transactional
-    public Client findClientByEmailOrRegister(String email){
+    public Client findOrRegisterClientByJwt(Jwt jwt){
+        if (jwt == null){
+            throw new IllegalArgumentException("An access token is required.");
+        }
+
+        String email = jwt.getClaims().get("sub").toString();
         Optional<Client> clientOpt = findActiveClientByEmail(email);
 
         Client client;
         if (clientOpt.isEmpty()){
             // register new client
+            // to-do add name to token and register here
             RegisterRequest request = new RegisterRequest("John Doe", email);
             client = registerClient(request);
         }
         else{
             // safe to cast Optional<Client> to Client
-            client = clientOpt;
+            client = clientOpt.get();
         }
 
         return client;

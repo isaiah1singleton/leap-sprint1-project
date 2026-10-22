@@ -1,5 +1,6 @@
 package com.neueda.leap.controller;
 
+import com.neueda.leap.entities.Client;
 import com.neueda.leap.models.AccountResponse;
 import com.neueda.leap.models.OpenAccountRequest;
 import com.neueda.leap.service.AccountService;
@@ -33,27 +34,16 @@ public class AccountController {
 
     @PostMapping
     public ResponseEntity<AccountResponse> openAccount(@AuthenticationPrincipal Jwt jwt, @RequestBody OpenAccountRequest request) {
-        if (jwt == null){
-            System.out.println("jwt token was null");
-            return null;
-        }
+        
+        
+        Client client = clientService.findOrRegisterClientByJwt(jwt);
+        Integer clientId = client.getClientId();
 
-        String email = jwt.getClaims().get("sub");
-        Optional<Client> clientOpt = clientService.findActiveClientByEmail(email);
-        if (clientOpt.isEmpty()){
-            // No client yet registered with this email
-            RegisterRequest request = new RegisterRequest("John Doe", email);
-            clientService.register(request);
-        }
+        AccountResponse account = accountService.openAccount(clientId, request.accountName());
 
-        return null;
-        // Integer clientId = authenticatedClientId(principal);
+        URI location = URI.create("/api/accounts/" + account.accountId());
 
-        // AccountResponse account = accountService.openAccount(clientId, request.accountName());
-
-        // URI location = URI.create("/api/accounts/" + account.accountId());
-
-        // return ResponseEntity.created(location).body(account);
+        return ResponseEntity.created(location).body(account);
     }
 
     @GetMapping("/{accountId}")
