@@ -23,9 +23,13 @@ public final class ApiRoutes {
     public static final String MARKET_QUOTES = "/quotes";
     public static final String MARKET_QUOTE = MARKET_QUOTES + "/{symbol}";
     public static final String MARKET_ALL = MARKET + "/**";
-    public static final String ADMIN_AUDIT = "/api/admin/audit";
+    public static final String ADMIN_AUDIT = "/api/admin/audit"; 
+    public static final String TAX = "/api/tax";
+    public static final String TAX_REPORT = "/report";
+    public static final String TAX_DOCUMENT = "/documents/{document}";
+    public static final String TAX_ALL = TAX + "/**"; 
     public static final String ADMIN_AUDIT_LIFECYCLE = "/{orderId}";
-    public static final String ADMIN_AUDIT_SUSPICIOUS = "/{orderId}/suspicious";
+    public static final String ADMIN_AUDIT_SUSPICIOUS = "/{orderId}/suspicious"; 
 
     private ApiRoutes() {
     }

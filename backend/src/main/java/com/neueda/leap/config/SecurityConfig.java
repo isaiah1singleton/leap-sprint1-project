@@ -55,8 +55,16 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/public").permitAll()
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(requests -> requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, ApiRoutes.AUTH_REGISTER, ApiRoutes.AUTH_SIGN_IN,
+                                ApiRoutes.AUTH + ApiRoutes.ADMIN_SIGN_IN).permitAll()
+                        .requestMatchers(HttpMethod.POST, ApiRoutes.ORDER_VALIDATE).authenticated()
+                        .requestMatchers(HttpMethod.GET, ApiRoutes.HELLO).permitAll()
+                        .requestMatchers(ApiRoutes.ADMIN_AUDIT, ApiRoutes.ADMIN_AUDIT + "/**").authenticated()
+                        .requestMatchers(ApiRoutes.MARKET, ApiRoutes.MARKET_ALL).authenticated()
+                        .requestMatchers(ApiRoutes.TAX, ApiRoutes.TAX_ALL).authenticated()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer((OAuth2ResourceServerConfigurer<HttpSecurity> oauth2) ->
                         oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(authenticationConverter)));
