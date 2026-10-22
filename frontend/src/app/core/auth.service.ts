@@ -36,7 +36,11 @@ export class AuthService {
   }
 
   isAdmin(): boolean {
-    return this.currentUserSegment()?.toUpperCase() === 'ADMIN';
+    return this.hasRole('admin');
+  }
+
+  isAnalyst(): boolean {
+    return this.hasRole('analyst');
   }
 
   getAccessToken(): string | null {
@@ -145,6 +149,8 @@ export class AuthService {
     sessionStorage.removeItem('currentUserName');
     sessionStorage.removeItem('currentUserEmail');
     sessionStorage.removeItem('currentUserSegment');
+    sessionStorage.removeItem('isAdmin');
+    sessionStorage.removeItem('isAnalyst');
     sessionStorage.removeItem('accessToken');
     this.currentUser.set(null);
     this.currentUserEmail.set(null);
@@ -153,10 +159,13 @@ export class AuthService {
   }
 
   private setCurrentUser(name: string, email: string, clientSegment: string, accessToken: string): void {
+    const roles = this.rolesFromToken(accessToken);
     sessionStorage.setItem('currentUserName', name);
     sessionStorage.setItem('currentUserEmail', email);
     sessionStorage.setItem('currentUserSegment', clientSegment);
     sessionStorage.setItem('accessToken', accessToken);
+    sessionStorage.setItem('isAdmin', String(roles.includes('admin')));
+    sessionStorage.setItem('isAnalyst', String(roles.includes('analyst')));
     this.currentUser.set(name);
     this.currentUserEmail.set(email);
     this.currentUserSegment.set(clientSegment);
@@ -167,11 +176,23 @@ export class AuthService {
   }
 
   private segmentFromToken(accessToken: string): string {
+    return this.rolesFromToken(accessToken).includes('admin') ? 'ADMIN' : 'RETAIL';
+  }
+
+  private hasRole(role: string): boolean {
+    const token = this.getAccessToken();
+    if (token) return this.rolesFromToken(token).includes(role);
+    return sessionStorage.getItem(role === 'admin' ? 'isAdmin' : 'isAnalyst') === 'true';
+  }
+
+  private rolesFromToken(accessToken: string): string[] {
     try {
-      const payload = JSON.parse(atob(accessToken.split('.')[1])) as { roles?: string[] };
-      return payload.roles?.some((role) => role.toLowerCase() === 'admin') ? 'ADMIN' : 'RETAIL';
+      const payload = JSON.parse(atob(accessToken.split('.')[1])) as { roles?: unknown };
+      return Array.isArray(payload.roles)
+        ? payload.roles.filter((role): role is string => typeof role === 'string').map((role) => role.toLowerCase())
+        : [];
     } catch {
-      return 'RETAIL';
+      return [];
     }
   }
 
