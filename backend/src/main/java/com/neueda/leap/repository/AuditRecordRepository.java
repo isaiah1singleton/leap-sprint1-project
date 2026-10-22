@@ -9,4 +9,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AuditRecordRepository extends JpaRepository<AuditRecord, Long> {
     boolean existsByEventId(UUID eventId);
     List<AuditRecord> findAllByOrderByOccurredAtDesc(Pageable pageable);
+    List<AuditRecord> findAllByOrderIdOrderByOccurredAtAsc(Integer orderId);
 }

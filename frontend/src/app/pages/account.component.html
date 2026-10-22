@@ -32,43 +32,6 @@
     </div>
   }
 
-  @if (selectedAccount(); as account) {
-    <section class="account-transfer" aria-label="Manage cash for selected account">
-      <div class="account-transfer-heading">
-        <div><h3>Manage cash · {{ account.accountName }}</h3><p class="sub">Deposits and withdrawals apply only to this account.</p></div>
-        <a routerLink="/app/cash-activity" class="toolbar-link">View cash activity →</a>
-      </div>
-      <p class="stat-note">Cash balance: {{ trading.loading() || trading.error() ? '—' : trading.money(trading.cash()) }}</p>
-      @if (account.accountStatus !== 'ACTIVE') {
-        <p class="error-text" role="status">Cash transfers are unavailable for an inactive account.</p>
-      } @else {
-        <div class="seg" aria-label="Cash transfer type">
-          <button type="button" class="seg-opt" [class.active]="transferMode === 'deposit'" [disabled]="transferSubmitting" (click)="setTransferMode('deposit')">Deposit</button>
-          <button type="button" class="seg-opt" [class.active]="transferMode === 'withdraw'" [disabled]="transferSubmitting" (click)="setTransferMode('withdraw')">Withdraw</button>
-        </div>
-        @if (transferReceipt; as receipt) {
-          <div class="transfer-receipt" role="status">
-            <div class="receipt-mark">✓</div><h3 class="receipt-head">{{ receipt.head }}</h3>
-            <p class="receipt-body">@for (line of receipt.lines; track line) { {{ line }}<br /> }</p>
-            <button type="button" class="btn btn-primary btn-sm" (click)="clearTransfer()">Make another transfer</button>
-          </div>
-        } @else {
-          <div class="account-transfer-form">
-            <div class="account-transfer-field">
-              <label class="label" for="transferAmount">Amount (USD)</label>
-              <input id="transferAmount" class="input" inputmode="decimal" autocomplete="off" [(ngModel)]="transferAmount" (keyup.enter)="submitTransfer()" placeholder="0.00" />
-            </div>
-            <button type="button" class="btn btn-primary" [disabled]="transferSubmitting" (click)="submitTransfer()">{{ transferSubmitting ? 'Processing…' : 'Confirm ' + (transferMode === 'deposit' ? 'deposit' : 'withdrawal') }}</button>
-          </div>
-          @if (transferError) { <p class="error-text" role="alert">{{ transferError }}</p> }
-          <p class="note">Transfers update your cash balance immediately. An accepted order must finish before cash can be moved.</p>
-        }
-      }
-    </section>
-  } @else {
-    <p class="sub">Select an account below to deposit or withdraw cash.</p>
-  }
-
   <!-- Create New Account Form -->
   <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--line-soft)">
     <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Create New Account</h3>
@@ -116,11 +79,7 @@
             </span>
           </div>
           <div class="account-row-actions">
-            <button type="button" class="btn-chip" (click)="selectAccount(account)" [disabled]="transferSubmitting || selectedAccount()?.accountId === account.accountId">{{ selectedAccount()?.accountId === account.accountId ? 'Selected' : 'Select account' }}</button>
-            @if (account.accountStatus === 'ACTIVE') {
-              <button type="button" class="btn-chip" [disabled]="transferSubmitting" (click)="selectAccount(account, 'deposit')">Deposit</button>
-              <button type="button" class="btn-chip" [disabled]="transferSubmitting" (click)="selectAccount(account, 'withdraw')">Withdraw</button>
-            }
+            <button type="button" class="btn-chip" (click)="selectAccount(account)" [disabled]="selectedAccount()?.accountId === account.accountId">{{ selectedAccount()?.accountId === account.accountId ? 'Selected' : 'Select account' }}</button>
           </div>
         </div>
       }

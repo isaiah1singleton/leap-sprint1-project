@@ -164,7 +164,20 @@ CREATE TABLE IF NOT EXISTS audit_records
 CREATE INDEX IF NOT EXISTS ix_audit_records_occurred_at
     ON audit_records (occurred_at DESC);
 
+CREATE TABLE suspicious_trade_flags
+(
+    flag_id BIGSERIAL PRIMARY KEY,
+    order_id INTEGER NOT NULL UNIQUE REFERENCES orders(order_id),
+    account_id INTEGER NOT NULL REFERENCES accounts(account_id),
+    flagged_by TEXT NOT NULL,
+    flagged_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    previous_account_status TEXT NOT NULL
+);
+
+CREATE INDEX ix_suspicious_trade_flags_account_id
+    ON suspicious_trade_flags (account_id);
 CREATE TABLE IF NOT EXISTS account_balances
+
 (
     account_id INTEGER NOT NULL REFERENCES accounts(account_id),
     currency TEXT NOT NULL,
@@ -263,4 +276,20 @@ CREATE TABLE IF NOT EXISTS fifo_allocations
     CONSTRAINT uk_fifo_allocations_sell_buy UNIQUE(sell_fill_id, buy_fill_id),
 
     allocated_quantity NUMERIC(24, 8) NOT NULL CHECK(allocated_quantity > 0)
+);
+
+-- Forward-only portfolio observations; apply this block to existing databases too.
+CREATE TABLE IF NOT EXISTS portfolio_observations
+(
+    observation_id BIGSERIAL PRIMARY KEY,
+    account_id INTEGER NOT NULL REFERENCES accounts(account_id),
+    observed_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    cash_balance NUMERIC(32, 8) NOT NULL,
+    invested_value NUMERIC(32, 8),
+    portfolio_value NUMERIC(32, 8),
+    lifetime_profit_loss NUMERIC(32, 8),
+    oldest_quote_at TIMESTAMP WITH TIME ZONE,
+    value_unavailable_reason TEXT,
+    profit_loss_unavailable_reason TEXT,
+    CONSTRAINT uk_portfolio_observation_time UNIQUE (account_id, observed_at)
 );

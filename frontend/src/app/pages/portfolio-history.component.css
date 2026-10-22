@@ -1,0 +1,9 @@
+:host { display:block; margin:26px 0; }
+.section-heading { gap:16px; flex-wrap:wrap; align-items:center; }
+.section-heading .sub { margin:6px 0 0; font-size:11px; }
+.history-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+.ranges { display:flex; gap:3px; padding:4px; border:1px solid var(--line); border-radius:9px; background:var(--surface); }
+.ranges button { border:0; border-radius:5px; padding:6px 10px; color:var(--muted); background:transparent; cursor:pointer; font-size:11px; }
+.ranges button.active { color:var(--accent); background:var(--accent-soft); font-weight:650; }
+.charts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+@media (max-width:800px) { .charts { grid-template-columns:minmax(0,1fr); } }

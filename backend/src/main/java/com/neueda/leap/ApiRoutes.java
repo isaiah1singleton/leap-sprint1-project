@@ -13,6 +13,7 @@ public final class ApiRoutes {
     public static final String ACCOUNT_BALANCE = "/{accountId}/balance";
     public static final String ACCOUNT_HOLDINGS = "/{accountId}/holdings";
     public static final String ACCOUNT_PORTFOLIO_SUMMARY = "/{accountId}/portfolio-summary";
+    public static final String ACCOUNT_PORTFOLIO_HISTORY = "/{accountId}/portfolio-history";
     public static final String ACCOUNT_TRANSFERS = "/{accountId}/transfers";
     public static final String ORDERS = "/api/orders";
     public static final String ORDER = "/{orderId}";
@@ -22,11 +23,13 @@ public final class ApiRoutes {
     public static final String MARKET_QUOTES = "/quotes";
     public static final String MARKET_QUOTE = MARKET_QUOTES + "/{symbol}";
     public static final String MARKET_ALL = MARKET + "/**";
-    public static final String ADMIN_AUDIT = "/api/admin/audit";
+    public static final String ADMIN_AUDIT = "/api/admin/audit"; 
     public static final String TAX = "/api/tax";
     public static final String TAX_REPORT = "/report";
     public static final String TAX_DOCUMENT = "/documents/{document}";
-    public static final String TAX_ALL = TAX + "/**";
+    public static final String TAX_ALL = TAX + "/**"; 
+    public static final String ADMIN_AUDIT_LIFECYCLE = "/{orderId}";
+    public static final String ADMIN_AUDIT_SUSPICIOUS = "/{orderId}/suspicious"; 
 
     private ApiRoutes() {
     }

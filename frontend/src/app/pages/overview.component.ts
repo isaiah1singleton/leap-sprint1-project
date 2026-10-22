@@ -7,10 +7,11 @@ import { AccountSelectionService } from '../core/account-selection.service';
 import { AccountsCacheService } from '../core/accounts-cache.service';
 import { MarketExplorerComponent } from '../market/market-explorer.component';
 import { PortfolioSummaryComponent } from './portfolio-summary.component';
+import { CashTransferComponent } from './cash-transfer.component';
 
 @Component({
   selector: 'app-overview',
-  imports: [RouterLink, CommonModule, MarketExplorerComponent, PortfolioSummaryComponent],
+  imports: [RouterLink, CommonModule, MarketExplorerComponent, PortfolioSummaryComponent, CashTransferComponent],
   templateUrl: './overview.component.html',
 })
 export class OverviewComponent implements OnInit {

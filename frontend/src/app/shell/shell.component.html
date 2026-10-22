@@ -18,7 +18,10 @@
       }
       @if (auth.isAdmin()) {
         @for (item of adminNavItems; track item.path) {
-          <a class="nav-link" [routerLink]="item.path" routerLinkActive="active" [attr.aria-label]="item.label" [title]="sidebarCollapsed() ? item.label : ''" (click)="closeMobileNavigation()">{{ item.label }}</a>
+          <a class="nav-link" [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page" [attr.aria-label]="item.label" [title]="sidebarCollapsed() ? item.label : ''" (click)="closeMobileNavigation()">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
         }
       }
     </div>
@@ -29,6 +32,7 @@
     <header class="topbar">
       <div><p class="topbar-context"></p><h1>{{ pageTitle() }}</h1></div>
       <div class="topbar-right">
+        <app-theme-toggle />
         <span class="topbar-user">{{ auth.currentUser() }}</span>
         <span class="avatar" aria-hidden="true">{{ auth.currentUser()?.charAt(0)?.toUpperCase() || 'U' }}</span>
         <button class="btn-chip" (click)="signOut()">Sign out</button>

@@ -5,11 +5,13 @@ import com.neueda.leap.models.*;
 import com.neueda.leap.service.AccountDataService;
 import com.neueda.leap.service.ClientService;
 import com.neueda.leap.service.PortfolioSummaryService;
+import com.neueda.leap.service.PortfolioHistoryService;
 import java.security.Principal;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -19,11 +21,20 @@ public class AccountDataController {
     private final AccountDataService data;
     private final ClientService clients;
     private final PortfolioSummaryService portfolio;
+    private final PortfolioHistoryService history;
 
-    public AccountDataController(AccountDataService data, ClientService clients, PortfolioSummaryService portfolio) {
+    public AccountDataController(AccountDataService data, ClientService clients, PortfolioSummaryService portfolio,
+                                 PortfolioHistoryService history) {
         this.data = data;
         this.clients = clients;
         this.portfolio = portfolio;
+        this.history = history;
+    }
+
+    @GetMapping(ApiRoutes.ACCOUNT_PORTFOLIO_HISTORY)
+    public PortfolioHistoryResponse portfolioHistory(@PathVariable Integer accountId, Principal principal,
+            @RequestParam(defaultValue = "ALL") String range) {
+        return history.history(accountId, clientId(principal), range);
     }
 
     @GetMapping(ApiRoutes.ACCOUNT_PORTFOLIO_SUMMARY)
@@ -56,6 +67,12 @@ public class AccountDataController {
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail badRequest(IllegalArgumentException error) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, error.getMessage());
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ProblemDetail storageUnavailable(DataAccessException error) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
+                "Account data storage is temporarily unavailable. Please try again later.");
     }
 
     @ExceptionHandler(NoSuchElementException.class)

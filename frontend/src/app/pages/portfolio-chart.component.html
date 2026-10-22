@@ -1,0 +1,43 @@
+<section class="card chart-card" [style.--chart-color]="color()" [attr.aria-label]="title()">
+  <div class="chart-heading"><h3>{{ title() }}</h3><span class="currency">USD</span></div>
+  <p class="chart-value">{{ money(value(current())) }}</p>
+  <p class="chart-date">{{ current() ? date(current()!.observedAt) : 'No observations in this period' }}</p>
+  @if (valid().length) {
+    <div class="chart-interaction" tabindex="0" role="group" [attr.aria-label]="title() + '. Use left and right arrow keys to inspect observations.'"
+      (keydown)="navigate($event)" (blur)="selected.set(-1)">
+      <svg viewBox="0 0 600 240" role="img" [attr.aria-label]="title() + ', ' + valid().length + ' recorded observations'"
+        (pointermove)="inspect($event)" (pointerdown)="inspect($event)" (pointerleave)="selected.set(-1)">
+        <defs><linearGradient [id]="'history-fill-' + metric()" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="currentColor" stop-opacity=".18" /><stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+        </linearGradient></defs>
+        @for (tick of ticks(); track tick.y) {
+          <line x1="68" x2="572" [attr.y1]="tick.y" [attr.y2]="tick.y" class="grid-line" />
+          <text x="56" [attr.y]="tick.y + 4" text-anchor="end">{{ money(tick.value, true) }}</text>
+        }
+        @if (domain().low < 0 && domain().high > 0) { <line x1="68" x2="572" [attr.y1]="y(0)" [attr.y2]="y(0)" class="zero-line" /> }
+        @for (path of paths(); track $index) {
+          <path [attr.d]="path.area" [attr.fill]="'url(#history-fill-' + metric() + ')'" />
+          <path [attr.d]="path.line" class="series-line" />
+          @if (path.single) { <circle [attr.cx]="path.startX" [attr.cy]="path.startY" r="5" class="point" /> }
+        }
+        @for (tick of dateTicks(); track tick.x) { <text [attr.x]="tick.x" y="226" text-anchor="middle">{{ tick.label }}</text> }
+        @if (selected() >= 0 && current(); as point) {
+          <line [attr.x1]="x(point)" [attr.x2]="x(point)" y1="20" y2="198" class="crosshair" />
+          @if (value(point) != null) { <circle [attr.cx]="x(point)" [attr.cy]="y(value(point)!)" r="5" class="point" /> }
+        }
+      </svg>
+      @if (selected() >= 0 && current(); as point) {
+        <div class="chart-tooltip" role="status">
+          <strong>{{ date(point.observedAt) }}</strong>
+          <span>Cash <b>{{ money(point.cashBalance) }}</b></span>
+          <span>Invested assets <b>{{ money(point.investedValue) }}</b></span>
+          @if (point.oldestQuoteAt) { <small>Oldest quote: {{ date(point.oldestQuoteAt) }}</small> }
+          @if (metric() === 'portfolioValue' ? point.valueUnavailableReason : point.profitLossUnavailableReason; as reason) { <small>{{ reason }}</small> }
+        </div>
+      }
+    </div>
+    <p class="chart-hint">{{ valid().length === 1 ? 'First observation saved. More points will appear as history builds.' : 'Hover, tap, or use arrow keys to explore · UTC' }}</p>
+  } @else {
+    <div class="chart-empty"><span aria-hidden="true">↗</span><p>{{ metric() === 'portfolioValue' ? current()?.valueUnavailableReason : current()?.profitLossUnavailableReason }}</p><p>A chart will appear when a complete valuation is recorded.</p></div>
+  }
+</section>

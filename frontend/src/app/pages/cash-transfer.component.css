@@ -1,0 +1,19 @@
+:host { display: block; margin: 20px 0; }
+.cash-heading { margin-bottom: 16px; }
+.cash-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; }
+.stat-value { margin: 0; overflow-wrap: anywhere; }
+.cash-actions, .dialog-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.cash-actions .btn, .dialog-actions .btn { width: auto; margin: 0; }
+.cash-activity-link { margin-left: auto; }
+.cash-activity-link, .dialog-actions a { font-size: 13px; }
+.cash-status:empty { display: none; }
+.note { line-height: 1.6; }
+dialog { box-sizing: border-box; width: min(460px, calc(100vw - 32px)); max-height: 90vh; overflow: auto; padding: 28px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); }
+dialog::backdrop { background: #071b29a6; }
+dialog h2 { margin: 0 0 12px; }
+.dialog-actions { justify-content: flex-end; margin-top: 24px; }
+@media (max-width: 480px) {
+  dialog { padding: 20px; }
+  .cash-actions { width: 100%; }
+  .cash-activity-link { margin-left: 0; }
+}

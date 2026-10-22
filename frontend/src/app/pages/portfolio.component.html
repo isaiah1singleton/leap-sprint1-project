@@ -6,7 +6,9 @@
 @if (!selectedAccount()) {
   <div class="empty-state"><strong>Select a trading account</strong>Choose an account from the dashboard to view its portfolio.</div>
 } @else {
+  <app-cash-transfer />
   <app-portfolio-summary (summaryChange)="setSnapshot($event)" />
+  <app-portfolio-history />
 
   <div class="portfolio-insights">
     <section class="card" aria-label="Portfolio allocation">

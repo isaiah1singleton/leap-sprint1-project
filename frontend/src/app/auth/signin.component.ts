@@ -2,17 +2,16 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
-import { ClientThemeService } from '../core/client-theme.service';
+import { ThemeToggleComponent } from '../core/theme-toggle.component';
 
 @Component({
   selector: 'app-signin',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ThemeToggleComponent],
   templateUrl: './signin.component.html',
 })
 export class SigninComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly clientTheme = inject(ClientThemeService);
 
   email = '';
   password = '';
@@ -20,17 +19,8 @@ export class SigninComponent {
   mode: 'client' | 'admin' = 'client';
   private errorFields: string[] = [];
 
-  constructor() {
-    this.clientTheme.enable();
-  }
-
   setMode(mode: 'client' | 'admin'): void {
     this.mode = mode;
-    if (mode === 'admin') {
-      this.clientTheme.disable();
-    } else {
-      this.clientTheme.enable();
-    }
   }
 
   invalid(field: string): boolean {

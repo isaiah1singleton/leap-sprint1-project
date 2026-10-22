@@ -56,6 +56,9 @@ public class PortfolioSummaryService {
         List<PortfolioHoldingValue> details = new ArrayList<>();
         for (var position : account.positions()) {
             var result = quotes.get(position.symbol());
+            if (result != null && "synthetic".equalsIgnoreCase(result.source())) {
+                warnings.add("Valuation includes synthetic provider quotes.");
+            }
             Instant quoteTime = usdOnly ? quoteTime(position.symbol(), result) : null;
             BigDecimal price = quoteTime == null ? null : result.quote().price();
             BigDecimal value = price == null ? null : position.quantity().multiply(price);
