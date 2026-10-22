@@ -121,6 +121,11 @@ direction TB
         -price: Money
         -quoteAt: date
     }
+    class FifoAllocations {
+        -sell_fill_id: long
+        -buy_fill_id: long
+        -allocated_quantity: Money
+    }
 
     Client "1" --> "0..*" Session : has
     Client "1" *-- "0..*" Account : owns

@@ -18,6 +18,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./shell/shell.component').then((m) => m.ShellComponent),
     children: [
+      {
+        path: 'tax-center',
+        title: 'Tax Center',
+        canActivate: [clientGuard],
+        loadComponent: () => import('./pages/tax-center.component').then((m) => m.TaxCenterComponent),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'overview' },
       {
         path: 'overview',

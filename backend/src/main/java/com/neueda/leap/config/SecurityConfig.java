@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, ApiRoutes.HELLO).permitAll()
                         .requestMatchers(ApiRoutes.ADMIN_AUDIT, ApiRoutes.ADMIN_AUDIT + "/**").authenticated()
                         .requestMatchers(ApiRoutes.MARKET, ApiRoutes.MARKET_ALL).authenticated()
+                        .requestMatchers(ApiRoutes.TAX, ApiRoutes.TAX_ALL).authenticated()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(
                         (request, response, error) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
