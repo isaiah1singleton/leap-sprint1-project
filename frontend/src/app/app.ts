@@ -1,7 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
-import { ClientThemeService } from './core/client-theme.service';
+import { RouterOutlet } from '@angular/router';
 import { ThemeService } from './core/theme.service';
 
 @Component({
@@ -10,19 +8,5 @@ import { ThemeService } from './core/theme.service';
   template: '<router-outlet />',
 })
 export class App {
-  private readonly router = inject(Router);
-  private readonly clientTheme = inject(ClientThemeService);
   private readonly theme = inject(ThemeService);
-
-  constructor() {
-    this.router.events
-      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe((event) => {
-        if (event.urlAfterRedirects === '/app/admin-audit') {
-          this.clientTheme.disable();
-        } else {
-          this.clientTheme.enable();
-        }
-      });
-  }
 }
