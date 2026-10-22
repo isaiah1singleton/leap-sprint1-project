@@ -20,37 +20,10 @@ import org.springframework.stereotype.Service;
 public class ClientService {
 
     private final ClientRepository clientRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final TokenService tokenService;
 
     public ClientService(
-            ClientRepository clientRepository,
-            PasswordEncoder passwordEncoder,
-            TokenService tokenService) {
+            ClientRepository clientRepository) {
         this.clientRepository = clientRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.tokenService = tokenService;
-    }
-
-    // to-do: remove this function
-    @Transactional
-    public AuthResponse register(RegisterRequest request) {
-        String name = request == null || request.name() == null ? null : request.name().trim();
-        String email = normalizedEmail(request.email());
-
-        if (name == null || name.isBlank() || email == null) {
-            throw new IllegalArgumentException("Name, email and password are required.");
-        }
-
-        if (clientRepository.findByEmailIgnoreCase(email).isPresent()) {
-            throw new IllegalStateException("An account with this email already exists.");
-        }
-
-        Client client = clientRepository.save(
-                new Client(name, email, "temp")
-        );
-
-        return toResponseWithToken(client);
     }
 
 
@@ -72,33 +45,6 @@ public class ClientService {
         );
 
         return client;
-    }
-
-    // to-do: remove this function
-    @Transactional
-    public AuthResponse signIn(SignInRequest request) {
-        String email = normalizedEmail(request.email());
-        String password = request == null ? null : request.password();
-
-        if (email == null || password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Email and password are required.");
-        }
-
-        Client client = clientRepository.findByEmailIgnoreCase(email)
-                .filter(found -> found.getClientStatus() == ClientStatus.ACTIVE
-                        && passwordEncoder.matches(password, found.getPasswordHash()))
-                .orElseThrow(() -> new NoSuchElementException("Invalid email or password."));
-
-        return toResponseWithToken(client);
-    }
-
-    @Transactional
-    public AuthResponse signInAdmin(SignInRequest request) {
-        AuthResponse response = signIn(request);
-        if (!"ADMIN".equalsIgnoreCase(response.clientSegment())) {
-            throw new NoSuchElementException("Administrator access is required.");
-        }
-        return response;
     }
 
     @Transactional
