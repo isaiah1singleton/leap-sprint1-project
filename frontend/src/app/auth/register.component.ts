@@ -32,6 +32,6 @@ export class RegisterComponent {
     }
     this.error = '';
     this.errorFields = [];
-    void this.router.navigate(['/app/overview']);
+    void this.router.navigate(['/signin']);
   }
 }
