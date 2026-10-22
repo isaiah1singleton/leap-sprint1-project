@@ -11,6 +11,7 @@ import com.neueda.leap.enums.Currency;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
+@org.junit.jupiter.api.Tag("unit")
 class CashBalanceTest {
     @Test
     void withdrawsFromTotalBalanceAndRejectsOverdrafts() {

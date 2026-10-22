@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest(properties = {
+        "spring.kafka.listener.auto-startup=false",
         "spring.datasource.url=jdbc:h2:mem:session-lifecycle;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.datasource.username=sa",
@@ -146,7 +147,7 @@ class SessionLifecycleTest {
 
     @Test
     void registrationAndSignInIgnoreAnInvalidBearerHeader() throws Exception {
-        String credentials = "{\"email\":\"alice@example.com\",\"password\":\"password123\"}";
+        String credentials = "{\"name\":\"Alice\",\"email\":\"alice@example.com\",\"password\":\"password123\"}";
 
         mockMvc.perform(post("/api/auth/register")
                         .header("Authorization", "Bearer invalid")

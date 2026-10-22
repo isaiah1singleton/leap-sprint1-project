@@ -14,6 +14,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@org.junit.jupiter.api.Tag("unit")
 class PortfolioSummaryServiceTest {
     private final PortfolioSnapshotReader reader = mock(PortfolioSnapshotReader.class);
     private final MarketDataService market = mock(MarketDataService.class);
@@ -40,7 +41,8 @@ class PortfolioSummaryServiceTest {
         assertThat(result.holdings()).hasSize(1);
         assertThat(result.holdings().get(0).quotePrice()).isEqualByComparingTo("150");
         assertThat(result.holdings().get(0).estimatedValue()).isEqualByComparingTo("300");
-        assertThat(result.valuationWarnings()).contains("Valuation includes delayed provider quotes.");
+        // Provider delay alone is eligible under the current quote policy.
+        assertThat(result.valuationWarnings()).isEmpty();
     }
 
     @Test void reportsLossUsingNetFundingAfterWithdrawals() {
@@ -137,6 +139,37 @@ class PortfolioSummaryServiceTest {
         BigDecimal units = new BigDecimal(quantity);
         return new PortfolioSnapshotReader.Position(id, symbol, symbol + " Inc.", Currency.USD,
                 units, BigDecimal.ZERO, units);
+    }
+    @Test void syntheticQuotesAreExplicitAndMalformedTimesNeverProduceTotals() {
+        var q = quote("AAPL", "150", "USD", now, false);
+        when(market.quotes("AAPL")).thenReturn(batch(new MarketQuoteResultDto("AAPL", q.quote(), "synthetic", false, null)));
+        assertThat(service.summary(1, 7).valuationWarnings()).contains("Valuation includes synthetic provider quotes.");
+        var invalid = new MarketQuoteDto("AAPL", new BigDecimal("150"), null, null, null, "USD", null, null, null, "bad-time", null);
+        when(market.quotes("AAPL")).thenReturn(batch(new MarketQuoteResultDto("AAPL", invalid, "provider", false, null)));
+        assertThat(service.summary(1, 7).estimatedPortfolioValue()).isNull();
+    }
+    @Test void missingFieldsNullBatchAndMissingSymbolsRemainUnavailable() {
+        var invalidQuotes = Arrays.asList(
+            new MarketQuoteDto("AAPL", null, null, null, null, "USD", null, null, null, now.toString(), null),
+            new MarketQuoteDto("AAPL", new BigDecimal("1"), null, null, null, null, null, null, null, now.toString(), null),
+            new MarketQuoteDto("AAPL", new BigDecimal("1"), null, null, null, "USD", null, null, null, null, null),
+            new MarketQuoteDto("OTHER", new BigDecimal("1"), null, null, null, "USD", null, null, null, now.toString(), null));
+        for (var invalid : invalidQuotes) {
+            when(market.quotes("AAPL")).thenReturn(batch(new MarketQuoteResultDto("AAPL", invalid, "provider", false, null)));
+            assertThat(service.summary(1, 7).estimatedPortfolioValue()).isNull();
+        }
+        when(market.quotes("AAPL")).thenReturn(null, new MarketQuotesDto(null, ""), new MarketQuotesDto(Arrays.asList((MarketQuoteResultDto)null), ""));
+        for (int i = 0; i < 3; i++) assertThat(service.summary(1, 7).estimatedPortfolioValue()).isNull();
+        when(market.quotes("AAPL")).thenThrow(new NoSuchElementException("symbol"));
+        assertThat(service.summary(1, 7).valuationWarnings()).contains("Market prices are temporarily unavailable. Refresh to try again.");
+    }
+    @Test void foreignPositionAndMultipleQuoteTimestampsAreHandled() {
+        var foreign = new PortfolioSnapshotReader.Position(1, "BARC", "Barclays", Currency.GBP, BigDecimal.ONE, BigDecimal.ZERO, BigDecimal.ONE);
+        snapshot = new PortfolioSnapshotReader.Snapshot(1, snapshot.usdCash(), List.of(foreign), false, BigDecimal.ZERO, null, null, now);
+        assertThat(service.summary(1, 7).estimatedPortfolioValue()).isNull(); verifyNoInteractions(market);
+        snapshot = new PortfolioSnapshotReader.Snapshot(1, BigDecimal.ZERO, List.of(position(1, "AAPL", "1"), position(2, "MSFT", "1")), false, BigDecimal.ZERO, null, null, now);
+        when(market.quotes("AAPL,MSFT")).thenReturn(new MarketQuotesDto(List.of(quote("AAPL", "1", "USD", now, false), quote("MSFT", "2", "USD", now.minusSeconds(60), false)), ""));
+        assertThat(service.summary(1, 7).oldestQuoteAt()).isEqualTo(now.minusSeconds(60));
     }
     private MarketQuotesDto batch(MarketQuoteResultDto result) { return new MarketQuotesDto(List.of(result), ""); }
     private MarketQuoteResultDto quote(String symbol, String price, String currency, Instant time, boolean stale) {

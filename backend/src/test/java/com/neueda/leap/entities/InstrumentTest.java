@@ -1,4 +1,4 @@
-package com.neueda.leap.entities.test;
+package com.neueda.leap.entities;
 
 import com.neueda.leap.entities.Instrument;
 import com.neueda.leap.enums.AssetClass;
@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@org.junit.jupiter.api.Tag("unit")
 class InstrumentTest {
     
     private Instrument apple;

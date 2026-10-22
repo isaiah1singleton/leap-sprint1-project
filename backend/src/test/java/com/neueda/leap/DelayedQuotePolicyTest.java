@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@org.junit.jupiter.api.Tag("unit")
 class DelayedQuotePolicyTest {
     private final Instant now = Instant.parse("2026-10-14T18:00:00Z");
     private final OffsetDateTime oldQuote = OffsetDateTime.parse("2026-10-14T17:30:00Z");

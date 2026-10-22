@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /** Uses real HTTP so Tomcat's error dispatch is covered as well as controller handling. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
+        "spring.kafka.listener.auto-startup=false",
         "server.address=127.0.0.1",
         "spring.datasource.url=jdbc:h2:mem:market-http;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
         "spring.datasource.driver-class-name=org.h2.Driver",
@@ -27,11 +28,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MarketHttpIntegrationTest {
     @LocalServerPort private int port;
     @Autowired private ObjectMapper mapper;
+    @Autowired private com.neueda.leap.repository.InstrumentRepository instruments;
     private final HttpClient http = HttpClient.newHttpClient();
     private String token;
 
     @BeforeEach
     void signIn() throws Exception {
+        // The catalogue is now database-backed; this test owns its catalogue fixture.
+        if (instruments.findFirstBySymbolIgnoreCase("AAPL").isEmpty()) {
+            var instrument = new com.neueda.leap.entities.Instrument("US", "AAPL", "Apple",
+                    com.neueda.leap.enums.AssetClass.EQUITY, com.neueda.leap.enums.Currency.USD);
+            instrument.enableTrading();
+            instruments.saveAndFlush(instrument);
+        }
         String payload = "{\"name\":\"Market HTTP test\",\"email\":\"" + UUID.randomUUID()
                 + "@example.invalid\",\"password\":\"TestMarket123\"}";
         assertThat(post(ApiRoutes.AUTH_REGISTER, payload, null).statusCode()).isEqualTo(201);

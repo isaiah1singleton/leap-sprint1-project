@@ -11,7 +11,22 @@ import org.springframework.data.domain.PageImpl;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@org.junit.jupiter.api.Tag("unit")
 class PortfolioHistoryWorkerTest {
+    @Test void traversesPagesAndHandlesEmptyRepository() {
+        var accounts = mock(AccountRepository.class);
+        var summaries = mock(PortfolioSummaryService.class);
+        var observations = mock(PortfolioObservationStore.class);
+        var worker = new PortfolioHistoryWorker(accounts, summaries, observations);
+        when(accounts.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(new PageImpl<>(List.of()));
+        worker.sampleAccounts(); verifyNoInteractions(summaries, observations);
+        var first = com.neueda.leap.support.TradingFixtures.account();
+        var second = com.neueda.leap.support.TradingFixtures.id(com.neueda.leap.support.TradingFixtures.account(), "accountId", 2);
+        when(accounts.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(
+            new PageImpl<>(List.of(first), org.springframework.data.domain.PageRequest.of(0, 1), 2),
+            new PageImpl<>(List.of(second), org.springframework.data.domain.PageRequest.of(1, 1), 2));
+        worker.sampleAccounts(); verify(summaries).summary(1, 7); verify(summaries).summary(2, 7);
+    }
     @Test void continuesAfterProviderFailureAndSkipsInactiveAccounts() {
         var accounts = mock(AccountRepository.class);
         var summaries = mock(PortfolioSummaryService.class);
