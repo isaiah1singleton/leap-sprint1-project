@@ -7,35 +7,32 @@ import com.neueda.leap.models.SignInRequest;
 import com.neueda.leap.models.AuthResponse;
 import com.neueda.leap.repository.ClientRepository;
 import jakarta.transaction.Transactional;
+
+import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ClientService {
 
     private final ClientRepository clientRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final TokenService tokenService;
 
     public ClientService(
-            ClientRepository clientRepository,
-            PasswordEncoder passwordEncoder,
-            TokenService tokenService) {
+            ClientRepository clientRepository) {
         this.clientRepository = clientRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.tokenService = tokenService;
     }
 
+
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public Client registerClient(RegisterRequest request) {
         String name = request == null || request.name() == null ? null : request.name().trim();
         String email = normalizedEmail(request.email());
-        String password = request == null ? null : request.password();
 
-        if (name == null || name.isBlank() || email == null || password == null || password.isBlank()) {
+        if (name == null || name.isBlank() || email == null) {
             throw new IllegalArgumentException("Name, email and password are required.");
         }
 
@@ -44,36 +41,10 @@ public class ClientService {
         }
 
         Client client = clientRepository.save(
-                new Client(name, email, passwordEncoder.encode(password))
+                new Client(name, email, "temp")
         );
 
-        return toResponseWithToken(client);
-    }
-
-    @Transactional
-    public AuthResponse signIn(SignInRequest request) {
-        String email = normalizedEmail(request.email());
-        String password = request == null ? null : request.password();
-
-        if (email == null || password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Email and password are required.");
-        }
-
-        Client client = clientRepository.findByEmailIgnoreCase(email)
-                .filter(found -> found.getClientStatus() == ClientStatus.ACTIVE
-                        && passwordEncoder.matches(password, found.getPasswordHash()))
-                .orElseThrow(() -> new NoSuchElementException("Invalid email or password."));
-
-        return toResponseWithToken(client);
-    }
-
-    @Transactional
-    public AuthResponse signInAdmin(SignInRequest request) {
-        AuthResponse response = signIn(request);
-        if (!"ADMIN".equalsIgnoreCase(response.clientSegment())) {
-            throw new NoSuchElementException("Administrator access is required.");
-        }
-        return response;
+        return client;
     }
 
     @Transactional
@@ -98,10 +69,48 @@ public class ClientService {
     }
 
     @Transactional
-    public boolean isActiveAdmin(String email) {
-        return findActiveClientByEmail(email)
-                .map(client -> "ADMIN".equalsIgnoreCase(client.getClientSegment()))
-                .orElse(false);
+    public boolean isActiveAdmin(Jwt jwt) {
+        Object roles = jwt.getClaims().get("roles");
+        if (roles == null || !(roles instanceof List<?>)){
+            throw new IllegalArgumentException("Invalid access token");
+        }
+
+        boolean isAdmin = false;
+        List<?> roleList = (List<?>) roles;
+        for (Object role : roleList){
+            if (role == null || !(role instanceof String)){
+                throw new IllegalArgumentException("Invalid access token");
+            }
+            if (((String) role).toLowerCase() == "admin"){
+                isAdmin = true;
+                break;
+            }
+        }
+        return isAdmin;
+    }
+
+    @Transactional
+    public Client findOrRegisterClientByJwt(Jwt jwt){
+        if (jwt == null){
+            throw new IllegalArgumentException("An access token is required.");
+        }
+
+        String email = (String) jwt.getClaimAsString("sub");
+        Optional<Client> clientOpt = findActiveClientByEmail(email);
+
+        Client client;
+        if (clientOpt.isEmpty()){
+            // register new client
+            // to-do add name to token and register here
+            RegisterRequest request = new RegisterRequest("John Doe", email);
+            client = registerClient(request);
+        }
+        else{
+            // safe to cast Optional<Client> to Client
+            client = clientOpt.get();
+        }
+
+        return client;
     }
 
     private String normalizedEmail(String emailInput) {
@@ -109,18 +118,5 @@ public class ClientService {
             return null;
         }
         return emailInput.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private AuthResponse toResponseWithToken(Client client) {
-        TokenService.TokenGrant token = tokenService.issueToken(client);
-        return new AuthResponse(
-                client.getClientId(),
-                client.getClientName(),
-                client.getEmail(),
-                client.getClientSegment(),
-                token.accessToken(),
-                "Bearer",
-                token.expiresAt()
-        );
     }
 }

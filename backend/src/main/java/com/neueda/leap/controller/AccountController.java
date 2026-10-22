@@ -1,5 +1,6 @@
 package com.neueda.leap.controller;
 
+import com.neueda.leap.entities.Client;
 import com.neueda.leap.models.AccountResponse;
 import com.neueda.leap.models.OpenAccountRequest;
 import com.neueda.leap.service.AccountService;
@@ -8,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -30,8 +33,9 @@ public class AccountController {
     }
 
     @PostMapping
-    public ResponseEntity<AccountResponse> openAccount(Principal principal, @RequestBody OpenAccountRequest request) {
-        Integer clientId = authenticatedClientId(principal);
+    public ResponseEntity<AccountResponse> openAccount(@AuthenticationPrincipal Jwt jwt, @RequestBody OpenAccountRequest request) {
+        Client client = clientService.findOrRegisterClientByJwt(jwt);
+        Integer clientId = client.getClientId();
 
         AccountResponse account = accountService.openAccount(clientId, request.accountName());
 
@@ -41,28 +45,23 @@ public class AccountController {
     }
 
     @GetMapping("/{accountId}")
-    public AccountResponse getAccount(@PathVariable("accountId") Integer accountId, Principal principal) {
-        Integer clientId = authenticatedClientId(principal);
+    public AccountResponse getAccount(@AuthenticationPrincipal Jwt jwt, @PathVariable("accountId") Integer accountId) {
+        Client client = clientService.findOrRegisterClientByJwt(jwt);
+        Integer clientId = client.getClientId();
         return accountService.getAccount(accountId, clientId);
     }
 
     @GetMapping
-    public List<AccountResponse> getAccounts(Principal principal) {
-        Integer clientId = authenticatedClientId(principal);
-        System.out.println("[AccountController] Loading accounts for clientId: " + clientId + " | email: " + principal.getName());
+    public List<AccountResponse> getAccounts(@AuthenticationPrincipal Jwt jwt) {
+        Client client = clientService.findOrRegisterClientByJwt(jwt);
+        Integer clientId = client.getClientId();
+        String email = client.getEmail();
+        System.out.println("[AccountController] Loading accounts for clientId: " + clientId + " | email: " + email);
         List<AccountResponse> accounts = accountService.getAccounts(clientId);
         System.out.println("[AccountController] Found " + accounts.size() + " accounts for client: " + clientId);
         return accounts;
     }
 
-    private Integer authenticatedClientId(Principal principal) {
-        if (principal == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to access accounts.");
-        }
-        return clientService
-                .findActiveClientIdByEmail(principal.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "An active client login is required."));
-    }
     // 404 NOT FOUND
     @ExceptionHandler(NoSuchElementException.class)
     public ProblemDetail handleNotFound(NoSuchElementException ex) {

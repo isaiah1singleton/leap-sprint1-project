@@ -5,6 +5,8 @@ import com.neueda.leap.service.CashMovementService;
 import com.neueda.leap.service.ClientService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -30,9 +32,9 @@ public class CashMovementController {
     @GetMapping("/accounts/{accountId}/cash-movements")
     public List<CashMovementResponse> getMovements(
             @PathVariable("accountId") Integer accountId,
-            Principal principal
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        Integer clientId = authenticatedClientId(principal);
+        Integer clientId = authenticatedClientId(jwt);
 
         return movementService.getMovements(accountId, clientId);
     }
@@ -40,15 +42,15 @@ public class CashMovementController {
     @GetMapping("/cash-movements/{cashMovementId}")
     public CashMovementResponse getMovement(
             @PathVariable("cashMovementId") Integer movementId,
-            Principal principal
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        Integer clientId = authenticatedClientId(principal);
+        Integer clientId = authenticatedClientId(jwt);
 
         return movementService.getMovement(movementId, clientId);
     }
 
-    private Integer authenticatedClientId(Principal principal) {
-        if (principal == null) {
+    private Integer authenticatedClientId(Jwt jwt) {
+        if (jwt == null) {
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
                     "Sign in to access cash movements."
@@ -56,13 +58,7 @@ public class CashMovementController {
         }
 
         return clientService
-                .findActiveClientIdByEmail(principal.getName())
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.UNAUTHORIZED,
-                                "An active client login is required."
-                        )
-                );
+                .findOrRegisterClientByJwt(jwt).getClientId();
     }
 
     @ExceptionHandler(NoSuchElementException.class)

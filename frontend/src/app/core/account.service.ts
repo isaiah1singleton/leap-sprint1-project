@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_CONFIG } from './api.config';
@@ -24,9 +24,11 @@ export class AccountService {
 
   async getAccounts(): Promise<AccountResponse[]> {
     const currentUser = this.auth.currentUser();
+    const headers = this.authorizationHeaders();
+    if (!headers) return [];
     try {
       console.log(`🌐 [AccountService] Fetching accounts for ${currentUser} from: ${this.apiUrl}`);
-      const accounts = await firstValueFrom(this.http.get<AccountResponse[]>(this.apiUrl));
+      const accounts = await firstValueFrom(this.http.get<AccountResponse[]>(this.apiUrl, { headers }));
       console.log(`✅ [AccountService] Received ${accounts?.length || 0} accounts for ${currentUser}`);
       return accounts || [];
     } catch (error) {
@@ -45,10 +47,14 @@ export class AccountService {
     }
 
     const currentUser = this.auth.currentUser();
+    const headers = this.authorizationHeaders();
+    if (!headers) {
+      return { message: 'Sign in to manage accounts.', fields: [] };
+    }
     try {
       console.log(`🆕 [AccountService] Creating account "${name}" for ${currentUser}`);
       const response = await firstValueFrom(
-        this.http.post<AccountResponse>(this.apiUrl, { accountName: name }),
+        this.http.post<AccountResponse>(this.apiUrl, { accountName: name }, { headers }),
       );
       console.log(`✅ [AccountService] Account created for ${currentUser}:`, response);
       return response;
@@ -64,5 +70,10 @@ export class AccountService {
       return { message: detail, fields: [] };
     }
     return { message: 'An error occurred. Please try again.', fields: [] };
+  }
+
+  private authorizationHeaders(): HttpHeaders | null {
+    const token = this.auth.getAccessToken();
+    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : null;
   }
 }

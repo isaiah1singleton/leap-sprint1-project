@@ -19,7 +19,7 @@ const SALT_ROUNDS = 10;
 // this exact string as its fallback. This is what lets this service's
 // tokens be accepted by the SAME mission service, unchanged, without
 // either side's code needing to know about the other.
-export const JWT_SECRET = process.env.JWT_SECRET || "mission-control-shared-secret-key-32-bytes-minimum";
+const JWT_SECRET = process.env.SHARED_SECRET as string;
 
 @Injectable()
 export class AuthService {
