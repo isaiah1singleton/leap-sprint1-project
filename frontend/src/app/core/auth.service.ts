@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface AuthFailure {
   message: string;
@@ -17,10 +18,17 @@ interface AuthResponse {
   expiresAt: string;
 }
 
+interface RegisterResponse {
+  name: string;
+  email: string;
+  registered: true;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/auth';
+  private readonly authApiUrl = `${environment.authApiUrl}/auth`;
   readonly currentUser = signal<string | null>(sessionStorage.getItem('currentUserName'));
   readonly currentUserEmail = signal<string | null>(sessionStorage.getItem('currentUserEmail'));
   readonly currentUserSegment = signal<string | null>(sessionStorage.getItem('currentUserSegment'));
@@ -110,13 +118,15 @@ export class AuthService {
     }
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiUrl}/register`, {
+        this.http.post<RegisterResponse>(`${this.authApiUrl}/register`, {
           name: userName,
           email: userEmail,
           password,
         }),
       );
-      this.setCurrentUser(response.clientName, response.email, response.clientSegment, response.accessToken);
+      if (!response.registered) {
+        return { message: 'Registration did not complete. Please try again.', fields: [] };
+      }
       return null;
     } catch (error) {
       return this.apiFailure(error, ['name', 'email']);
@@ -154,6 +164,12 @@ export class AuthService {
     }
     if (error instanceof HttpErrorResponse && error.error?.detail) {
       return { message: error.error.detail, fields };
+    }
+    if (error instanceof HttpErrorResponse && Array.isArray(error.error?.message)) {
+      return { message: error.error.message.join(' '), fields };
+    }
+    if (error instanceof HttpErrorResponse && typeof error.error?.message === 'string') {
+      return { message: error.error.message, fields };
     }
     if (error instanceof HttpErrorResponse && typeof error.error === 'string') {
       return { message: error.error, fields };
