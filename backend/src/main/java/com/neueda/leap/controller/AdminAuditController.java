@@ -9,6 +9,8 @@ import com.neueda.leap.service.SuspiciousTradeService;
 import java.security.Principal;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,44 +24,44 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping(ApiRoutes.ADMIN_AUDIT)
 public class AdminAuditController {
     private final AuditRecordService auditRecords;
-    private final ClientService clients;
+    private final ClientService clientService;
     private final SuspiciousTradeService suspiciousTrades;
 
     public AdminAuditController(AuditRecordService auditRecords, ClientService clients,
                                 SuspiciousTradeService suspiciousTrades) {
         this.auditRecords = auditRecords;
-        this.clients = clients;
+        this.clientService = clients;
         this.suspiciousTrades = suspiciousTrades;
     }
 
     @GetMapping
     public List<AuditRecordResponse> latest(
-            Principal principal,
+            @AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "100") int limit) {
-        requireAdmin(principal);
+        requireAdmin(jwt);
         return auditRecords.latest(limit);
     }
 
     @GetMapping(ApiRoutes.ADMIN_AUDIT_LIFECYCLE)
-    public TradeLifecycleResponse lifecycle(Principal principal, @PathVariable Integer orderId) {
-        requireAdmin(principal);
+    public TradeLifecycleResponse lifecycle(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer orderId) {
+        requireAdmin(jwt);
         return auditRecords.lifecycle(orderId);
     }
 
     @PostMapping(ApiRoutes.ADMIN_AUDIT_SUSPICIOUS)
-    public void flagSuspicious(Principal principal, @PathVariable Integer orderId) {
-        requireAdmin(principal);
-        suspiciousTrades.flag(orderId, principal.getName());
+    public void flagSuspicious(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer orderId) {
+        requireAdmin(jwt);
+        suspiciousTrades.flag(orderId, (String) jwt.getClaims().get("sub"));
     }
 
     @DeleteMapping(ApiRoutes.ADMIN_AUDIT_SUSPICIOUS)
-    public void removeSuspiciousFlag(Principal principal, @PathVariable Integer orderId) {
-        requireAdmin(principal);
+    public void removeSuspiciousFlag(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer orderId) {
+        requireAdmin(jwt);
         suspiciousTrades.removeFlag(orderId);
     }
 
-    private void requireAdmin(Principal principal) {
-        if (principal == null || !clients.isActiveAdmin(principal.getName())) {
+    private void requireAdmin(@AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null || !clientService.isActiveAdmin(jwt)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Administrator access is required.");
         }
     }

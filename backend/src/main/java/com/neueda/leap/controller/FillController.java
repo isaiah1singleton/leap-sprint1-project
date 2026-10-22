@@ -2,6 +2,8 @@ package com.neueda.leap.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,11 +24,11 @@ public class FillController {
     private final FillService fillService;
     private final ClientService clientService;
 
-    private Integer authenticatedClientId(Principal principal) {
-        if (principal == null) {
+    private Integer authenticatedClientId(Jwt jwt){
+        if (jwt == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to access fills.");
         }
-        return clientService.findActiveClientIdByEmail(principal.getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "An active client login is required."));
+        return clientService.findOrRegisterClientByJwt(jwt).getClientId();
     }
 
     public FillController(FillService fillService, ClientService clientService) {
@@ -36,9 +38,9 @@ public class FillController {
     @GetMapping("{orderId}/fill")
     public FillResponse getFill(
             @PathVariable("orderId") Integer orderId,
-            Principal principal
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        Integer clientId = authenticatedClientId(principal);
+        Integer clientId = authenticatedClientId(jwt);
         return fillService.getFillFromOrder(orderId, clientId);
     }
 

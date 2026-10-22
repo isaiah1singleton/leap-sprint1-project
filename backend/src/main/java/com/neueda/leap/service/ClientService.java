@@ -7,6 +7,8 @@ import com.neueda.leap.models.SignInRequest;
 import com.neueda.leap.models.AuthResponse;
 import com.neueda.leap.repository.ClientRepository;
 import jakarta.transaction.Transactional;
+
+import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -121,10 +123,24 @@ public class ClientService {
     }
 
     @Transactional
-    public boolean isActiveAdmin(String email) {
-        return findActiveClientByEmail(email)
-                .map(client -> "ADMIN".equalsIgnoreCase(client.getClientSegment()))
-                .orElse(false);
+    public boolean isActiveAdmin(Jwt jwt) {
+        Object roles = jwt.getClaims().get("roles");
+        if (roles == null || !(roles instanceof List<?>)){
+            throw new IllegalArgumentException("Invalid access token");
+        }
+
+        boolean isAdmin = false;
+        List<?> roleList = (List<?>) roles;
+        for (Object role : roleList){
+            if (role == null || !(role instanceof String)){
+                throw new IllegalArgumentException("Invalid access token");
+            }
+            if (((String) role).toLowerCase() == "admin"){
+                isAdmin = true;
+                break;
+            }
+        }
+        return isAdmin;
     }
 
     @Transactional
@@ -133,7 +149,7 @@ public class ClientService {
             throw new IllegalArgumentException("An access token is required.");
         }
 
-        String email = jwt.getClaims().get("sub").toString();
+        String email = (String) jwt.getClaimAsString("sub");
         Optional<Client> clientOpt = findActiveClientByEmail(email);
 
         Client client;
@@ -156,18 +172,5 @@ public class ClientService {
             return null;
         }
         return emailInput.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private AuthResponse toResponseWithToken(Client client) {
-        TokenService.TokenGrant token = tokenService.issueToken(client);
-        return new AuthResponse(
-                client.getClientId(),
-                client.getClientName(),
-                client.getEmail(),
-                client.getClientSegment(),
-                token.accessToken(),
-                "Bearer",
-                token.expiresAt()
-        );
     }
 }

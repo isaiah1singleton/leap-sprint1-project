@@ -13,6 +13,8 @@ import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -30,26 +32,25 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderResponse> submit(@RequestBody SubmitOrderRequest request, Principal principal) {
-        int clientId = clientId(principal);
-        OrderResponse order = submission.submit(request, clientId, principal.getName());
+    public ResponseEntity<OrderResponse> submit(@RequestBody SubmitOrderRequest request, @AuthenticationPrincipal Jwt jwt) {
+        int clientId = clientId(jwt);
+        OrderResponse order = submission.submit(request, clientId, jwt.getClaimAsString("sub"));
         return ResponseEntity.created(URI.create(ApiRoutes.ORDERS + "/" + order.orderId())).body(order);
     }
 
     @GetMapping
-    public List<OrderResponse> list(@RequestParam Integer accountId, Principal principal) {
-        return queries.list(accountId, clientId(principal));
+    public List<OrderResponse> list(@RequestParam Integer accountId, @AuthenticationPrincipal Jwt jwt) {
+        return queries.list(accountId, clientId(jwt));
     }
 
     @GetMapping(ApiRoutes.ORDER)
-    public OrderResponse get(@PathVariable Integer orderId, Principal principal) {
-        return queries.get(orderId, clientId(principal));
+    public OrderResponse get(@PathVariable Integer orderId, @AuthenticationPrincipal Jwt jwt) {
+        return queries.get(orderId, clientId(jwt));
     }
 
-    private int clientId(Principal principal) {
-        if (principal == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to place orders.");
-        return clients.findActiveClientIdByEmail(principal.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "An active client login is required."));
+    private int clientId(Jwt jwt) {
+        if (jwt == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to place orders.");
+        return clients.findOrRegisterClientByJwt(jwt).getClientId();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

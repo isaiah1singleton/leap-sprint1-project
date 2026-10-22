@@ -7,6 +7,9 @@ import com.neueda.leap.service.ClientService;
 
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+
 import java.util.NoSuchElementException;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,12 +33,12 @@ public class OrderEventController {
     }
 
     @GetMapping("/{orderId}/events")
-    public List<OrderEventResponse> getOrderEvents(@PathVariable Integer orderId, Principal principal) {
-        if (principal == null) {
+    public List<OrderEventResponse> getOrderEvents(@PathVariable Integer orderId, @AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to access order history.");
         }
 
-        Integer clientId = clientService.findActiveClientIdByEmail(principal.getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "An active client login is required."));
+        Integer clientId = clientService.findOrRegisterClientByJwt(jwt).getClientId();
 
         return orderEventService.getEvents(orderId, clientId);
     }
