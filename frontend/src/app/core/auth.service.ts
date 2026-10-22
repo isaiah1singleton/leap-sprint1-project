@@ -9,13 +9,11 @@ export interface AuthFailure {
 }
 
 interface AuthResponse {
-  clientId: number;
-  clientName: string;
-  email: string;
-  clientSegment: string;
   accessToken: string;
-  tokenType: string;
-  expiresAt: string;
+  refreshToken: {
+    uuid: string;
+    body: string;
+  };
 }
 
 interface RegisterResponse {
@@ -73,9 +71,14 @@ export class AuthService {
 
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiUrl}/sign-in`, { email: userEmail, password }),
+        this.http.post<AuthResponse>(`${this.authApiUrl}/login`, { email: userEmail, password }),
       );
-      this.setCurrentUser(response.clientName, response.email, response.clientSegment, response.accessToken);
+      this.setCurrentUser(
+        this.displayNameFor(userEmail),
+        userEmail,
+        this.segmentFromToken(response.accessToken),
+        response.accessToken,
+      );
       return null;
     } catch (error) {
       return this.apiFailure(error, ['email', 'password']);
@@ -91,9 +94,14 @@ export class AuthService {
 
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiUrl}/admin-sign-in`, { email: userEmail, password }),
+        this.http.post<AuthResponse>(`${this.authApiUrl}/login`, { email: userEmail, password }),
       );
-      this.setCurrentUser(response.clientName, response.email, response.clientSegment, response.accessToken);
+      this.setCurrentUser(
+        this.displayNameFor(userEmail),
+        userEmail,
+        this.segmentFromToken(response.accessToken),
+        response.accessToken,
+      );
       return null;
     } catch (error) {
       return this.apiFailure(error, ['email', 'password']);
@@ -152,6 +160,19 @@ export class AuthService {
     this.currentUser.set(name);
     this.currentUserEmail.set(email);
     this.currentUserSegment.set(clientSegment);
+  }
+
+  private displayNameFor(email: string): string {
+    return email.split('@')[0] || email;
+  }
+
+  private segmentFromToken(accessToken: string): string {
+    try {
+      const payload = JSON.parse(atob(accessToken.split('.')[1])) as { roles?: string[] };
+      return payload.roles?.some((role) => role.toLowerCase() === 'admin') ? 'ADMIN' : 'RETAIL';
+    } catch {
+      return 'RETAIL';
+    }
   }
 
   private apiFailure(error: unknown, fields: string[]): AuthFailure {

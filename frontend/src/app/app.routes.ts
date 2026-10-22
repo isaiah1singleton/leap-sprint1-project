@@ -10,7 +10,7 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/register.component').then((m) => m.RegisterComponent),
   },
   {
-    path: 'signin',
+    path: 'login',
     loadComponent: () => import('./auth/signin.component').then((m) => m.SigninComponent),
   },
   {
@@ -83,5 +83,5 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '**', redirectTo: 'signin' },
+  { path: '**', redirectTo: 'login' },
 ];

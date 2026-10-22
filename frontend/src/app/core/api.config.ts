@@ -11,7 +11,7 @@ export const API_CONFIG = {
   // API endpoints
   endpoints: {
     auth: {
-      signIn: '/api/auth/sign-in',
+      login: '/auth/login',
       register: '/api/auth/register',
     },
     accounts: {
