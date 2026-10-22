@@ -1,0 +1,40 @@
+{
+  "fileKey": "sqFnjVARmNCox2Eu3jfCMr",
+  "boardId": "2:27",
+  "lockupId": "2:19",
+  "masters": {
+    "Sidecut": "2:10",
+    "Stack": "2:13",
+    "Loop": "2:16",
+    "Micro": "3:32"
+  },
+  "scope": "logo-family-and-theme-board",
+  "validation": {
+    "microBounds": [
+      16,
+      16
+    ],
+    "boardBounds": [
+      1440,
+      1569
+    ],
+    "allAssetsVector": true
+  },
+  "createdNodeIds": [
+    "3:32",
+    "3:33",
+    "3:34",
+    "3:35",
+    "I3:35;3:33",
+    "I3:35;3:34"
+  ],
+  "completedSteps": [
+    "frontend-review",
+    "noun-shortlist",
+    "logo-family",
+    "theme-board",
+    "visual-review",
+    "optical-micro",
+    "exports"
+  ]
+}

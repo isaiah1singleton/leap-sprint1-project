@@ -1,0 +1,21 @@
+/* Optional Bside theme direction. Not imported by the app.
+   Self-host Inter before adopting it; exported SVG lockups need no fonts. */
+:root {
+  --ink: #16181a; --ink-soft: #4b4d50; --muted: #6d6f73;
+  --line: #e4e2df; --line-soft: #f1efec;
+  --ground: #f4f3f1; --surface: #ffffff;
+  --gain: #1d7a4c; --danger: #c4392c; --radius: 12px;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px;
+  --space-4: 16px; --space-6: 24px; --space-8: 32px;
+}
+.bside-ui { font-family: var(--font-ui); color: var(--ink); background: var(--ground); }
+.bside-ui .card { padding: var(--space-6); border-radius: var(--radius); }
+.bside-ui .page { padding: var(--space-8); }
+.bside-ui .row, .bside-ui .stack { gap: var(--space-6); }
+.bside-ui .stat-value { font-size: 36px; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.bside-ui .table td { font-variant-numeric: tabular-nums; }
+.bside-ui :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+@media (max-width: 860px) {
+  .bside-ui .page, .bside-ui .card { padding: var(--space-4); }
+}
