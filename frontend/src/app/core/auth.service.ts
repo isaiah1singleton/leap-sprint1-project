@@ -31,6 +31,29 @@ export class AuthService {
   readonly currentUserEmail = signal<string | null>(sessionStorage.getItem('currentUserEmail'));
   readonly currentUserSegment = signal<string | null>(sessionStorage.getItem('currentUserSegment'));
 
+  redirectAnalystToSuperset(): void {
+    const token = this.getAccessToken();
+
+    if (!token || !this.isAnalyst()) {
+      throw new Error('An authenticated analyst session is required.');
+    }
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = environment.supersetLoginUrl;
+    form.style.display = 'none';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'access_token';
+    input.value = token;
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    form.submit();
+  }
+
   isSignedIn(): boolean {
     return this.currentUser() !== null && this.getAccessToken() !== null;
   }
@@ -49,14 +72,13 @@ export class AuthService {
 
   beginLocalSession(email: string, segment: 'RETAIL' | 'ADMIN'): void {
     const normalizedEmail = email.trim().toLowerCase();
-    const name = normalizedEmail.includes('@')
-      ? normalizedEmail.split('@')[0]
-      : normalizedEmail;
-    const titleName = name
-      .split(/[._-]/g)
-      .filter(Boolean)
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ') || 'Local User';
+    const name = normalizedEmail.includes('@') ? normalizedEmail.split('@')[0] : normalizedEmail;
+    const titleName =
+      name
+        .split(/[._-]/g)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ') || 'Local User';
 
     this.setCurrentUser(
       titleName,
@@ -158,7 +180,12 @@ export class AuthService {
     return Promise.resolve();
   }
 
-  private setCurrentUser(name: string, email: string, clientSegment: string, accessToken: string): void {
+  private setCurrentUser(
+    name: string,
+    email: string,
+    clientSegment: string,
+    accessToken: string,
+  ): void {
     const roles = this.rolesFromToken(accessToken);
     sessionStorage.setItem('currentUserName', name);
     sessionStorage.setItem('currentUserEmail', email);
@@ -189,7 +216,9 @@ export class AuthService {
     try {
       const payload = JSON.parse(atob(accessToken.split('.')[1])) as { roles?: unknown };
       return Array.isArray(payload.roles)
-        ? payload.roles.filter((role): role is string => typeof role === 'string').map((role) => role.toLowerCase())
+        ? payload.roles
+            .filter((role): role is string => typeof role === 'string')
+            .map((role) => role.toLowerCase())
         : [];
     } catch {
       return [];
