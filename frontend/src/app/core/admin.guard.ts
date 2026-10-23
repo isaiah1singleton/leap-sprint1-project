@@ -5,19 +5,25 @@ import { AuthService } from './auth.service';
 export const adminGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
+  const signedIn = auth.isSignedIn();
+  const isAdmin = auth.isAdmin();
 
-  if (!auth.isSignedIn()) {
+  if (!signedIn) {
+    console.info('[RouteGuard] adminGuard', {
+      target: state.url,
+      signedIn,
+      isAdmin,
+      decision: 'REDIRECT /login',
+    });
     return router.createUrlTree(['/login']);
   }
 
-  if (auth.isAdmin()) {
-    return true;
-  }
-
-  if (auth.isAnalyst()) {
-    auth.redirectAnalystToSuperset();
-    return false;
-  }
-
-  return router.createUrlTree(['/app/overview']);
+  const allowed = isAdmin;
+  console.info('[RouteGuard] adminGuard', {
+    target: state.url,
+    signedIn,
+    isAdmin,
+    decision: allowed ? 'ALLOW' : 'REDIRECT /app/overview',
+  });
+  return allowed ? true : router.createUrlTree(['/app/overview']);
 };

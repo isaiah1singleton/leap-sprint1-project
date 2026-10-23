@@ -3,18 +3,16 @@ package com.neueda.leap.service;
 import com.neueda.leap.entities.Client;
 import com.neueda.leap.enums.ClientStatus;
 import com.neueda.leap.models.RegisterRequest;
-import com.neueda.leap.models.SignInRequest;
-import com.neueda.leap.models.AuthResponse;
 import com.neueda.leap.repository.ClientRepository;
 import jakarta.transaction.Transactional;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.NoSuchElementException;
 import java.util.Optional;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ClientService {
@@ -95,14 +93,23 @@ public class ClientService {
             throw new IllegalArgumentException("An access token is required.");
         }
 
+        if (isActiveAdmin(jwt)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Administrator accounts do not have client profiles."
+            );
+        }
+
         String email = (String) jwt.getClaimAsString("sub");
         Optional<Client> clientOpt = findActiveClientByEmail(email);
 
         Client client;
         if (clientOpt.isEmpty()){
-            // register new client
-            // to-do add name to token and register here
-            RegisterRequest request = new RegisterRequest("John Doe", email);
+            String name = jwt.getClaimAsString("name");
+            if (name == null || name.isBlank()) {
+                throw new IllegalArgumentException("A user name is required to create a client profile.");
+            }
+            RegisterRequest request = new RegisterRequest(name.trim(), email);
             client = registerClient(request);
         }
         else{

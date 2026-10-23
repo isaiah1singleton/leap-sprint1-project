@@ -63,7 +63,7 @@ export class AuthService {
 
     const session = await this.sessionService.create({user});
 
-    const accessToken = this.issueAccessToken(email, roles);
+    const accessToken = this.issueAccessToken(user.email, user.name, roles);
 
     
     const refreshToken = await this.issueRefreshToken(session);
@@ -101,13 +101,13 @@ async refresh(refreshToken: {uuid: UUID, body: string}):
     if (user.isAnalyst){
       roles.push("analyst");
     }
-    const newAccessToken = this.issueAccessToken(user.email, roles);
+    const newAccessToken = this.issueAccessToken(user.email, user.name, roles);
 
     return {accessToken: newAccessToken, refreshToken: newRefreshToken};
   }
 
-  private issueAccessToken(email: string, roles: string[]): string {
-    return jwt.sign({ sub: email, roles }, JWT_SECRET, {
+  private issueAccessToken(email: string, name: string, roles: string[]): string {
+    return jwt.sign({ sub: email, name, roles }, JWT_SECRET, {
       algorithm: "HS256",
       expiresIn: "15m",
     });

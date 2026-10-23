@@ -24,7 +24,9 @@ export class ShellComponent implements OnInit {
   readonly sidebarCollapsed = signal(this.initialSidebarState());
 
   ngOnInit(): void {
-    void this.accountsCache.loadAccounts();
+    if (!this.auth.isAdmin()) {
+      void this.accountsCache.loadAccounts();
+    }
   }
 
   toggleSidebar(): void {
