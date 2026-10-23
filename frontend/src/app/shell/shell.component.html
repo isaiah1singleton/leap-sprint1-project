@@ -32,24 +32,26 @@
     <header class="topbar">
       <div><p class="topbar-context"></p><h1>{{ pageTitle() }}</h1></div>
       <div class="topbar-right">
-        <div class="header-account-picker" aria-label="Trading account selection">
-          @if (isLoadingAccounts()) {
-            <span class="header-account-status">Loading accounts...</span>
-          } @else if (accountsError()) {
-            <button class="header-account-status header-account-action" type="button" (click)="loadAccounts()">Retry accounts</button>
-          } @else if (accounts().length === 0) {
-            <a class="header-account-status" routerLink="/app/account">Create account</a>
-          } @else {
-            <label class="header-account-label" for="header-account">Account</label>
-            <select #headerAccount id="header-account" class="input" [value]="accountSelection.selectedAccount()?.accountId ?? ''" (change)="selectAccountById(headerAccount.value)">
-              <option value="" disabled>Select account</option>
-              @for (account of activeAccounts(); track account.accountId) {
-                <option [value]="account.accountId">{{ account.accountName }}{{ account.accountStatus !== 'ACTIVE' ? ' (Flagged)' : '' }}</option>
-              }
-              <option value="__create__">+ Create account</option>
-            </select>
-          }
-        </div>
+        @if (!auth.isAdmin()) {
+          <div class="header-account-picker" aria-label="Trading account selection">
+            @if (isLoadingAccounts()) {
+              <span class="header-account-status">Loading accounts...</span>
+            } @else if (accountsError()) {
+              <button class="header-account-status header-account-action" type="button" (click)="loadAccounts()">Retry accounts</button>
+            } @else if (accounts().length === 0) {
+              <a class="header-account-status" routerLink="/app/account">Create account</a>
+            } @else {
+              <label class="header-account-label" for="header-account">Account</label>
+              <select #headerAccount id="header-account" class="input" [value]="accountSelection.selectedAccount()?.accountId ?? ''" (change)="selectAccountById(headerAccount.value)">
+                <option value="" disabled>Select account</option>
+                @for (account of activeAccounts(); track account.accountId) {
+                  <option [value]="account.accountId">{{ account.accountName }}{{ account.accountStatus !== 'ACTIVE' ? ' (Flagged)' : '' }}</option>
+                }
+                <option value="__create__">+ Create account</option>
+              </select>
+            }
+          </div>
+        }
         <app-theme-toggle />
         <span class="topbar-user">{{ auth.currentUser() }}</span>
         <span class="avatar" aria-hidden="true">{{ auth.currentUser()?.charAt(0)?.toUpperCase() || 'U' }}</span>

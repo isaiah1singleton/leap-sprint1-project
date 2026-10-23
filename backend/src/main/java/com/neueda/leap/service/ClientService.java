@@ -3,18 +3,16 @@ package com.neueda.leap.service;
 import com.neueda.leap.entities.Client;
 import com.neueda.leap.enums.ClientStatus;
 import com.neueda.leap.models.RegisterRequest;
-import com.neueda.leap.models.SignInRequest;
-import com.neueda.leap.models.AuthResponse;
 import com.neueda.leap.repository.ClientRepository;
 import jakarta.transaction.Transactional;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.NoSuchElementException;
 import java.util.Optional;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ClientService {
@@ -81,7 +79,7 @@ public class ClientService {
             if (role == null || !(role instanceof String)){
                 throw new IllegalArgumentException("Invalid access token");
             }
-            if (((String) role).toLowerCase() == "admin"){
+            if ("admin".equalsIgnoreCase((String) role)){
                 isAdmin = true;
                 break;
             }
@@ -93,6 +91,13 @@ public class ClientService {
     public Client findOrRegisterClientByJwt(Jwt jwt){
         if (jwt == null){
             throw new IllegalArgumentException("An access token is required.");
+        }
+
+        if (isActiveAdmin(jwt)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Administrator accounts do not have client profiles."
+            );
         }
 
         String email = (String) jwt.getClaimAsString("sub");

@@ -7,25 +7,22 @@ export const adminGuard: CanActivateFn = (_route, state) => {
   const router = inject(Router);
   const signedIn = auth.isSignedIn();
   const isAdmin = auth.isAdmin();
-  const isAnalyst = auth.isAnalyst();
 
   if (!signedIn) {
     console.info('[RouteGuard] adminGuard', {
       target: state.url,
       signedIn,
       isAdmin,
-      isAnalyst,
-      decision: 'REDIRECT /signin',
+      decision: 'REDIRECT /login',
     });
-    return router.createUrlTree(['/signin']);
+    return router.createUrlTree(['/login']);
   }
 
-  const allowed = isAdmin || isAnalyst;
+  const allowed = isAdmin;
   console.info('[RouteGuard] adminGuard', {
     target: state.url,
     signedIn,
     isAdmin,
-    isAnalyst,
     decision: allowed ? 'ALLOW' : 'REDIRECT /app/overview',
   });
   return allowed ? true : router.createUrlTree(['/app/overview']);

@@ -187,7 +187,13 @@ export class AuthService {
 
   private rolesFromToken(accessToken: string): string[] {
     try {
-      const payload = JSON.parse(atob(accessToken.split('.')[1])) as { roles?: unknown };
+      const encodedPayload = accessToken.split('.')[1];
+      if (!encodedPayload) return [];
+
+      const base64Payload = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
+      const paddedPayload = base64Payload.padEnd(Math.ceil(base64Payload.length / 4) * 4, '=');
+      const payloadBytes = Uint8Array.from(atob(paddedPayload), (character) => character.charCodeAt(0));
+      const payload = JSON.parse(new TextDecoder().decode(payloadBytes)) as { roles?: unknown };
       return Array.isArray(payload.roles)
         ? payload.roles.filter((role): role is string => typeof role === 'string').map((role) => role.toLowerCase())
         : [];
