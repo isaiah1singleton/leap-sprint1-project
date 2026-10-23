@@ -15,5 +15,4 @@ FEATURE_FLAGS = {'ALERT_REPORTS': False}
 # Disable query-result caching so a generation switch cannot reuse stale data.
 DATA_CACHE_CONFIG = {'CACHE_TYPE': 'NullCache'}
 CACHE_CONFIG = {'CACHE_TYPE': 'NullCache'}
-
 FLASK_APP_MUTATOR = configure_analyst_sso
