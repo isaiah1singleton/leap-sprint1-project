@@ -105,9 +105,11 @@ public class ClientService {
 
         Client client;
         if (clientOpt.isEmpty()){
-            // register new client
-            // to-do add name to token and register here
-            RegisterRequest request = new RegisterRequest("John Doe", email);
+            String name = jwt.getClaimAsString("name");
+            if (name == null || name.isBlank()) {
+                throw new IllegalArgumentException("A user name is required to create a client profile.");
+            }
+            RegisterRequest request = new RegisterRequest(name.trim(), email);
             client = registerClient(request);
         }
         else{
