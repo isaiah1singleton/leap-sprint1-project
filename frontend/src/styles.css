@@ -261,7 +261,6 @@ button:disabled { opacity:.48; cursor:not-allowed; }
 .valuation-heading .sub { margin:5px 0 0; font-size:12px; }
 .valuation-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
 .valuation-grid .card { padding:20px; position:relative; overflow:hidden; }
-.valuation-grid .card:not(.stat-primary)::before { content:''; position:absolute; inset:0 auto auto 20px; width:28px; height:2px; background:#60aca3; }
 .valuation-grid .card:hover { border-color:#9ebfc5; }
 .valuation-grid .stat-value { font-size:clamp(22px,2.1vw,32px); overflow-wrap:anywhere; }
 .valuation-grid .stat-label::before { content:'[ '; color:#69a59e; }

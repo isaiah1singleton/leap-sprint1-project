@@ -10,6 +10,8 @@ x-superset: &superset
     SUPERSET_DB_PASSWORD: ${SUPERSET_DB_PASSWORD:-}
     SUPERSET_ADMIN_USERNAME: ${SUPERSET_ADMIN_USERNAME:-admin}
     SNAPSHOT_ID: ${SNAPSHOT_ID:-snapshot-001}
+    TRADING_AUTH_SHARED_SECRET: ${TRADING_AUTH_SHARED_SECRET:?Set the auth service shared secret}
+    TRADING_FRONTEND_ORIGINS: ${TRADING_FRONTEND_ORIGINS:?Set the frontend origins}
   volumes:
     - published:/data/published:ro
   networks: [default]

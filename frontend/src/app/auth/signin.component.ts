@@ -29,8 +29,10 @@ export class SigninComponent {
 
   async submit(): Promise<void> {
     const fields: string[] = [];
+
     if (!this.email.trim()) fields.push('email');
     if (!this.password) fields.push('password');
+
     if (fields.length) {
       this.error = 'Enter your email and password.';
       this.errorFields = fields;
@@ -40,6 +42,7 @@ export class SigninComponent {
     const failure = this.mode === 'admin'
       ? await this.auth.signInAdmin(this.email, this.password)
       : await this.auth.signIn(this.email, this.password);
+
     if (failure) {
       this.error = failure.message;
       this.errorFields = failure.fields;
@@ -49,6 +52,17 @@ export class SigninComponent {
     this.error = '';
     this.errorFields = [];
     this.password = '';
-    void this.router.navigate([this.mode === 'admin' ? '/app/admin-audit' : '/app/overview']);
+
+    if (this.auth.isAnalyst()) {
+      this.auth.redirectAnalystToSuperset();
+      return;
+    }
+
+    if (this.auth.isAdmin()) {
+      await this.router.navigate(['/app/admin-audit']);
+      return;
+    }
+
+    await this.router.navigate(['/app/overview']);
   }
 }

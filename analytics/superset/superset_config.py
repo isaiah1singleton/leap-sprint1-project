@@ -1,5 +1,6 @@
 import os
 from urllib.parse import quote_plus
+from analyst_sso import configure_analyst_sso
 
 SECRET_KEY = os.environ['SUPERSET_SECRET_KEY']
 if len(SECRET_KEY) < 32 or not os.environ.get('SUPERSET_DB_PASSWORD'):
@@ -14,3 +15,4 @@ FEATURE_FLAGS = {'ALERT_REPORTS': False}
 # Disable query-result caching so a generation switch cannot reuse stale data.
 DATA_CACHE_CONFIG = {'CACHE_TYPE': 'NullCache'}
 CACHE_CONFIG = {'CACHE_TYPE': 'NullCache'}
+FLASK_APP_MUTATOR = configure_analyst_sso

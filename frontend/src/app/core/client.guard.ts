@@ -2,31 +2,22 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './auth.service';
 
-export const clientGuard: CanActivateFn = (_route, state) => {
+export const clientGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  const signedIn = auth.isSignedIn();
-  const isAdmin = auth.isAdmin();
-  const isAnalyst = auth.isAnalyst();
 
-  if (!signedIn) {
-    console.info('[RouteGuard] clientGuard', {
-      target: state.url,
-      signedIn,
-      isAdmin,
-      isAnalyst,
-      decision: 'REDIRECT /signin',
-    });
-    return router.createUrlTree(['/signin']);
+  if (!auth.isSignedIn()) {
+    return router.createUrlTree(['/login']);
   }
 
-  const privileged = isAdmin || isAnalyst;
-  console.info('[RouteGuard] clientGuard', {
-    target: state.url,
-    signedIn,
-    isAdmin,
-    isAnalyst,
-    decision: privileged ? 'REDIRECT /app/admin-audit' : 'ALLOW',
-  });
-  return privileged ? router.createUrlTree(['/app/admin-audit']) : true;
+  if (auth.isAnalyst()) {
+    auth.redirectAnalystToSuperset();
+    return false;
+  }
+
+  if (auth.isAdmin()) {
+    return router.createUrlTree(['/app/admin-audit']);
+  }
+
+  return true;
 };
