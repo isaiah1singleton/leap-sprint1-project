@@ -33,3 +33,14 @@
     <p class="auth-foot">Already have an account? <a routerLink="/signin">Sign in</a></p>
   </div>
 </div>
+
+@if (registered) {
+  <div class="registration-success-backdrop">
+    <section class="registration-success" role="dialog" aria-modal="true" aria-labelledby="registration-success-title">
+      <div class="registration-success-mark" aria-hidden="true">✓</div>
+      <h2 id="registration-success-title">Thank you for registering!</h2>
+      <p>Your account has been created. Click the link below to go back to the log in page.</p>
+      <a class="btn btn-primary" routerLink="/login">Go to log in</a>
+    </section>
+  </div>
+}

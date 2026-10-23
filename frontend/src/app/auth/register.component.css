@@ -1,0 +1,50 @@
+.registration-success-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #071b29a6;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+.registration-success {
+  width: min(440px, 100%);
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: center;
+  box-shadow: 0 24px 80px #06172166;
+}
+
+.registration-success-mark {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--success-surface);
+  color: var(--success-ink);
+  font-size: 28px;
+}
+
+.registration-success h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.registration-success p {
+  margin: 12px 0 8px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.registration-success .btn {
+  display: block;
+  margin-top: 22px;
+}
