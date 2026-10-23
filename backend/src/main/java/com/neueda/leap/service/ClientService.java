@@ -81,7 +81,7 @@ public class ClientService {
             if (role == null || !(role instanceof String)){
                 throw new IllegalArgumentException("Invalid access token");
             }
-            if (((String) role).toLowerCase() == "admin"){
+            if ("admin".equalsIgnoreCase((String) role)){
                 isAdmin = true;
                 break;
             }

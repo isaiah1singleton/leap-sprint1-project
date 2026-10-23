@@ -20,7 +20,7 @@ export const adminGuard: CanActivateFn = (_route, state) => {
     return router.createUrlTree(['/signin']);
   }
 
-  const allowed = isAdmin || isAnalyst;
+  const allowed = isAdmin;
   console.info('[RouteGuard] adminGuard', {
     target: state.url,
     signedIn,

@@ -16,6 +16,5 @@
       <app-portfolio-chart title="Lifetime profit/loss" metric="lifetimeProfitLoss" [points]="data.points" />
     </div>
     @if (data.recordingStartedAt) { <p class="note">Recording since {{ data.recordingStartedAt | date:'MMM d, y, HH:mm':'UTC' }} UTC.</p> }
-    <p class="note">History starts when recording is enabled; earlier performance is unavailable. Observations use the latest available provider quotes, which may be delayed. Missing valuations appear as gaps. Deposits and withdrawals change portfolio value but are excluded from profit/loss.</p>
   }
 </section>

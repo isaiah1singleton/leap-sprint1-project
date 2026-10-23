@@ -51,7 +51,6 @@ export interface PortfolioHoldingValue {
       @if (summary(); as data) {
         <div class="valuation-notes">
           <p class="note">Account snapshot {{ data.accountAsOf | date:'MMM d, y, HH:mm:ss':'UTC' }} UTC.
-            @if (data.oldestQuoteAt) { Oldest quote {{ data.oldestQuoteAt | date:'MMM d, y, HH:mm:ss':'UTC' }} UTC. }
           </p>
           @for (warning of data.valuationWarnings; track warning) {
             @if (warning !== 'Valuation includes delayed provider quotes.') {

@@ -7,4 +7,5 @@ COPY superset/bootstrap.py /app/analytics-bootstrap.py
 COPY superset/initialize.py /app/analytics-initialize.py
 COPY superset/active_snapshots.py /app/analytics-active-snapshots.py
 ENV SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py
+COPY superset/analyst_sso.py /app/pythonpath/analyst_sso.py
 USER superset
