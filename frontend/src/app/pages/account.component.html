@@ -1,40 +1,52 @@
-<div class="page-intro"><div><h2>Account details.</h2><p class="sub">View your profile and organise your trading accounts.</p></div></div>
-<div class="row">
-  <div class="card card-pad-lg" style="flex:1">
-    <h2 class="card-title">Profile</h2>
-    <dl style="margin:0">
-      <div class="definition"><dt>Name</dt><dd><strong>{{ auth.currentUser() }}</strong></dd></div>
-      <div class="definition"><dt>Email</dt><dd>{{ auth.currentUserEmail() }}</dd></div>
-    </dl>
+<div class="page-intro account-intro">
+  <div>
+    <p class="eyebrow">Account settings</p>
+    <h2>Account details</h2>
+    <p class="sub">Manage your profile and choose where your trades are held.</p>
   </div>
 </div>
 
-<!-- Trading Accounts Section -->
-<div class="card card-pad-lg" style="margin-top:20px">
-  <h2 class="card-title">Trading Accounts</h2>
+<div class="account-layout">
+  <section class="card account-profile">
+    <div class="section-heading">
+      <div><p class="eyebrow">Signed in as</p><h2 class="card-title">Your profile</h2></div>
+      <span class="profile-avatar" aria-hidden="true">{{ auth.currentUser()?.charAt(0)?.toUpperCase() || 'U' }}</span>
+    </div>
+    <dl class="profile-details">
+      <div class="definition"><dt>Name</dt><dd><strong>{{ auth.currentUser() }}</strong></dd></div>
+      <div class="definition"><dt>Email</dt><dd>{{ auth.currentUserEmail() }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="card account-management">
+    <div class="section-heading account-section-heading">
+      <div><p class="eyebrow">Trading workspace</p><h2 class="card-title">Your accounts</h2></div>
+      <span class="account-count">{{ accounts.length }} total</span>
+    </div>
 
   @if (success) {
-    <p style="color:var(--gain);font-weight:500;margin-bottom:12px">{{ success }}</p>
+    <p class="account-message account-success" role="status">{{ success }}</p>
   }
 
   @if (error) {
-    <p style="color:var(--loss);margin-bottom:12px">{{ error }}</p>
+    <p class="account-message account-error" role="alert">{{ error }}</p>
   }
 
   <!-- Currently Selected Account -->
   @if (selectedAccount()) {
     <div class="account-banner">
       <div class="account-summary">
-        <p style="font-weight:600;margin:0">Selected account: {{ selectedAccount()!.accountName }}</p>
-        <p style="font-size:12px;color:var(--muted);margin:4px 0 0 0">Status: {{ selectedAccount()!.accountStatus }}</p>
+        <p class="eyebrow">Selected account</p>
+        <strong>{{ selectedAccount()!.accountName }}</strong>
+        <p class="account-meta">Status: {{ selectedAccount()!.accountStatus }}</p>
       </div>
       <a routerLink="/app/overview" class="btn btn-primary btn-sm account-action">Go to overview</a>
     </div>
   }
 
   <!-- Create New Account Form -->
-  <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--line-soft)">
-    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Create New Account</h3>
+  <div class="account-create-section">
+    <div><h3>Create a new account</h3><p class="sub">Use a name that makes the account easy to identify.</p></div>
     <div class="account-create-form">
       <div class="account-name-field">
         <label class="label" for="accountName">Account Name</label>
@@ -45,36 +57,34 @@
           [class.invalid]="invalid('accountName')"
           [(ngModel)]="newAccountName"
           (keyup.enter)="submit()"
-          placeholder="e.g., Primary Trading, Retirement, etc." />
+          placeholder="e.g. Primary Trading" />
       </div>
       <button
         class="btn btn-primary create-account-button"
         (click)="submit()"
         [disabled]="isCreating">
-        {{ isCreating ? 'Creating...' : 'Create Account' }}
+        {{ isCreating ? 'Creating...' : 'Create account' }}
       </button>
     </div>
   </div>
 
   <!-- Existing Accounts -->
-  <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Your Accounts</h3>
   @if (accounts.length === 0) {
-    <p style="color:var(--muted)">No trading accounts yet. Create one to get started!</p>
+    <div class="account-empty"><strong>No trading accounts yet</strong><p class="sub">Create your first account above to get started.</p></div>
   } @else {
     <div class="account-list">
       @for (account of accounts; track account.accountId) {
         <div
           class="account-row"
-          [style.background]="selectedAccount()?.accountId === account.accountId ? 'rgba(0,200,0,0.05)' : 'transparent'"
-          [style.border]="selectedAccount()?.accountId === account.accountId ? '1px solid var(--gain)' : '1px solid var(--line-soft)'">
+          [class.account-row-selected]="selectedAccount()?.accountId === account.accountId">
           <div class="account-row-heading">
             <div class="account-summary">
-              <strong style="font-size:14px">{{ account.accountName }}</strong>
-              <div style="font-size:12px;color:var(--muted);margin-top:4px">
+              <strong>{{ account.accountName }}</strong>
+              <div class="account-meta">
                 Opened {{ account.openedAt | date:'short' }}
               </div>
             </div>
-            <span class="account-status" [style.color]="account.accountStatus === 'ACTIVE' ? 'var(--gain)' : 'var(--danger)'">
+            <span class="account-status" [class.account-status-active]="account.accountStatus === 'ACTIVE'">
               {{ account.accountStatus }}
             </span>
           </div>
@@ -85,5 +95,6 @@
       }
     </div>
   }
+</section>
 </div>
 

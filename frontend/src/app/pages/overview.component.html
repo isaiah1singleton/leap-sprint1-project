@@ -2,24 +2,6 @@
   <div><h2>Welcome, {{ auth.currentUser() }}.</h2><p class="sub">Your portfolio, market watchlist and latest activity.</p></div>
   <a class="btn btn-primary" routerLink="/app/transact">Place an order ↗</a>
 </div>
-<section class="card account-toolbar" aria-label="Trading account selection">
-  @if (isLoadingAccounts()) {
-    <p class="sub" role="status">Loading your accounts…</p>
-  } @else if (accountsError()) {
-    <p class="error-text" role="alert">{{ accountsError() }}</p><button class="btn-chip" (click)="loadAccounts()">Retry</button>
-  } @else if (accounts().length === 0) {
-    <div><strong>Create your first trading account</strong><p class="sub">Start with an account to manage your cash and holdings.</p></div>
-    <button class="btn-chip" (click)="createAccount()">+ Create account</button>
-  } @else {
-    <div class="account-picker"><label class="label" for="dashboard-account">Trading account</label>
-      <select #accountPicker id="dashboard-account" class="input" [value]="selectedAccount()?.accountId ?? ''" (change)="selectAccountById(accountPicker.value)">
-        <option value="" disabled>Select an account</option>
-        @for (account of accounts(); track account.accountId) { <option [value]="account.accountId">{{ account.accountName }}{{ account.accountStatus !== 'ACTIVE' ? ' (Flagged)' : '' }}</option> }
-      </select>
-    </div>
-    <a class="toolbar-link" routerLink="/app/account">Manage accounts →</a>
-  }
-</section>
 @if (!selectedAccount()) {
   <div class="empty-state dashboard-notice"><strong>Choose your trading account</strong>Select an account above to view its cash, holdings and activity.</div>
 } @else {
