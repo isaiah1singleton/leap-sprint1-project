@@ -8,12 +8,7 @@
     <div class="auth-theme-controls"><app-theme-toggle /></div>
 
     <h1 class="auth-title">Sign in</h1>
-    <p class="auth-sub">Access your investor dashboard or admin audit console.</p>
-
-    <div class="seg" style="margin-top:18px">
-      <button class="seg-opt" [class.active]="mode === 'client'" (click)="setMode('client')">Client sign-in</button>
-      <button class="seg-opt" [class.active]="mode === 'admin'" (click)="setMode('admin')">Sign in as admin</button>
-    </div>
+    <p class="auth-sub">Sign in to access your account.</p>
 
     @if (error) {
       <p class="error-banner">{{ error }}</p>
@@ -27,10 +22,8 @@
     <input id="password" type="password" autocomplete="current-password" class="input" [class.invalid]="invalid('password')"
            [(ngModel)]="password" (keyup.enter)="submit()" placeholder="Your password" />
 
-    <button class="btn btn-primary" (click)="submit()">{{ mode === 'admin' ? 'Sign in as admin' : 'Sign in' }}</button>
+    <button class="btn btn-primary" (click)="submit()">Sign in</button>
 
-    @if (mode === 'client') {
-      <p class="auth-foot">No account yet? <a routerLink="/register">Create one</a></p>
-    }
+    <p class="auth-foot">No account yet? <a routerLink="/register">Create one</a></p>
   </div>
 </div>

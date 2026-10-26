@@ -27,7 +27,13 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/auth';
   private readonly authApiUrl = `${environment.authApiUrl}/auth`;
-  readonly currentUser = signal<string | null>(sessionStorage.getItem('currentUserName'));
+  private readonly storedAccessToken = sessionStorage.getItem('accessToken') ?? '';
+  readonly currentUser = signal<string | null>(
+    this.nameFromToken(this.storedAccessToken) ?? sessionStorage.getItem('currentUserName'),
+  );
+  readonly currentUserFirstName = signal<string | null>(
+    this.firstNameFromToken(this.storedAccessToken) ?? sessionStorage.getItem('currentUserFirstName'),
+  );
   readonly currentUserEmail = signal<string | null>(sessionStorage.getItem('currentUserEmail'));
   readonly currentUserSegment = signal<string | null>(sessionStorage.getItem('currentUserSegment'));
 
@@ -85,6 +91,7 @@ export class AuthService {
       normalizedEmail,
       segment,
       `local-${segment.toLowerCase()}-${Date.now()}`,
+      titleName.split(/\s+/)[0],
     );
   }
 
@@ -100,33 +107,11 @@ export class AuthService {
         this.http.post<AuthResponse>(`${this.authApiUrl}/login`, { email: userEmail, password }),
       );
       this.setCurrentUser(
-        this.displayNameFor(userEmail),
+        this.displayNameFor(userEmail, response.accessToken),
         userEmail,
         this.segmentFromToken(response.accessToken),
         response.accessToken,
-      );
-      return null;
-    } catch (error) {
-      return this.apiFailure(error, ['email', 'password']);
-    }
-  }
-
-  async signInAdmin(email: string, password: string): Promise<AuthFailure | null> {
-    const userEmail = email.trim();
-    const fields: string[] = [];
-    if (!userEmail) fields.push('email');
-    if (!password) fields.push('password');
-    if (fields.length) return { message: 'Enter your admin email and password.', fields };
-
-    try {
-      const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.authApiUrl}/login`, { email: userEmail, password }),
-      );
-      this.setCurrentUser(
-        this.displayNameFor(userEmail),
-        userEmail,
-        this.segmentFromToken(response.accessToken),
-        response.accessToken,
+        this.firstNameFromToken(response.accessToken),
       );
       return null;
     } catch (error) {
@@ -169,12 +154,14 @@ export class AuthService {
 
   async signOut(): Promise<void> {
     sessionStorage.removeItem('currentUserName');
+    sessionStorage.removeItem('currentUserFirstName');
     sessionStorage.removeItem('currentUserEmail');
     sessionStorage.removeItem('currentUserSegment');
     sessionStorage.removeItem('isAdmin');
     sessionStorage.removeItem('isAnalyst');
     sessionStorage.removeItem('accessToken');
     this.currentUser.set(null);
+    this.currentUserFirstName.set(null);
     this.currentUserEmail.set(null);
     this.currentUserSegment.set(null);
     return Promise.resolve();
@@ -185,21 +172,44 @@ export class AuthService {
     email: string,
     clientSegment: string,
     accessToken: string,
+    firstName: string | null,
   ): void {
     const roles = this.rolesFromToken(accessToken);
     sessionStorage.setItem('currentUserName', name);
+    if (firstName) sessionStorage.setItem('currentUserFirstName', firstName);
+    else sessionStorage.removeItem('currentUserFirstName');
     sessionStorage.setItem('currentUserEmail', email);
     sessionStorage.setItem('currentUserSegment', clientSegment);
     sessionStorage.setItem('accessToken', accessToken);
     sessionStorage.setItem('isAdmin', String(roles.includes('admin')));
     sessionStorage.setItem('isAnalyst', String(roles.includes('analyst')));
     this.currentUser.set(name);
+    this.currentUserFirstName.set(firstName);
     this.currentUserEmail.set(email);
     this.currentUserSegment.set(clientSegment);
   }
 
-  private displayNameFor(email: string): string {
-    return email.split('@')[0] || email;
+  private displayNameFor(email: string, accessToken: string): string {
+    return this.nameFromToken(accessToken) || email.split('@')[0] || email;
+  }
+
+  private firstNameFromToken(accessToken: string): string | null {
+    return this.nameFromToken(accessToken)?.split(/\s+/)[0] ?? null;
+  }
+
+  private nameFromToken(accessToken: string): string | null {
+    try {
+      const encodedPayload = accessToken.split('.')[1];
+      if (!encodedPayload) return null;
+
+      const base64Payload = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
+      const paddedPayload = base64Payload.padEnd(Math.ceil(base64Payload.length / 4) * 4, '=');
+      const payloadBytes = Uint8Array.from(atob(paddedPayload), (character) => character.charCodeAt(0));
+      const payload = JSON.parse(new TextDecoder().decode(payloadBytes)) as { name?: unknown };
+      return typeof payload.name === 'string' && payload.name.trim() ? payload.name.trim() : null;
+    } catch {
+      return null;
+    }
   }
 
   private segmentFromToken(accessToken: string): string {

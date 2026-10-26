@@ -22,6 +22,7 @@ export class AdminAuditComponent implements OnDestroy {
   readonly accountFilter = signal('ALL');
   readonly statusFilter = signal('ALL');
   readonly sideFilter = signal('ALL');
+  readonly flaggedFilter = signal('ALL');
   readonly dateFrom = signal('');
   readonly dateTo = signal('');
   readonly updatingOrder = signal<number | null>(null);
@@ -41,6 +42,7 @@ export class AdminAuditComponent implements OnDestroy {
     const account = this.accountFilter();
     const status = this.statusFilter();
     const side = this.sideFilter();
+    const flagged = this.flaggedFilter();
 
     return this.audit.records().filter((record) => {
       if (client && !record.clientEmail.toLowerCase().includes(client) && !record.clientName.toLowerCase().includes(client)) {
@@ -64,6 +66,14 @@ export class AdminAuditComponent implements OnDestroy {
       }
 
       if (side !== 'ALL' && record.side !== side) {
+        return false;
+      }
+
+      if (flagged === 'FLAGGED' && !record.suspicious) {
+        return false;
+      }
+
+      if (flagged === 'UNFLAGGED' && record.suspicious) {
         return false;
       }
 
@@ -94,23 +104,17 @@ export class AdminAuditComponent implements OnDestroy {
     const uniqueClients = new Set(rows.map((row) => row.clientEmail)).size;
     const uniqueInstruments = new Set(rows.map((row) => row.instrumentKey)).size;
     const rejectedCount = rows.filter((row) => row.status.includes('REJECT') || row.status.includes('FAILED')).length;
-    const cancelledCount = rows.filter((row) => row.status.includes('CANCEL')).length;
-    const completeEvidenceCount = rows.filter((row) => row.status === 'FILLED' || row.status === 'REJECTED' || row.status === 'EXPIRED').length;
-    const reviewCount = rows.filter((row) => row.suspicious || row.status.includes('FAILED')).length;
     return {
       total: rows.length,
       uniqueClients,
       uniqueInstruments,
       rejectedCount,
-      cancelledCount,
-      completeEvidenceCount,
-      reviewCount,
     };
   });
 
   readonly statusBreakdown = computed(() => this.breakdown(this.filteredRecords(), (row) => row.status));
-  readonly clientBreakdown = computed(() => this.breakdown(this.filteredRecords(), (row) => row.clientEmail).slice(0, 8));
-  readonly instrumentBreakdown = computed(() => this.breakdown(this.filteredRecords(), (row) => row.instrumentKey).slice(0, 8));
+  readonly clientBreakdown = computed(() => this.submittedBreakdown(this.filteredRecords(), (row) => row.clientEmail).slice(0, 8));
+  readonly instrumentBreakdown = computed(() => this.submittedBreakdown(this.filteredRecords(), (row) => row.instrumentKey).slice(0, 8));
   private readonly refreshTimer = window.setInterval(() => void this.audit.refresh(true), 3000);
 
   constructor() {
@@ -132,6 +136,7 @@ export class AdminAuditComponent implements OnDestroy {
     this.accountFilter.set('ALL');
     this.statusFilter.set('ALL');
     this.sideFilter.set('ALL');
+    this.flaggedFilter.set('ALL');
     this.dateFrom.set('');
     this.dateTo.set('');
   }
@@ -142,6 +147,7 @@ export class AdminAuditComponent implements OnDestroy {
   setAccountFilter(value: string): void { this.accountFilter.set(value); }
   setStatusFilter(value: string): void { this.statusFilter.set(value); }
   setSideFilter(value: string): void { this.sideFilter.set(value); }
+  setFlaggedFilter(value: string): void { this.flaggedFilter.set(value); }
   setDateFrom(value: string): void { this.dateFrom.set(value); }
   setDateTo(value: string): void { this.dateTo.set(value); }
 
@@ -201,6 +207,20 @@ export class AdminAuditComponent implements OnDestroy {
     }
     return [...counts.entries()]
       .map(([key, count]) => ({ key, count }))
+      .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
+  }
+
+  private submittedBreakdown(records: AuditRecord[], selector: (row: AuditRecord) => string): Array<{ key: string; count: number }> {
+    const ordersByKey = new Map<string, Set<number>>();
+    for (const row of records) {
+      if (row.status !== 'SUBMITTED') continue;
+      const key = selector(row);
+      const orders = ordersByKey.get(key) ?? new Set<number>();
+      orders.add(row.orderId);
+      ordersByKey.set(key, orders);
+    }
+    return [...ordersByKey.entries()]
+      .map(([key, orders]) => ({ key, count: orders.size }))
       .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
   }
 

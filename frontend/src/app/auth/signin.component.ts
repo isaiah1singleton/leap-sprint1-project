@@ -16,12 +16,7 @@ export class SigninComponent {
   email = '';
   password = '';
   error = '';
-  mode: 'client' | 'admin' = 'client';
   private errorFields: string[] = [];
-
-  setMode(mode: 'client' | 'admin'): void {
-    this.mode = mode;
-  }
 
   invalid(field: string): boolean {
     return this.errorFields.includes(field);
@@ -39,9 +34,7 @@ export class SigninComponent {
       return;
     }
 
-    const failure = this.mode === 'admin'
-      ? await this.auth.signInAdmin(this.email, this.password)
-      : await this.auth.signIn(this.email, this.password);
+    const failure = await this.auth.signIn(this.email, this.password);
 
     if (failure) {
       this.error = failure.message;
@@ -53,13 +46,13 @@ export class SigninComponent {
     this.errorFields = [];
     this.password = '';
 
-    if (this.auth.isAnalyst()) {
-      this.auth.redirectAnalystToSuperset();
+    if (this.auth.isAdmin()) {
+      await this.router.navigate(['/app/admin-audit']);
       return;
     }
 
-    if (this.auth.isAdmin()) {
-      await this.router.navigate(['/app/admin-audit']);
+    if (this.auth.isAnalyst()) {
+      this.auth.redirectAnalystToSuperset();
       return;
     }
 

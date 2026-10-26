@@ -62,6 +62,14 @@
         </select>
       </div>
       <div class="filter-field">
+        <label class="label" for="audit-flagged">Flagged Trades</label>
+        <select id="audit-flagged" class="input" [ngModel]="flaggedFilter()" (ngModelChange)="setFlaggedFilter($event)">
+          <option value="ALL">All Trades</option>
+          <option value="FLAGGED">Flagged Only</option>
+          <option value="UNFLAGGED">Unflagged Only</option>
+        </select>
+      </div>
+      <div class="filter-field">
         <label class="label" for="audit-side">Side</label>
         <select id="audit-side" class="input" [ngModel]="sideFilter()" (ngModelChange)="setSideFilter($event)">
           <option value="ALL">All Sides</option>
@@ -99,18 +107,6 @@
     <div class="metric">
       <p class="stat-label">Rejected or failed</p>
       <p class="stat-value loss">{{ summary().rejectedCount }}</p>
-    </div>
-    <div class="metric">
-      <p class="stat-label">Cancelled</p>
-      <p class="stat-value">{{ summary().cancelledCount }}</p>
-    </div>
-    <div class="metric">
-      <p class="stat-label">Complete evidence</p>
-      <p class="stat-value">{{ summary().completeEvidenceCount }}</p>
-    </div>
-    <div class="metric">
-      <p class="stat-label">Needs review</p>
-      <p class="stat-value loss">{{ summary().reviewCount }}</p>
     </div>
   </section>
   }
@@ -206,7 +202,7 @@
     <div class="insight-panel">
       <h3>Top clients</h3>
       <table class="table">
-        <thead><tr><th>Client</th><th class="num">Count</th></tr></thead>
+        <thead><tr><th>Client</th><th class="num">Submitted trades</th></tr></thead>
         <tbody>
           @for (item of clientBreakdown(); track item.key) {
             <tr><td>{{ item.key }}</td><td class="num">{{ item.count }}</td></tr>
@@ -219,7 +215,7 @@
     <div class="insight-panel">
       <h3>Top instruments</h3>
       <table class="table">
-        <thead><tr><th>Instrument</th><th class="num">Count</th></tr></thead>
+        <thead><tr><th>Instrument</th><th class="num">Submitted trades</th></tr></thead>
         <tbody>
           @for (item of instrumentBreakdown(); track item.key) {
             <tr><td>{{ item.key }}</td><td class="num">{{ item.count }}</td></tr>

@@ -1,5 +1,5 @@
 <div class="page-intro dashboard-intro">
-  <div><h2>Welcome, {{ auth.currentUser() }}.</h2><p class="sub">Your portfolio, market watchlist and latest activity.</p></div>
+  <div><h2>Welcome, {{ auth.currentUserFirstName() || 'there' }}.</h2><p class="sub">Your portfolio, market watchlist and latest activity.</p></div>
   <a class="btn btn-primary" routerLink="/app/transact">Place an order ↗</a>
 </div>
 @if (!selectedAccount()) {
