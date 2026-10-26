@@ -10,7 +10,7 @@
 
 .admin-page,
 .admin-page * {
-  font-family: system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  font-family: var(--ui-font);
 }
 
 .admin-page .sub,
@@ -74,7 +74,7 @@
 .admin-eyebrow {
   margin: 0 0 6px;
   color: var(--muted);
-  font: 10px/1.4 ui-monospace, Menlo, monospace;
+  font: 10px/1.4 var(--ui-font);
   letter-spacing: .08em;
 }
 
@@ -327,7 +327,7 @@
 }
 
 .admin-page .table th {
-  font-family: system-ui, -apple-system, 'Helvetica Neue', sans-serif !important;
+  font-family: var(--ui-font) !important;
   color: var(--muted);
   border-bottom-color: var(--line);
   background: var(--surface-muted);

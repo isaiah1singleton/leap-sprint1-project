@@ -3,7 +3,7 @@
   --line:#cedee4; --line-soft:#e7eef1; --ground:#f3f7f8; --surface:#fff;
   --accent:#087d76; --accent-soft:#e7f5f1; --danger:#b63c48; --loss:var(--danger);
   --danger-line:#da8790; --danger-tint:#fff1f2; --gain:#08775a; --radius:12px;
-  --ui-font:'Cascadia Code','Cascadia Mono',Consolas,'Liberation Mono',monospace;
+  --ui-font:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
   color-scheme:light;
   --surface-muted:#f5f9fa; --surface-hover:#f8fbfa; --empty-surface:#f8fafb;
   --input-border:#cdd9df; --placeholder:#7c8b96; --button-ink:#fff; --accent-hover:#06665e;
