@@ -41,7 +41,7 @@ describe('Portfolio summary', () => {
     expect(fixture.nativeElement.textContent).not.toContain('$0.00');
     http.expectOne('/api/accounts/1/portfolio-summary').flush(summary);
     fixture.detectChanges();
-    for (const amount of ['$1,100.00', '$800.00', '$300.00', '+$100.00', '17:50:00']) {
+    for (const amount of ['$1,100.00', '$800.00', '$300.00', '+$100.00', '18:00:00 UTC']) {
       expect(fixture.nativeElement.textContent).toContain(amount);
     }
   });

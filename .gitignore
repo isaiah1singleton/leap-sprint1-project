@@ -12,3 +12,14 @@ __pycache__/
 analytics/**/*.duckdb
 analytics/**/*.duckdb.wal
 .vscode/*
+.m2/
+frontend/.npm-cache/
+frontend/test-results/
+frontend/playwright-report/
+auth/.npm-cache/
+auth/coverage/
+auth/test-results/
+backend/*-tests.log
+backend/*-run.log
+backend/verification.log
+tests/*.log

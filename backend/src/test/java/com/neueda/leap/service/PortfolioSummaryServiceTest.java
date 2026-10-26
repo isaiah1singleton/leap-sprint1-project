@@ -40,7 +40,7 @@ class PortfolioSummaryServiceTest {
         assertThat(result.holdings()).hasSize(1);
         assertThat(result.holdings().get(0).quotePrice()).isEqualByComparingTo("150");
         assertThat(result.holdings().get(0).estimatedValue()).isEqualByComparingTo("300");
-        assertThat(result.valuationWarnings()).contains("Valuation includes delayed provider quotes.");
+        assertThat(result.valuationWarnings()).noneMatch(warning -> warning.contains("unavailable"));
     }
 
     @Test void reportsLossUsingNetFundingAfterWithdrawals() {

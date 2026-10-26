@@ -36,7 +36,7 @@ describe('Account management', () => {
     fixture.componentInstance.selectAccount(savings);
     fixture.detectChanges();
     expect(selectedAccount()?.accountId).toBe(2);
-    expect(fixture.nativeElement.textContent).toContain('Selected account: Savings');
+    expect(fixture.nativeElement.textContent).toContain('Selected accountSavings');
     expect(fixture.nativeElement.textContent).not.toContain('Deposit');
     expect(fixture.nativeElement.textContent).not.toContain('Withdraw');
   });

@@ -5,6 +5,8 @@ import { OrderDto, TradingService } from '../core/trading.service';
 import { OrderProgressComponent } from './order-progress.component';
 
 describe('Order progress', () => {
+  let originalShowModal: PropertyDescriptor | undefined;
+  let originalClose: PropertyDescriptor | undefined;
   const accepted: OrderDto = {
     orderId: 5, accountId: 42, symbol: 'AAPL', side: 'BUY', quantity: 2,
     indicativePrice: 100, submittedAt: '2026-10-14T18:00:00Z',
@@ -13,13 +15,17 @@ describe('Order progress', () => {
   let service: { getOrder: ReturnType<typeof vi.fn>; refresh: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
+    originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'showModal');
+    originalClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'close');
     // jsdom does not implement native dialog methods.
     Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
       configurable: true,
+      writable: true,
       value: function (this: HTMLDialogElement) { this.setAttribute('open', ''); },
     });
     Object.defineProperty(HTMLDialogElement.prototype, 'close', {
       configurable: true,
+      writable: true,
       value: function (this: HTMLDialogElement) { this.removeAttribute('open'); },
     });
     vi.useFakeTimers();
@@ -30,6 +36,10 @@ describe('Order progress', () => {
   afterEach(() => {
     TestBed.resetTestingModule();
     vi.useRealTimers();
+    if (originalShowModal) Object.defineProperty(HTMLDialogElement.prototype, 'showModal', originalShowModal);
+    else Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+    if (originalClose) Object.defineProperty(HTMLDialogElement.prototype, 'close', originalClose);
+    else Reflect.deleteProperty(HTMLDialogElement.prototype, 'close');
   });
 
   function start() {

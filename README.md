@@ -1,5 +1,7 @@
 # LEAP Sprint 1
 
+See [TESTING.md](TESTING.md) for local unit, integration, database/Kafka, authentication, and browser test commands.
+
 This repository contains a Java backend and an Angular frontend. The frontend is
 the Inside Tr8ders sign-in and investor dashboard prototype.
 

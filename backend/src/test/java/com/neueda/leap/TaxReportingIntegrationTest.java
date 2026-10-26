@@ -186,7 +186,7 @@ class TaxReportingIntegrationTest {
         Client other = clients.save(new Client("Other", UUID.randomUUID() + "@example.com", "hash"));
         int otherAccount = accounts.save(new Account(other, "Other")).getAccountId();
         fill(otherAccount, equity, "SELL", "999", "100", "2026-02-01T00:00:00Z");
-        String token = tokens.issueToken(client).accessToken();
+        String token = com.neueda.leap.support.TestTokens.bearer(client.getEmail()).substring(7);
         for (String route : List.of(ApiRoutes.TAX + ApiRoutes.TAX_REPORT,
                 ApiRoutes.TAX + "/documents/1099-B", ApiRoutes.TAX + "/documents/1099-DA")) {
             mvc.perform(get(route)).andExpect(status().isUnauthorized());

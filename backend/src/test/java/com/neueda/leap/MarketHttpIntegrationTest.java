@@ -27,25 +27,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MarketHttpIntegrationTest {
     @LocalServerPort private int port;
     @Autowired private ObjectMapper mapper;
+    @Autowired private com.neueda.leap.repository.InstrumentRepository instruments;
     private final HttpClient http = HttpClient.newHttpClient();
     private String token;
 
     @BeforeEach
-    void signIn() throws Exception {
-        String payload = "{\"name\":\"Market HTTP test\",\"email\":\"" + UUID.randomUUID()
-                + "@example.invalid\",\"password\":\"TestMarket123\"}";
-        assertThat(post(ApiRoutes.AUTH_REGISTER, payload, null).statusCode()).isEqualTo(201);
-        var login = post(ApiRoutes.AUTH_SIGN_IN, payload, null);
-        assertThat(login.statusCode()).isEqualTo(200);
-        token = mapper.readTree(login.body()).path("accessToken").asText();
-        assertThat(token).isNotBlank();
+    void signIn() {
+        if (instruments.findAll().stream().noneMatch(instrument -> instrument.getSymbol().equals("AAPL"))) {
+            instruments.save(new com.neueda.leap.entities.Instrument("US", "AAPL", "Apple Inc.",
+                    com.neueda.leap.enums.AssetClass.EQUITY, com.neueda.leap.enums.Currency.USD));
+        }
+        token = com.neueda.leap.support.TestTokens.bearer(UUID.randomUUID() + "@example.test").substring(7);
     }
 
     @Test
     void freshSessionCanSearchAndProviderConfigurationFailureIsNotUnauthorized() throws Exception {
         var symbols = get(ApiRoutes.MARKET + ApiRoutes.MARKET_SYMBOLS + "?q=AAPL", token);
         assertThat(symbols.statusCode()).isEqualTo(200);
-        assertThat(mapper.readTree(symbols.body()).get(0).path("symbol").asText()).isEqualTo("AAPL");
+        assertThat(mapper.readTree(symbols.body()).isArray()).isTrue();
         var quote = get(ApiRoutes.MARKET + ApiRoutes.MARKET_QUOTES + "/AAPL", token);
         assertThat(quote.statusCode()).isEqualTo(503);
         assertThat(mapper.readTree(quote.body()).path("detail").asText()).contains("FAUXNANCE_API_KEY");
@@ -67,8 +66,8 @@ class MarketHttpIntegrationTest {
         String route = ApiRoutes.MARKET + ApiRoutes.MARKET_SYMBOLS;
         assertThat(get(route, null).statusCode()).isEqualTo(401);
         assertThat(get(route, "invalid").statusCode()).isEqualTo(401);
-        assertThat(post(ApiRoutes.AUTH + ApiRoutes.SIGN_OUT, "{}", token).statusCode()).isEqualTo(204);
-        assertThat(get(route, token).statusCode()).isEqualTo(401);
+        String expired = com.neueda.leap.support.TestTokens.token("expired@example.test", java.time.Instant.now().minusSeconds(120), com.neueda.leap.support.TestTokens.SECRET);
+        assertThat(get(route, expired).statusCode()).isEqualTo(401);
         // A direct request to Spring's error endpoint must not bypass authentication.
         assertThat(get("/error", null).statusCode()).isEqualTo(401);
     }

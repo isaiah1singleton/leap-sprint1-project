@@ -9,6 +9,8 @@ import { OrderDto, TradingService } from '../core/trading.service';
 import { MarketExplorerComponent } from './market-explorer.component';
 
 describe('Market order review', () => {
+  let originalShowModal: PropertyDescriptor | undefined;
+  let originalClose: PropertyDescriptor | undefined;
   const stock: MarketSymbol = {
     instrumentId: 7, symbol: 'AAPL', name: 'Apple Inc.',
     type: 'equity', exchange: 'NASDAQ', currency: 'USD',
@@ -38,12 +40,16 @@ describe('Market order review', () => {
   };
 
   beforeEach(() => {
+    originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'showModal');
+    originalClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'close');
     Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
       configurable: true,
+      writable: true,
       value: function (this: HTMLDialogElement) { this.setAttribute('open', ''); },
     });
     Object.defineProperty(HTMLDialogElement.prototype, 'close', {
       configurable: true,
+      writable: true,
       value: function (this: HTMLDialogElement) { this.removeAttribute('open'); },
     });
     trading = {
@@ -61,7 +67,7 @@ describe('Market order review', () => {
       quote: vi.fn().mockResolvedValue(quote),
       pin: vi.fn(), unpin: vi.fn(), errorMessage: vi.fn(),
     };
-    const account = { selectedAccount: signal({ accountId: 42, accountName: 'Trading account' }) };
+    const account = { selectedAccount: signal({ accountId: 42, accountName: 'Trading account', accountStatus: 'ACTIVE' }) };
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -70,6 +76,13 @@ describe('Market order review', () => {
         { provide: AccountSelectionService, useValue: account },
       ],
     });
+  });
+
+  afterEach(() => {
+    if (originalShowModal) Object.defineProperty(HTMLDialogElement.prototype, 'showModal', originalShowModal);
+    else Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+    if (originalClose) Object.defineProperty(HTMLDialogElement.prototype, 'close', originalClose);
+    else Reflect.deleteProperty(HTMLDialogElement.prototype, 'close');
   });
 
   function start() {

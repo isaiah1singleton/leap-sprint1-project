@@ -122,13 +122,11 @@ class SessionLifecycleTest {
     }
 
     @Test
-    void signOutRevokesTheServerSessionAndFurtherUseIsUnauthorized() throws Exception {
+    void legacySessionRevocationRetainsHistoryAndPreventsFurtherServiceUse() throws Exception {
         TokenService.TokenGrant grant = issueToken();
         clock.set(START.plusSeconds(60));
 
-        mockMvc.perform(post("/api/auth/sign-out")
-                        .header("Authorization", "Bearer " + grant.accessToken()))
-                .andExpect(status().isNoContent());
+        assertThat(tokenService.revokeToken(grant.accessToken())).isTrue();
 
         assertThat(onlySession().getRevokedAt()).isEqualTo(at(START.plusSeconds(60)));
         assertThat(tokenService.authenticate(grant.accessToken())).isEmpty();
@@ -145,20 +143,20 @@ class SessionLifecycleTest {
     }
 
     @Test
-    void registrationAndSignInIgnoreAnInvalidBearerHeader() throws Exception {
+    void backendDoesNotExposeTheRemovedLegacyRegistrationAndSignInEndpoints() throws Exception {
         String credentials = "{\"email\":\"alice@example.com\",\"password\":\"password123\"}";
 
         mockMvc.perform(post("/api/auth/register")
-                        .header("Authorization", "Bearer invalid")
+                        .header("Authorization", com.neueda.leap.support.TestTokens.bearer("alice@example.com"))
                         .contentType(APPLICATION_JSON)
                         .content(credentials))
-                .andExpect(status().isCreated());
+                .andExpect(status().isNotFound());
 
         mockMvc.perform(post("/api/auth/sign-in")
-                        .header("Authorization", "Bearer invalid")
+                        .header("Authorization", com.neueda.leap.support.TestTokens.bearer("alice@example.com"))
                         .contentType(APPLICATION_JSON)
                         .content(credentials))
-                .andExpect(status().isOk());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -171,15 +169,16 @@ class SessionLifecycleTest {
 
         TokenService.TokenGrant grant = issueToken();
         mockMvc.perform(get("/api/accounts")
-                        .header("Authorization", "Bearer " + grant.accessToken()))
+                        .header("Authorization", com.neueda.leap.support.TestTokens.bearer("alice@example.com")))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void helloRemainsPublicWithAnInvalidBearerHeader() throws Exception {
+    void helloIsPublicWithoutCredentialsButRejectsAnInvalidBearerHeader() throws Exception {
+        mockMvc.perform(get(ApiRoutes.HELLO)).andExpect(status().isOk());
         mockMvc.perform(get("/hello")
                         .header("Authorization", "Bearer invalid"))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized());
     }
 
     private TokenService.TokenGrant issueToken() {
