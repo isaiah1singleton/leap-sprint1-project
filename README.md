@@ -16,6 +16,22 @@ and [operations guide](analytics/OPERATIONS.md) for setup, verification and limi
 
 ## Run the Angular frontend
 
+To run the frontend as a container with the backend stack, create
+`backend/.env` from `backend/.env.example`, then start Compose from `backend`:
+
+```bash
+docker compose -f compose.yml up -d --build
+```
+
+Open <http://localhost:4200>. The container serves the production Angular build
+through Nginx. The frontend uses `http://localhost:8082` and
+`http://localhost:8083` for the backend and authentication service by default;
+set `FRONTEND_API_URL` and `FRONTEND_AUTH_API_URL` in `backend/.env` if the
+browser must reach those services at different URLs. `FRONTEND_PORT` can change
+the host port for the frontend.
+
+For local development without Docker, run:
+
 From the repository root:
 
 ```bash
