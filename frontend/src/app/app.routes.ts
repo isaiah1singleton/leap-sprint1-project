@@ -7,10 +7,12 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'app/overview' },
   {
     path: 'register',
+    title: 'Nside',
     loadComponent: () => import('./auth/register.component').then((m) => m.RegisterComponent),
   },
   {
     path: 'login',
+    title: 'Nside',
     loadComponent: () => import('./auth/signin.component').then((m) => m.SigninComponent),
   },
   {
