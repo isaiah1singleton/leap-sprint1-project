@@ -4,6 +4,7 @@ export interface PortfolioHistoryPoint {
   investedValue: number | null;
   portfolioValue: number | null;
   lifetimeProfitLoss: number | null;
+  returnPercent: number | null;
   oldestQuoteAt: string | null;
   valueUnavailableReason: string | null;
   profitLossUnavailableReason: string | null;

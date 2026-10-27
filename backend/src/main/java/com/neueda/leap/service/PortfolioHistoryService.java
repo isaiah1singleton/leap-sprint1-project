@@ -36,7 +36,10 @@ public class PortfolioHistoryService {
         accounts.findByAccountIdAndClient_ClientId(accountId, clientId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found."));
         observations.record(summaries.summary(accountId, clientId));
+        var allPoints = observations.points(accountId, Instant.EPOCH);
+        var withReturns = PortfolioReturnCalculator.calculate(allPoints, observations.externalFlows(accountId));
+        var visible = withReturns.stream().filter(point -> !point.observedAt().isBefore(since)).toList();
         return new PortfolioHistoryResponse(accountId, "USD", observations.recordingStartedAt(accountId),
-                range, observations.points(accountId, since));
+                range, visible);
     }
 }

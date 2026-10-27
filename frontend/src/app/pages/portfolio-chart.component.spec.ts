@@ -5,7 +5,7 @@ import { PortfolioHistoryPoint } from './portfolio-history.model';
 describe('Portfolio charts', () => {
   function point(time: string, value: number | null, profit: number | null): PortfolioHistoryPoint {
     return { observedAt: time, cashBalance: 100, investedValue: value == null ? null : value - 100,
-      portfolioValue: value, lifetimeProfitLoss: profit, oldestQuoteAt: time,
+      portfolioValue: value, lifetimeProfitLoss: profit, returnPercent: profit, oldestQuoteAt: time,
       valueUnavailableReason: value == null ? 'Price unavailable' : null,
       profitLossUnavailableReason: profit == null ? 'History incomplete' : null };
   }
@@ -30,9 +30,10 @@ describe('Portfolio charts', () => {
       point('2026-10-20T12:00:00Z', 100, -20),
       point('2026-10-20T12:05:00Z', null, null),
       point('2026-10-20T12:10:00Z', 120, 0),
-    ], 'lifetimeProfitLoss');
+    ], 'returnPercent');
     expect(fixture.componentInstance.paths()).toHaveLength(2);
-    expect(fixture.nativeElement.textContent).toContain('$0.00');
+    expect(fixture.nativeElement.textContent).toContain('0.00%');
+    expect(fixture.nativeElement.querySelector('.currency').textContent).toBe('%');
     expect(fixture.componentInstance.domain().low).toBeLessThan(-20);
     expect(fixture.nativeElement.querySelector('.zero-line')).not.toBeNull();
   });

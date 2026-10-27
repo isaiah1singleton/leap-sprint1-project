@@ -54,9 +54,21 @@ public class PortfolioObservationStore {
                 """, (row, index) -> new Point(row.getObject("observed_at", OffsetDateTime.class).toInstant(),
                 row.getBigDecimal("cash_balance"), row.getBigDecimal("invested_value"),
                 row.getBigDecimal("portfolio_value"), row.getBigDecimal("lifetime_profit_loss"),
+                null,
                 row.getObject("oldest_quote_at", OffsetDateTime.class) == null ? null
                         : row.getObject("oldest_quote_at", OffsetDateTime.class).toInstant(),
                 row.getString("value_unavailable_reason"), row.getString("profit_loss_unavailable_reason")),
                 accountId, since.atOffset(java.time.ZoneOffset.UTC));
+    }
+
+    public List<PortfolioReturnCalculator.CashFlow> externalFlows(Integer accountId) {
+        return jdbc.query("""
+                SELECT occurred_at, amount FROM cash_movements
+                WHERE account_id = ? AND currency = 'USD'
+                  AND movement_type IN ('DEPOSIT', 'WITHDRAW')
+                ORDER BY occurred_at, cash_movement_id
+                """, (row, index) -> new PortfolioReturnCalculator.CashFlow(
+                row.getObject("occurred_at", OffsetDateTime.class).toInstant(),
+                row.getBigDecimal("amount")), accountId);
     }
 }

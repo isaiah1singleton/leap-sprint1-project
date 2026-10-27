@@ -8,7 +8,7 @@ import { PortfolioHistoryPoint } from './portfolio-history.model';
 })
 export class PortfolioChartComponent {
   readonly points = input.required<PortfolioHistoryPoint[]>();
-  readonly metric = input.required<'portfolioValue' | 'lifetimeProfitLoss'>();
+  readonly metric = input.required<'portfolioValue' | 'returnPercent'>();
   readonly title = input.required<string>();
   readonly selected = signal(-1);
   readonly valid = computed(() => this.points().filter(point => this.value(point) != null));
@@ -105,6 +105,15 @@ export class PortfolioChartComponent {
       style: 'currency', currency: 'USD', notation: compact ? 'compact' : 'standard',
       maximumFractionDigits: compact ? 1 : 2,
     }).format(value);
+  }
+
+  display(value: number | null | undefined, compact = false): string {
+    if (this.metric() === 'portfolioValue') return this.money(value, compact);
+    return value == null ? 'Unavailable' : new Intl.NumberFormat('en-US', {
+      style: 'percent', minimumFractionDigits: compact ? 0 : 2,
+      maximumFractionDigits: compact ? 1 : 2,
+      signDisplay: compact ? 'auto' : 'exceptZero',
+    }).format(value / 100);
   }
 
   date(value: string): string {

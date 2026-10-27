@@ -1,6 +1,6 @@
 <section class="card chart-card" [style.--chart-color]="color()" [attr.aria-label]="title()">
-  <div class="chart-heading"><h3>{{ title() }}</h3><span class="currency">USD</span></div>
-  <p class="chart-value">{{ money(value(current())) }}</p>
+  <div class="chart-heading"><h3>{{ title() }}</h3><span class="currency">{{ metric() === 'portfolioValue' ? 'USD' : '%' }}</span></div>
+  <p class="chart-value">{{ display(value(current())) }}</p>
   <p class="chart-date">{{ current() ? date(current()!.observedAt) : 'No observations in this period' }}</p>
   @if (valid().length) {
     <div class="chart-interaction" tabindex="0" role="group" [attr.aria-label]="title() + '. Use left and right arrow keys to inspect observations.'"
@@ -12,7 +12,7 @@
         </linearGradient></defs>
         @for (tick of ticks(); track tick.y) {
           <line x1="68" x2="572" [attr.y1]="tick.y" [attr.y2]="tick.y" class="grid-line" />
-          <text x="56" [attr.y]="tick.y + 4" text-anchor="end">{{ money(tick.value, true) }}</text>
+          <text x="56" [attr.y]="tick.y + 4" text-anchor="end">{{ display(tick.value, true) }}</text>
         }
         @if (domain().low < 0 && domain().high > 0) { <line x1="68" x2="572" [attr.y1]="y(0)" [attr.y2]="y(0)" class="zero-line" /> }
         @for (path of paths(); track $index) {
@@ -31,6 +31,7 @@
           <strong>{{ date(point.observedAt) }}</strong>
           <span>Cash <b>{{ money(point.cashBalance) }}</b></span>
           <span>Invested assets <b>{{ money(point.investedValue) }}</b></span>
+          @if (metric() === 'returnPercent') { <span>Return <b>{{ display(value(point)) }}</b></span> }
           @if (point.oldestQuoteAt) { <small>Oldest quote: {{ date(point.oldestQuoteAt) }}</small> }
           @if (metric() === 'portfolioValue' ? point.valueUnavailableReason : point.profitLossUnavailableReason; as reason) { <small>{{ reason }}</small> }
         </div>
@@ -38,6 +39,6 @@
     </div>
     <p class="chart-hint">{{ valid().length === 1 ? 'First observation saved. More points will appear as history builds.' : 'Hover, tap, or use arrow keys to explore · UTC' }}</p>
   } @else {
-    <div class="chart-empty"><span aria-hidden="true">↗</span><p>{{ metric() === 'portfolioValue' ? current()?.valueUnavailableReason : current()?.profitLossUnavailableReason }}</p><p>A chart will appear when a complete valuation is recorded.</p></div>
+    <div class="chart-empty"><span aria-hidden="true">↗</span><p>{{ metric() === 'portfolioValue' ? current()?.valueUnavailableReason : (current()?.profitLossUnavailableReason || 'A funded valuation is needed to start return tracking.') }}</p><p>A chart will appear when a complete valuation is recorded.</p></div>
   }
 </section>

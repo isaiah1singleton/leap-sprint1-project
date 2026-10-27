@@ -1,6 +1,6 @@
 <section class="performance" aria-label="Portfolio performance history" [attr.aria-busy]="loading()">
   <div class="section-heading">
-    <div><h2 class="card-title">Performance over time</h2><p class="sub">Recorded valuations · Cash + invested assets · Profit/loss excludes net deposits</p></div>
+    <div><h2 class="card-title">Performance over time</h2><p class="sub">Recorded valuations · Cash + invested assets · Return adjusts for deposits and withdrawals between observations</p></div>
     <div class="history-controls">
       <div class="ranges" role="group" aria-label="Performance period">
         @for (period of ranges; track period) { <button type="button" [class.active]="range() === period" [attr.aria-pressed]="range() === period" (click)="range.set(period)">{{ period === 'ALL' ? 'All' : period }}</button> }
@@ -13,7 +13,7 @@
   @if (history(); as data) {
     <div class="charts">
       <app-portfolio-chart title="Portfolio value" metric="portfolioValue" [points]="data.points" />
-      <app-portfolio-chart title="Lifetime profit/loss" metric="lifetimeProfitLoss" [points]="data.points" />
+      <app-portfolio-chart title="Estimated return since tracking began" metric="returnPercent" [points]="data.points" />
     </div>
     @if (data.recordingStartedAt) { <p class="note">Recording since {{ data.recordingStartedAt | date:'MMM d, y, HH:mm':'UTC' }} UTC.</p> }
   }
