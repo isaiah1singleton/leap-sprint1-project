@@ -43,7 +43,7 @@ button:disabled { opacity:.48; cursor:not-allowed; }
 /* Navigation and workspace */
 .shell { min-height:100vh; display:flex; }
 .sidebar { width:232px; flex:none; position:sticky; top:0; height:100vh; padding:30px 18px 22px; background:linear-gradient(160deg,#0b2232,#102f3e 62%,#0c2735); color:#d8e7ee; display:flex; flex-direction:column; gap:6px; border-right:1px solid #2b4c5b; }
-.brand { display:flex; align-items:center; justify-content:center; padding:10px; border-radius:8px; background:#f7f9f9; }
+.brand { display:flex; align-items:center; justify-content:center; padding:10px; background:transparent; }
 .brand-logo { display:block; width:100%; height:auto; }
 .brand-symbol { display:none; width:100%; height:100%; object-fit:contain; }
 .nav-caption { color:#8fbdc4; font-family:var(--ui-font); font-size:10px; font-weight:600; letter-spacing:.08em; padding:0 14px; margin:8px 0 10px; text-transform:uppercase; }
