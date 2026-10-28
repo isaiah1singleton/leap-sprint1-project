@@ -12,18 +12,23 @@ import { Session } from "./session/entities/session.entity";
 import { RefreshToken } from "./refresh-token/entities/refresh-token.entity";
 import { SessionService } from "./session/session.service";
 import { RefreshTokenService } from "./refresh-token/refresh-token.service";
+import { readFileSync } from 'node:fs';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'postgres-auth',
+      host: process.env.POSTGRES_AUTH_HOST,
       port: 5432,
       password: process.env.POSTGRES_AUTH_PASSWORD,
       username: process.env.POSTGRES_AUTH_USER,
       entities: [User, Session, RefreshToken],
       database: process.env.POSTGRES_AUTH_DB,
-      synchronize: true,
+      synchronize: false,
+      ssl: {
+        ca: readFileSync('/certs/global-bundle.pem', 'utf8'),
+        rejectUnauthorized: true,
+      },
       logging: true,
     }),
     UserModule,
