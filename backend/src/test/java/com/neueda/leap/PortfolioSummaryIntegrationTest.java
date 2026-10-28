@@ -141,7 +141,7 @@ class PortfolioSummaryIntegrationTest {
                 accountId, new BigDecimal(amount));
     }
 
-    private String bearer(Client client) { return "Bearer " + tokens.issueToken(client).accessToken(); }
+    private String bearer(Client client) { return com.neueda.leap.support.TestTokens.bearer(client.getEmail()); }
     private String path(Integer accountId) { return "/api/accounts/" + accountId + "/portfolio-summary"; }
     private record AccountOwner(Client client, Integer accountId) { }
 }

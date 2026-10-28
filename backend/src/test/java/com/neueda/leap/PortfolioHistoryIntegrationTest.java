@@ -53,7 +53,7 @@ class PortfolioHistoryIntegrationTest {
     }
 
     private String path(Account account) { return "/api/accounts/" + account.getAccountId() + "/portfolio-history"; }
-    private String bearer(Account account) { return "Bearer " + tokens.issueToken(account.getClient()).accessToken(); }
+    private String bearer(Account account) { return com.neueda.leap.support.TestTokens.bearer(account.getClient().getEmail()); }
 
     @Test void requiresAuthenticationAndNeverExposesAnotherClientsHistory() throws Exception {
         var owner = account();

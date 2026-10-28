@@ -62,7 +62,7 @@ class OrderSubmissionIntegrationTest {
         Account account = accounts.save(new Account(client, "Trading"));
         Instrument instrument = createInstrument();
 
-        mockMvc.perform(post(ApiRoutes.ORDER)
+        mockMvc.perform(post(ApiRoutes.ORDERS)
                         .header("Authorization", bearer(client))
                         .contentType("application/json")
                         .content(orderJson(account.getAccountId(), instrument.getInstrumentId())))
@@ -71,7 +71,7 @@ class OrderSubmissionIntegrationTest {
 
         assertThat(orders.count()).isEqualTo(1);
         Order saved = orders.findAll().get(0); 
-        assertThat(saved.getSubmittedQuoteAt()).isEqualTo(saved.getSubmittedAt());
+        assertThat(saved.getSubmittedQuoteAt()).isBeforeOrEqualTo(saved.getSubmittedAt());
         assertThat(saved.getRequestedQuantity()).isEqualByComparingTo("2");
     }
 
@@ -82,7 +82,7 @@ class OrderSubmissionIntegrationTest {
         Account account = accounts.save(new Account(owner, "Trading"));
         Instrument instrument = createInstrument();
 
-        mockMvc.perform(post(ApiRoutes.ORDER)
+        mockMvc.perform(post(ApiRoutes.ORDERS)
                         .header("Authorization", bearer(otherClient))
                         .contentType("application/json")
                         .content(orderJson(account.getAccountId(), instrument.getInstrumentId())))
@@ -95,16 +95,16 @@ class OrderSubmissionIntegrationTest {
         Client client = createClient();
         String authorization = bearer(client);
 
-        mockMvc.perform(post(ApiRoutes.ORDER)
+        mockMvc.perform(post(ApiRoutes.ORDERS)
                         .contentType("application/json")
                         .content("not-json"))
                 .andExpect(status().isUnauthorized());
-        mockMvc.perform(post(ApiRoutes.ORDER)
+        mockMvc.perform(post(ApiRoutes.ORDERS)
                         .header("Authorization", authorization)
                         .contentType("application/json")
                         .content("not-json"))
                 .andExpect(status().isBadRequest());
-        mockMvc.perform(post(ApiRoutes.ORDER)
+        mockMvc.perform(post(ApiRoutes.ORDERS)
                         .header("Authorization", authorization)
                         .contentType("application/json")
                         .content("{}"))
@@ -134,11 +134,11 @@ class OrderSubmissionIntegrationTest {
     }
 
     private String bearer(Client client) {
-        return "Bearer " + tokenService.issueToken(client).accessToken();
+        return com.neueda.leap.support.TestTokens.bearer(client.getEmail());
     }
 
     private static String orderJson(Integer accountId, Integer instrumentId) {
         return "{\"accountId\":" + accountId + ",\"instrumentId\":" + instrumentId
-                + ",\"side\":\"BUY\",\"requestedQuantity\":2,\"submittedQuotePrice\":1}";
+                + ",\"side\":\"BUY\",\"quantity\":2,\"indicativePrice\":1,\"quoteCurrency\":\"USD\",\"quoteAsOf\":\"2026-10-01T12:00:00Z\"}";
     }
 }

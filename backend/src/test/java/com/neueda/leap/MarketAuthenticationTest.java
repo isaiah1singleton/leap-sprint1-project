@@ -44,27 +44,23 @@ class MarketAuthenticationTest {
     }
 
     @Test
-    void registrationLoginAndRevocationProtectMarketData() throws Exception {
+    void signedJwtAllowsMarketDataWhileExpiredAndWronglySignedTokensAreRejected() throws Exception {
         Instrument bitcoin = new Instrument("US", "X:BTC-USD", "Bitcoin", AssetClass.CRYPTO, Currency.USD);
         bitcoin.enableTrading();
         instruments.save(bitcoin);
-        String payload = "{\"name\":\"Market Tester\",\"email\":\"market-auth@example.com\",\"password\":\"TestMarket123\"}";
-        String registration = mvc.perform(post(ApiRoutes.AUTH_REGISTER).contentType(APPLICATION_JSON).content(payload))
-                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
-        String token = mapper.readTree(registration).path("accessToken").asText();
+        String token = com.neueda.leap.support.TestTokens.bearer("market-auth@example.com");
         mvc.perform(get(ApiRoutes.MARKET + ApiRoutes.MARKET_SYMBOLS).param("q", "btc")
-                        .header("Authorization", "Bearer " + token)).andExpect(status().isOk())
+                        .header("Authorization", token)).andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].symbol").value("X:BTC-USD"));
 
-        String login = mvc.perform(post(ApiRoutes.AUTH_SIGN_IN).contentType(APPLICATION_JSON).content(payload))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        String loginToken = mapper.readTree(login).path("accessToken").asText();
         when(market.quotes("AAPL")).thenReturn(new MarketQuotesDto(List.of(), MarketDataService.DISCLAIMER));
         mvc.perform(get(ApiRoutes.MARKET + ApiRoutes.MARKET_QUOTES).param("symbols", "AAPL")
-                .header("Authorization", "Bearer " + loginToken)).andExpect(status().isOk());
-        mvc.perform(post(ApiRoutes.AUTH + ApiRoutes.SIGN_OUT).header("Authorization", "Bearer " + loginToken))
-                .andExpect(status().isNoContent());
-        mvc.perform(get(ApiRoutes.MARKET + ApiRoutes.MARKET_SYMBOLS).header("Authorization", "Bearer " + loginToken))
-                .andExpect(status().isUnauthorized());
+                .header("Authorization", token)).andExpect(status().isOk());
+        for (String invalid : List.of(
+                com.neueda.leap.support.TestTokens.token("market-auth@example.com", java.time.Instant.now().minusSeconds(120), com.neueda.leap.support.TestTokens.SECRET),
+                com.neueda.leap.support.TestTokens.token("market-auth@example.com", java.time.Instant.now().plusSeconds(120), "another-test-signing-secret-at-least-32-bytes"))) {
+            mvc.perform(get(ApiRoutes.MARKET + ApiRoutes.MARKET_SYMBOLS).header("Authorization", "Bearer " + invalid))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 }

@@ -63,6 +63,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, ApiRoutes.AUTH_REGISTER, ApiRoutes.AUTH_SIGN_IN,
                                 ApiRoutes.AUTH + ApiRoutes.ADMIN_SIGN_IN).permitAll()
