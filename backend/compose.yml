@@ -64,13 +64,13 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      POSTGRES_AUTH_DB: ${POSTGRES_AUTH_DB}
-      POSTGRES_AUTH_USER: ${POSTGRES_AUTH_USER}
-      POSTGRES_AUTH_PASSWORD: ${POSTGRES_AUTH_PASSWORD}
+      POSTGRES_AUTH_HOST: team8-rds-db.c8xuasgw2vz5.us-east-1.rds.amazonaws.com
+      POSTGRES_AUTH_DB: leap_auth
+      POSTGRES_AUTH_USER: leap_auth
+      POSTGRES_AUTH_PASSWORD: ${RDS_AUTH_PASSWORD:-}
       SHARED_SECRET: ${SHARED_SECRET}
-    depends_on:
-      postgres-auth: 
-        condition: service_healthy
+    volumes:
+      - /home/ubuntu/rds-certs/global-bundle.pem:/certs/global-bundle.pem:ro
     ports:
       - "0.0.0.0:${AUTH_PORT:-8083}:3000"
 
@@ -86,9 +86,9 @@ services:
         condition: service_healthy
     environment:
       SHARED_SECRET: ${SHARED_SECRET}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://team8-rds-db.c8xuasgw2vz5.us-east-1.rds.amazonaws.com:5432/leap_trading?sslmode=verify-full&sslrootcert=/certs/global-bundle.pem"
+      SPRING_DATASOURCE_USERNAME: leap_trading
+      SPRING_DATASOURCE_PASSWORD: ${RDS_DB_PASSWORD:-}
       SPRING_FLYWAY_ENABLED: "false"
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SERVER_PORT: 8082
@@ -98,6 +98,8 @@ services:
       FAUXNANCE_API_KEY: ${FAUXNANCE_API_KEY:-}
       FAUXNANCE_BASE_URL: ${FAUXNANCE_BASE_URL:-https://y4t9nq2bqf.execute-api.eu-west-2.amazonaws.com/v1}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    volumes:
+      - /home/ubuntu/rds-certs/global-bundle.pem:/certs/global-bundle.pem:ro
     ports:
       - "0.0.0.0:${BACKEND_PORT:-8082}:8082"
 
