@@ -1,6 +1,6 @@
 // API Configuration for frontend-backend communication
 // Update API_URL based on your environment (development, staging, production)
-import { environment } from '../../environments/environment.prod';
+import { environment } from '../../environments/environment';
 
 export const API_CONFIG = {
   // Backend API base URL
