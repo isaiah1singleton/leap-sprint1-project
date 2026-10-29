@@ -8,7 +8,10 @@ if len(SECRET_KEY) < 32 or not os.environ.get('SUPERSET_DB_PASSWORD'):
 SQLALCHEMY_DATABASE_URI = (
     'postgresql+psycopg2://superset:'
     + quote_plus(os.environ['SUPERSET_DB_PASSWORD'])
-    + '@superset-db:5432/superset'
+    + '@'
+    + os.environ['SUPERSET_DB_HOST']
+    + ':5432/superset'
+    + '?sslmode=verify-full&sslrootcert=/certs/global-bundle.pem'
 )
 WTF_CSRF_ENABLED = True
 FEATURE_FLAGS = {'ALERT_REPORTS': False}
