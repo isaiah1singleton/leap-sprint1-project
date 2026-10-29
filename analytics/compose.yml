@@ -1,23 +1,23 @@
 name: leap-analytics
 
 x-superset: &superset
+  image: leap-analytics-superset:rds-migration
   build:
     context: .
     dockerfile: superset/Dockerfile
   profiles: [bi]
   environment: &superset-env
     SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-}
+    SUPERSET_DB_HOST: team8-superset-db.c8xuasgw2vz5.us-east-1.rds.amazonaws.com
     SUPERSET_DB_PASSWORD: ${SUPERSET_DB_PASSWORD:-}
     SUPERSET_ADMIN_USERNAME: ${SUPERSET_ADMIN_USERNAME:-admin}
-    SNAPSHOT_ID: ${SNAPSHOT_ID:-snapshot-001}
-    TRADING_AUTH_SHARED_SECRET: ${TRADING_AUTH_SHARED_SECRET:?Set the auth service shared secret}
-    TRADING_FRONTEND_ORIGINS: ${TRADING_FRONTEND_ORIGINS:?Set the frontend origins}
+    SNAPSHOT_ID: ${SNAPSHOT_ID:-seeded-demo-20261023T151359Z}
+    TRADING_AUTH_SHARED_SECRET: ${TRADING_AUTH_SHARED_SECRET:-}
+    TRADING_FRONTEND_ORIGINS: ${TRADING_FRONTEND_ORIGINS:-https://dl7bvz3k1d67g.cloudfront.net}
   volumes:
     - published:/data/published:ro
+    - /home/ubuntu/rds-certs/global-bundle.pem:/certs/global-bundle.pem:ro
   networks: [default]
-  depends_on:
-    superset-db:
-      condition: service_healthy
   mem_limit: 2g
 
 # One-shot jobs: invoke ETL, then warehouse, sequentially with `run --rm`.
@@ -117,4 +117,6 @@ volumes:
   etl_state:
   gold:
   published:
+    external: true
+    name: team8-superset-published
   superset_metadata:
